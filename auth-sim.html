@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - WishAI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f172a;
+            --text: #f1f5f9;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Alexandria', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            padding: 40px 20px;
+            text-align: center;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 30px;
+            letter-spacing: -1px;
+        }
+
+        .logo span {
+            color: #8b5cf6;
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .provider-icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 1.25rem;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+        }
+
+        .user-preview {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: right;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .user-email {
+            display: block;
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            font-family: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #8b5cf6;
+            color: white;
+            margin-bottom: 12px;
+        }
+
+        .btn-primary:hover {
+            background: #7c3aed;
+            transform: translateY(-2px);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: #94a3b8;
+        }
+
+        .btn-ghost:hover {
+            color: white;
+        }
+
+        .loading {
+            display: none;
+        }
+
+        .loading-spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(139, 92, 246, 0.2);
+            border-top-color: #8b5cf6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="logo">Wish<span>AI</span></div>
+
+        <div id="auth-card" class="card">
+            <div id="content">
+                <div id="provider-icon-container"></div>
+                <h1 id="title">تسجيل الدخول</h1>
+                <p id="subtitle">للمتابعة إلى WishAI</p>
+
+                <div class="user-preview">
+                    <div class="avatar" id="avatar">U</div>
+                    <div class="user-details">
+                        <span class="user-name" id="display-name">جاري التحميل...</span>
+                        <span class="user-email" id="display-email">user@example.com</span>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="proceed()">المتابعة</button>
+                <button class="btn btn-ghost" onclick="window.close()">إلغاء</button>
+            </div>
+
+            <div id="loading-state" class="loading">
+                <div class="loading-spinner"></div>
+                <p>جاري التحقق...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const provider = urlParams.get('provider') || 'google';
+        const lang = urlParams.get('lang') || 'ar';
+
+        const config = {
+            google: {
+                name: lang === 'ar' ? 'Google' : 'Google',
+                icon: '<svg viewBox="0 0 24 24" class="provider-icon"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>',
+                user: 'Hossam Ashi',
+                email: 'hossam@gmail.com',
+                color: '#4285F4'
+            },
+            apple: {
+                name: 'Apple',
+                icon: '<svg viewBox="0 0 24 24" class="provider-icon" fill="white"><path d="M17.05 20.28c-.98.95-2.05 1.78-3.15 1.76-1.09-.02-1.74-.71-3.02-.71-1.28 0-2 .69-3.04.73-1.04.04-2.2-.84-3.26-1.89-2.13-2.11-3.78-5.96-3.78-9.35 0-5.4 3.31-8.24 6.44-8.24s4.16 2.16 5.39 2.16c1.23 0 2.26-2.16 5.39-2.16 1.83 0 3.38.99 4.3 2.58-3.74 2.26-3.13 7.7.53 9.4-.95 2.4-2.16 4.79-3.8 6.72zm-4.32-15.63c-.07-2.67-2.16-4.65-4.48-4.65V0c0 .12-.02.24-.03.36 2.3 0 4.54 2.22 4.51 4.29z"/></svg>',
+                user: 'Hossam Apple',
+                email: 'hossam@icloud.com',
+                color: '#fff'
+            },
+            microsoft: {
+                name: 'Microsoft',
+                icon: '<svg viewBox="0 0 23 23" class="provider-icon"><path fill="#f35325" d="M1 1h10v10H1z"/><path fill="#81bc06" d="M12 1h10v10H12z"/><path fill="#05a6f0" d="M1 12h10v10H1z"/><path fill="#ffba08" d="M12 12h10v10H12z"/></svg>',
+                user: 'Hossam MS',
+                email: 'hossam@outlook.com',
+                color: '#05a6f0'
+            }
+        };
+
+        const current = config[provider] || config.google;
+
+        document.getElementById('provider-icon-container').innerHTML = current.icon;
+        document.getElementById('title').textContent = lang === 'ar' ? `المتابعة باستخدام ${current.name}` : `Continue with ${current.name}`;
+        document.getElementById('display-name').textContent = current.user;
+        document.getElementById('display-email').textContent = current.email;
+        document.getElementById('avatar').textContent = current.user.charAt(0);
+        document.getElementById('avatar').style.background = current.color;
+
+        function proceed() {
+            document.getElementById('content').style.display = 'none';
+            document.getElementById('loading-state').style.display = 'block';
+
+            setTimeout(() => {
+                const userData = {
+                    name: current.user,
+                    email: current.email,
+                    provider: provider
+                };
+                window.opener.postMessage({ type: 'AUTH_SUCCESS', user: userData }, window.location.origin);
+                window.close();
+            }, 1200);
+        }
+    </script>
+</body>
+
+</html>

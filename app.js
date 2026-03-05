@@ -524,18 +524,27 @@ function bindEvents() {
         if (!src) return;
 
         try {
-            // Fetch as blob to force download instead of open in new tab
-            const response = await fetch(src);
-            const blob = await response.blob();
-            const url = URL.createObjectURL(blob);
+            if (src.startsWith('data:')) {
+                const a = document.createElement('a');
+                a.href = src;
+                a.download = `WishAI-${state.occasion || 'card'}-${Date.now()}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } else {
+                // Fetch as blob to force download instead of open in new tab
+                const response = await fetch(src);
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
 
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `WishAI-${state.occasion || 'card'}-${Date.now()}.png`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `WishAI-${state.occasion || 'card'}-${Date.now()}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
         } catch (err) {
             console.error("Download failed, using fallback:", err);
             // Fallback

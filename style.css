@@ -793,7 +793,7 @@ textarea {
 }
 
 .advanced-panel.open {
-    max-height: 900px;
+    max-height: 2500px;
     opacity: 1;
     padding: 20px 16px;
     border-color: rgba(139, 92, 246, 0.1);

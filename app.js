@@ -33,7 +33,16 @@ const translations = {
         'graduation': 'تخرج', 'success': 'نجاح', 'newborn': 'مولود جديد', 'love': 'حب',
         'friendship': 'صداقة', 'daily': 'تحية يومية', 'newyear': 'سنة جديدة', 'thankyou': 'شكر',
         'btn-guest': 'المتابعة كزائر',
-        'sub-style': 'خيارات الأسلوب المتقدمة:'
+        'sub-style': 'خيارات الأسلوب المتقدمة:',
+        'style-modern': 'عصري وحديث',
+        'style-traditional': 'تراثي كلاسيكي',
+        'style-minimalist': 'بسيط وأنيق',
+        'style-vibrant': 'ملون ومبهج',
+        'style-watercolor': 'ألوان مائية',
+        'style-3d': 'ثلاثي الأبعاد',
+        'style-cinematic': 'تصوير سينمائي',
+        'style-illustration': 'رسم توضيحي',
+        'style-papercraft': 'فن ورقي'
     },
     en: {
         'welcome-title': 'Create AI Greeting Magic',
@@ -69,7 +78,16 @@ const translations = {
         'graduation': 'Graduation', 'success': 'Success', 'newborn': 'Newborn', 'love': 'Love',
         'friendship': 'Friendship', 'daily': 'Daily Greeting', 'newyear': 'New Year', 'thankyou': 'Thank You',
         'btn-guest': 'Continue as Guest',
-        'sub-style': 'Advanced Style Options:'
+        'sub-style': 'Advanced Style Options:',
+        'style-modern': 'Modern',
+        'style-traditional': 'Traditional / Classic',
+        'style-minimalist': 'Minimalist',
+        'style-vibrant': 'Vibrant',
+        'style-watercolor': 'Watercolor',
+        'style-3d': '3D Render',
+        'style-cinematic': 'Cinematic',
+        'style-illustration': 'Illustration',
+        'style-papercraft': 'Papercraft'
     }
 };
 
@@ -452,28 +470,40 @@ function bindEvents() {
     // Sub-style configurations
     const subStylesConfig = {
         modern: {
-            ar: ['مستقبلي', 'نيون', 'سايبر بانك', 'إضاءات نيون', 'زجاجي'],
-            en: ['Futuristic', 'Neon', 'Cyberpunk', 'Neon Lights', 'Glassmorphism']
+            ar: ['مستقبلي', 'نيون', 'سايبر بانك', 'إضاءات نيون', 'زجاجي', 'تجريدي', 'ثلاثي الأبعاد حديث', 'إضاءة سينمائية'],
+            en: ['Futuristic', 'Neon', 'Cyberpunk', 'Neon Lights', 'Glassmorphism', 'Abstract', 'Modern 3D', 'Cinematic Lighting']
         },
         traditional: {
-            ar: ['عتيق', 'فن كلاسيكي', 'تخطيط', 'فيكتوري'],
-            en: ['Vintage', 'Classic Art', 'Calligraphy', 'Victorian']
+            ar: ['عتيق', 'فن كلاسيكي', 'تخطيط', 'فيكتوري', 'زخرفة إسلامية', 'عصر النهضة', 'رسم زيتي تقليدي', 'فن استشراقي'],
+            en: ['Vintage', 'Classic Art', 'Calligraphy', 'Victorian', 'Islamic Geometry', 'Renaissance', 'Traditional Oil Painting', 'Orientalist Art']
         },
         minimalist: {
-            ar: ['تصميم مسطح', 'فن خطي', 'أحادية اللون', 'هندسي'],
-            en: ['Flat Design', 'Line Art', 'Monochrome', 'Geometric']
+            ar: ['تصميم مسطح', 'فن خطي', 'أحادية اللون', 'هندسي', 'مساحات سلبية', 'بسيط ولطيف', 'فن البوب المينيمالي', 'إسكندنافي'],
+            en: ['Flat Design', 'Line Art', 'Monochrome', 'Geometric', 'Negative Space', 'Simple & Cute', 'Minimal Pop Art', 'Scandinavian']
         },
         vibrant: {
-            ar: ['بوب آرت', 'مزاجي', 'تدرج لوني', 'سائل'],
-            en: ['Pop Art', 'Psychedelic', 'Gradient', 'Fluid']
+            ar: ['بوب آرت', 'مزاجي', 'تدرج لوني', 'سائل', 'مضيء', 'ألوان نيون', 'سريالي ملون', 'كاريكاتير'],
+            en: ['Pop Art', 'Psychedelic', 'Gradient', 'Fluid', 'Luminous', 'Neon Colors', 'Colorful Surrealism', 'Caricature']
         },
         watercolor: {
-            ar: ['ألوان باستيل', 'رسم زيتي', 'حبر', 'فحم'],
-            en: ['Pastel', 'Oil Painting', 'Ink Wash', 'Charcoal']
+            ar: ['ألوان باستيل', 'رسم زيتي', 'حبر', 'فحم', 'ألوان مائية ناعمة', 'رسم قلم رصاص', 'ألوان جواش', 'لطخات ألوان'],
+            en: ['Pastel', 'Oil Painting', 'Ink Wash', 'Charcoal', 'Soft Watercolor', 'Pencil Sketch', 'Gouache', 'Color Splashes']
         },
         '3d-render': {
-            ar: ['صلصال', 'واقعي', 'رسوم منخفضة', 'فيزيائي'],
-            en: ['Claymation', 'Photorealistic', 'Low Poly', 'Isometric']
+            ar: ['صلصال', 'واقعي', 'رسوم منخفضة', 'فيزيائي', 'تصيير أوكتان', 'ألياف ناعمة', 'تكوين فوكسل', 'إضاءة استوديو'],
+            en: ['Claymation', 'Photorealistic', 'Low Poly', 'Isometric', 'Octane Render', 'Soft Fluff', 'Voxel Art', 'Studio Lighting']
+        },
+        cinematic: {
+            ar: ['إضاءة درامية', 'تصوير فيلم', 'عدسة ماكرو', 'أبيض وأسود سينمائي', 'خيال علمي', 'فانتازيا', 'مشهد ملحمي', 'إضاءة خلفية'],
+            en: ['Dramatic Lighting', 'Film Photography', 'Macro Lens', 'Cinematic B&W', 'Sci-Fi', 'Fantasy', 'Epic Scene', 'Backlighting']
+        },
+        illustration: {
+            ar: ['رسم رقمي', 'أنمي', 'كتب أطفال', 'كوميكس', 'رسم قصصي', 'شخصيات كرتونية', 'رسم خطي', 'رسم خيالي'],
+            en: ['Digital Art', 'Anime', 'Childrens Book', 'Comics', 'Storybook Illustration', 'Cartoon Characters', 'Line Drawing', 'Fantasy Illustration']
+        },
+        papercraft: {
+            ar: ['أوريغامي', 'قصاصات ورق', 'طبقات ورقية', 'صندوق إضاءة', 'ورق مقوى ثلاثي الأبعاد', 'لف الورق كويلينج', 'نقش ورقي', 'ظل ورقي'],
+            en: ['Origami', 'Paper Cutout', 'Layered Paper', 'Lightbox Art', '3D Cardboard', 'Quilling Art', 'Paper Embossing', 'Paper Shadow']
         }
     };
 

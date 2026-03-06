@@ -447,14 +447,55 @@ function bindEvents() {
     document.getElementById('color-plus').onclick = () => updateSlider(cSlider, 1);
 
 
-    // Art Style Chips (HTML uses data-value)
-    document.querySelectorAll('.chip[data-value]').forEach(c => {
+    // Sub-style configurations
+    const subStylesConfig = {
+        modern: ['Futuristic', 'Neon', 'Cyberpunk', 'Neon Lights', 'Glassmorphism'],
+        traditional: ['Vintage', 'Classic Art', 'Calligraphy', 'Victorian'],
+        minimalist: ['Flat Design', 'Line Art', 'Monochrome', 'Geometric'],
+        vibrant: ['Pop Art', 'Psychedelic', 'Gradient', 'Fluid'],
+        watercolor: ['Pastel', 'Oil Painting', 'Ink Wash', 'Charcoal'],
+        '3d-render': ['Claymation', 'Photorealistic', 'Low Poly', 'Isometric']
+    };
+
+    // Art Style Cards (Image Selector)
+    document.querySelectorAll('.style-card[data-value]').forEach(c => {
         c.onclick = () => {
-            document.querySelectorAll('.chip[data-value]').forEach(x => x.classList.remove('active', 'selected'));
+            document.querySelectorAll('.style-card[data-value]').forEach(x => x.classList.remove('active', 'selected'));
             c.classList.add('active', 'selected');
             state.style = c.dataset.value;
+            state.subStyle = null; // reset
+
+            // Populate Sub-Styles Panel
+            const subPanel = document.getElementById('sub-styles-panel');
+            const subContainer = document.getElementById('sub-style-chips');
+            subContainer.innerHTML = '';
+
+            const options = subStylesConfig[state.style];
+            if (options && options.length > 0) {
+                subPanel.classList.remove('hidden');
+                options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = 'chip';
+                    btn.type = 'button';
+                    btn.innerHTML = `<span class="chip-icon">✨</span><span>${opt}</span>`;
+                    btn.onclick = () => {
+                        document.querySelectorAll('#sub-style-chips .chip').forEach(x => x.classList.remove('active', 'selected'));
+                        btn.classList.add('active', 'selected');
+                        state.subStyle = opt;
+                    };
+                    subContainer.appendChild(btn);
+                });
+
+                // Select first option by default
+                subContainer.firstChild.click();
+            } else {
+                subPanel.classList.add('hidden');
+            }
         };
     });
+
+    // Default initialization for style selection
+    document.querySelector('.style-card[data-value="modern"]')?.click();
 
     // Color Palette Chips (HTML uses class palette-chip + data-palette)
     document.querySelectorAll('.palette-chip[data-palette]').forEach(c => {
@@ -677,7 +718,7 @@ async function generate() {
 
     const prompt = `Create a stunning, ultra-premium vertical greeting card.
 Description: ${occDesc}.
-Artistic Style: ${state.style}.
+Artistic Style: ${state.style}${state.subStyle ? ` (${state.subStyle})` : ''}.
 Design Quality: Detail Level ${state.details}/10, Color Intensity ${state.colorIntensity}/10, Color Palette: ${state.palette}.
 Additional User Directives: ${state.instructions || 'None'}.
 

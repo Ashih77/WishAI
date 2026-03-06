@@ -150,26 +150,66 @@
                     <!-- Advanced Controls Panel -->
                     <div class="advanced-panel" id="advanced-panel">
 
-                        <!-- Art Style Chips -->
+                        <!-- Art Style Visual Selector -->
                         <div class="field">
                             <label data-i18n="style">الأسلوب الفني:</label>
-                            <div class="chip-group" id="style-chips">
-                                <button type="button" class="chip selected" data-value="modern">
-                                    <span class="chip-icon">🎨</span>
-                                    <span data-i18n="style-modern">عصري وحديث</span>
+                            <div class="style-cards-grid" id="style-chips">
+                                <button type="button" class="style-card selected" data-value="modern">
+                                    <div class="style-img-wrapper"><img
+                                            src="https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=400&q=80"
+                                            alt="عصري وحديث"></div>
+                                    <div class="style-info">
+                                        <span class="style-title" data-i18n="style-modern">عصري وحديث</span>
+                                    </div>
                                 </button>
-                                <button type="button" class="chip" data-value="traditional">
-                                    <span class="chip-icon">🏛️</span>
-                                    <span data-i18n="style-traditional">تراثي كلاسيكي</span>
+                                <button type="button" class="style-card" data-value="traditional">
+                                    <div class="style-img-wrapper"><img
+                                            src="https://images.unsplash.com/photo-1574883478954-c9772bf6d1de?w=400&q=80"
+                                            alt="تراثي كلاسيكي"></div>
+                                    <div class="style-info">
+                                        <span class="style-title" data-i18n="style-traditional">تراثي كلاسيكي</span>
+                                    </div>
                                 </button>
-                                <button type="button" class="chip" data-value="minimalist">
-                                    <span class="chip-icon">✨</span>
-                                    <span data-i18n="style-minimalist">بسيط وأنيق</span>
+                                <button type="button" class="style-card" data-value="minimalist">
+                                    <div class="style-img-wrapper"><img
+                                            src="https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?w=400&q=80"
+                                            alt="بسيط وأنيق"></div>
+                                    <div class="style-info">
+                                        <span class="style-title" data-i18n="style-minimalist">بسيط وأنيق</span>
+                                    </div>
                                 </button>
-                                <button type="button" class="chip" data-value="vibrant">
-                                    <span class="chip-icon">🌈</span>
-                                    <span data-i18n="style-vibrant">ملون ومبهج</span>
+                                <button type="button" class="style-card" data-value="vibrant">
+                                    <div class="style-img-wrapper"><img
+                                            src="https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=400&q=80"
+                                            alt="ملون ومبهج"></div>
+                                    <div class="style-info">
+                                        <span class="style-title" data-i18n="style-vibrant">ملون ومبهج</span>
+                                    </div>
                                 </button>
+                                <button type="button" class="style-card" data-value="watercolor">
+                                    <div class="style-img-wrapper"><img
+                                            src="https://images.unsplash.com/photo-1580136608260-4eb11f4b24fe?w=400&q=80"
+                                            alt="ألوان مائية"></div>
+                                    <div class="style-info">
+                                        <span class="style-title" data-i18n="style-watercolor">ألوان مائية</span>
+                                    </div>
+                                </button>
+                                <button type="button" class="style-card" data-value="3d-render">
+                                    <div class="style-img-wrapper"><img
+                                            src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80"
+                                            alt="ثلاثي الأبعاد"></div>
+                                    <div class="style-info">
+                                        <span class="style-title" data-i18n="style-3d">ثلاثي الأبعاد</span>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Sub-styles Options (Appears on selecting an Art Style) -->
+                        <div class="field hidden" id="sub-styles-panel">
+                            <label data-i18n="sub-style">خيارات الأسلوب المتقدمة:</label>
+                            <div class="chip-group" id="sub-style-chips">
+                                <!-- Populated dynamically by JS -->
                             </div>
                         </div>
 

@@ -32,7 +32,8 @@ const translations = {
         'ramadan': 'رمضان', 'eid': 'العيد', 'birthday': 'ميلاد', 'wedding': 'زواج',
         'graduation': 'تخرج', 'success': 'نجاح', 'newborn': 'مولود جديد', 'love': 'حب',
         'friendship': 'صداقة', 'daily': 'تحية يومية', 'newyear': 'سنة جديدة', 'thankyou': 'شكر',
-        'btn-guest': 'المتابعة كزائر'
+        'btn-guest': 'المتابعة كزائر',
+        'sub-style': 'خيارات الأسلوب المتقدمة:'
     },
     en: {
         'welcome-title': 'Create AI Greeting Magic',
@@ -67,7 +68,8 @@ const translations = {
         'ramadan': 'Ramadan', 'eid': 'Eid', 'birthday': 'Birthday', 'wedding': 'Wedding',
         'graduation': 'Graduation', 'success': 'Success', 'newborn': 'Newborn', 'love': 'Love',
         'friendship': 'Friendship', 'daily': 'Daily Greeting', 'newyear': 'New Year', 'thankyou': 'Thank You',
-        'btn-guest': 'Continue as Guest'
+        'btn-guest': 'Continue as Guest',
+        'sub-style': 'Advanced Style Options:'
     }
 };
 
@@ -449,12 +451,30 @@ function bindEvents() {
 
     // Sub-style configurations
     const subStylesConfig = {
-        modern: ['Futuristic', 'Neon', 'Cyberpunk', 'Neon Lights', 'Glassmorphism'],
-        traditional: ['Vintage', 'Classic Art', 'Calligraphy', 'Victorian'],
-        minimalist: ['Flat Design', 'Line Art', 'Monochrome', 'Geometric'],
-        vibrant: ['Pop Art', 'Psychedelic', 'Gradient', 'Fluid'],
-        watercolor: ['Pastel', 'Oil Painting', 'Ink Wash', 'Charcoal'],
-        '3d-render': ['Claymation', 'Photorealistic', 'Low Poly', 'Isometric']
+        modern: {
+            ar: ['مستقبلي', 'نيون', 'سايبر بانك', 'إضاءات نيون', 'زجاجي'],
+            en: ['Futuristic', 'Neon', 'Cyberpunk', 'Neon Lights', 'Glassmorphism']
+        },
+        traditional: {
+            ar: ['عتيق', 'فن كلاسيكي', 'تخطيط', 'فيكتوري'],
+            en: ['Vintage', 'Classic Art', 'Calligraphy', 'Victorian']
+        },
+        minimalist: {
+            ar: ['تصميم مسطح', 'فن خطي', 'أحادية اللون', 'هندسي'],
+            en: ['Flat Design', 'Line Art', 'Monochrome', 'Geometric']
+        },
+        vibrant: {
+            ar: ['بوب آرت', 'مزاجي', 'تدرج لوني', 'سائل'],
+            en: ['Pop Art', 'Psychedelic', 'Gradient', 'Fluid']
+        },
+        watercolor: {
+            ar: ['ألوان باستيل', 'رسم زيتي', 'حبر', 'فحم'],
+            en: ['Pastel', 'Oil Painting', 'Ink Wash', 'Charcoal']
+        },
+        '3d-render': {
+            ar: ['صلصال', 'واقعي', 'رسوم منخفضة', 'فيزيائي'],
+            en: ['Claymation', 'Photorealistic', 'Low Poly', 'Isometric']
+        }
     };
 
     // Art Style Cards (Image Selector)
@@ -470,10 +490,10 @@ function bindEvents() {
             const subContainer = document.getElementById('sub-style-chips');
             subContainer.innerHTML = '';
 
-            const options = subStylesConfig[state.style];
+            const options = subStylesConfig[state.style]?.[state.lang] || [];
             if (options && options.length > 0) {
                 subPanel.classList.remove('hidden');
-                options.forEach(opt => {
+                options.forEach((opt, index) => {
                     const btn = document.createElement('button');
                     btn.className = 'chip';
                     btn.type = 'button';
@@ -481,7 +501,8 @@ function bindEvents() {
                     btn.onclick = () => {
                         document.querySelectorAll('#sub-style-chips .chip').forEach(x => x.classList.remove('active', 'selected'));
                         btn.classList.add('active', 'selected');
-                        state.subStyle = opt;
+                        // Use English equivalent for state.subStyle value to keep prompt consistent for AI
+                        state.subStyle = subStylesConfig[state.style].en[index];
                     };
                     subContainer.appendChild(btn);
                 });

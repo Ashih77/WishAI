@@ -334,6 +334,19 @@
                             placeholder="مثال: أضف زهور الياسمين، اجعل اللون الفيروزي هو الغالب..."></textarea>
                     </div>
 
+                    <!-- Live Preview -->
+                    <div class="field live-preview-field">
+                        <label data-i18n="live-preview">معاينة مباشرة:</label>
+                        <div class="mini-card-preview" id="mini-card-preview">
+                            <div class="mini-card-bg"></div>
+                            <div class="mini-card-content">
+                                <div class="mini-text-greeting" id="preview-greeting-text"></div>
+                                <div class="mini-text-name" id="preview-name-text"></div>
+                            </div>
+                            <div class="preview-badge">Preview</div>
+                        </div>
+                    </div>
+
                     <button id="generate-btn" class="btn-primary btn-generate" data-i18n="generate">توليد
                         البطاقة</button>
                 </div>
@@ -361,7 +374,8 @@
                         </div>
                     </div>
                     <div class="btn-row">
-                        <button id="download-btn" class="btn-outline" data-i18n="download">تحميل البطاقة</button>
+                        <button id="download-btn" class="btn-outline" data-i18n="download">تحميل</button>
+                        <button id="share-btn" class="btn-outline" data-i18n="share">مشاركة 🔗</button>
                         <button id="restart-btn" class="btn-primary" data-i18n="create-new">تصميم جديد</button>
                     </div>
                 </div>

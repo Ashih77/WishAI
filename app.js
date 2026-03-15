@@ -42,7 +42,9 @@ const translations = {
         'style-3d': 'ثلاثي الأبعاد',
         'style-cinematic': 'تصوير سينمائي',
         'style-illustration': 'رسم توضيحي',
-        'style-papercraft': 'فن ورقي'
+        'style-papercraft': 'فن ورقي',
+        'live-preview': 'معاينة مباشرة (تصميم تخيلي)',
+        'share': 'مشاركة 🔗'
     },
     en: {
         'welcome-title': 'Create AI Greeting Magic',
@@ -87,7 +89,9 @@ const translations = {
         'style-3d': '3D Render',
         'style-cinematic': 'Cinematic',
         'style-illustration': 'Illustration',
-        'style-papercraft': 'Papercraft'
+        'style-papercraft': 'Papercraft',
+        'live-preview': 'Live Preview (Estimated)',
+        'share': 'Share 🔗'
     }
 };
 
@@ -184,12 +188,11 @@ let state = {
     palette: 'auto'
 };
 
-const API_KEY = 'AIzaSyCjHv0CLNcwJG7WEUoorduNGGFUiDNHWRc';
-// Confirmed available models from API (tested 2026-03-05):
-const AI_MODEL = 'gemini-2.5-flash'; // For text: suggestions & prompt refinement (v1beta ✅)
-const NB2_MODEL = 'gemini-3.1-flash-image-preview'; // Nano Banana 2 — native image generation (v1beta ✅)
-const NB2_BACKUP = 'nano-banana-pro-preview';        // Nano Banana Pro — backup (v1beta ✅)
-const API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+// 🔒 Security Update: API Key moved to Netlify environment variables
+const API_BASE = '/.netlify/functions/gemini';
+const AI_MODEL = 'gemini-1.5-flash'; 
+const NB2_MODEL = 'gemini-3.1-flash-image-preview'; 
+const NB2_BACKUP = 'nano-banana-pro-preview';
 
 
 function init() {
@@ -428,6 +431,11 @@ function bindEvents() {
 
     document.getElementById('greeting-text').oninput = (e) => {
         state.greeting = e.target.value;
+        updatePreview();
+    };
+
+    document.getElementById('user-name').oninput = (e) => {
+        updatePreview();
     };
 
     document.getElementById('advanced-toggle').onclick = () => {
@@ -649,6 +657,28 @@ function bindEvents() {
 
     document.getElementById('download-btn').onclick = handleDownload;
     document.getElementById('modal-download-btn').onclick = handleDownload;
+
+    document.getElementById('share-btn').onclick = async () => {
+        const src = document.getElementById('generated-image').src;
+        if (!src) return;
+
+        if (navigator.share) {
+            try {
+                // If it's a data URL, we might need to convert to file for some platforms,
+                // but usually Sharing text + URL is better.
+                // For this demo, we'll share the text and prompt.
+                await navigator.share({
+                    title: 'WishAI Greeting Card',
+                    text: `${state.greeting} — ${state.lang === 'ar' ? 'صممت بواسطة WishAI' : 'Designed by WishAI'}`,
+                    url: window.location.href
+                });
+            } catch (err) {
+                console.log('Share failed:', err);
+            }
+        } else {
+            alert(state.lang === 'ar' ? 'المشاركة غير مدعومة في هذا المتصفح' : 'Sharing not supported in this browser');
+        }
+    };
 }
 
 function renderOccasions() {
@@ -665,6 +695,7 @@ function renderOccasions() {
             document.getElementById('greeting-text').value = defaultGreeting;
             document.getElementById('greeting-field').classList.remove('hidden');
             document.getElementById('suggestions-container').classList.add('hidden');
+            updatePreview();
             renderOccasions();
         };
         grid.appendChild(el);
@@ -677,6 +708,36 @@ function updateText() {
         if (translations[state.lang][key]) el.textContent = translations[state.lang][key];
     });
     document.getElementById('user-name').placeholder = state.lang === 'ar' ? 'ما هو اسمك؟' : 'What is your name?';
+    updatePreview();
+}
+
+function updatePreview() {
+    const name = document.getElementById('user-name').value.trim();
+    const greeting = document.getElementById('greeting-text').value.trim();
+    
+    document.getElementById('preview-greeting-text').textContent = greeting || (state.lang === 'ar' ? 'نص التهنئة' : 'Greeting Text');
+    document.getElementById('preview-name-text').textContent = name ? (state.lang === 'ar' ? `بواسطة: ${name}` : `By: ${name}`) : '';
+    
+    // Update mini-card background based on occasion
+    const previewCard = document.getElementById('mini-card-preview');
+    if (state.occasion) {
+        const colors = {
+            ramadan: 'linear-gradient(135deg, #1e3a8a, #1e1b4b)',
+            eid: 'linear-gradient(135deg, #065f46, #064e3b)',
+            birthday: 'linear-gradient(135deg, #9d174d, #831843)',
+            wedding: 'linear-gradient(135deg, #f59e0b, #d97706)',
+            graduation: 'linear-gradient(135deg, #1f2937, #111827)',
+            success: 'linear-gradient(135deg, #ca8a04, #a16207)',
+            newborn: 'linear-gradient(135deg, #0ea5e9, #0284c7)',
+            love: 'linear-gradient(135deg, #dc2626, #991b1b)',
+            friendship: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+            daily: 'linear-gradient(135deg, #22c55e, #15803d)',
+            newyear: 'linear-gradient(135deg, #4b5563, #1f2937)',
+            thankyou: 'linear-gradient(135deg, #6366f1, #4338ca)'
+        };
+        const bg = document.querySelector('.mini-card-bg');
+        if (bg) bg.style.background = colors[state.occasion] || colors.daily;
+    }
 }
 
 function go(n) {
@@ -706,11 +767,14 @@ async function generateSuggestions() {
         : `Suggest 5 short and unique greeting texts for ${occName}. The texts should be in English, short (max 8 words), general (do not include any person names), and suitable for a greeting card. Give me only the texts, each on a separate numbered line (1. 2. 3. etc), without any extra explanation.`;
 
     try {
-        const res = await fetch(`${API_BASE}/${AI_MODEL}:generateContent?key=${API_KEY}`, {
-
+        const res = await fetch(API_BASE, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            body: JSON.stringify({ 
+                action: 'suggestions',
+                model: AI_MODEL,
+                contents: [{ parts: [{ text: prompt }] }] 
+            })
         });
         if (!res.ok) {
             const errText = await res.text();
@@ -737,7 +801,10 @@ async function generateSuggestions() {
     } catch (e) {
         console.error(e);
         loadingEl.classList.add('hidden');
-        list.innerHTML = `<div style="color:var(--dim);text-align:center;padding:10px;">${state.lang === 'ar' ? 'حدث خطأ، حاول مرة أخرى' : 'Error, try again'}</div>`;
+        const msg = (e.message.includes('400') || e.message.includes('401')) 
+            ? (state.lang === 'ar' ? 'نم إدخال مفتاح API غير صالح أو منتهي في Netlify' : 'Invalid or expired API key in Netlify')
+            : (state.lang === 'ar' ? 'حدث خطأ، حاول مرة أخرى' : 'Error, try again');
+        list.innerHTML = `<div style="color:var(--important);text-align:center;padding:10px;font-size:0.9rem;">${msg}</div>`;
     }
     btn.classList.remove('loading');
 }
@@ -815,12 +882,12 @@ CRITICAL TYPOGRAPHY INSTRUCTIONS:
         let nbResponse = null;
         for (const model of imageModels) {
             try {
-                const res = await fetch(
-                    `${API_BASE}/${model}:generateContent?key=${API_KEY}`,
-                    {
+                const res = await fetch(API_BASE, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
+                            action: 'generate',
+                            model: model,
                             contents: [{ parts: [{ text: prompt }] }],
                             generationConfig: {
                                 responseModalities: ['IMAGE', 'TEXT']
@@ -943,6 +1010,7 @@ function downloadCard(src, name) {
 }
 
 function deleteCard(id) {
+    if (!confirm(state.lang === 'ar' ? 'هل أنت متأكد من حذف هذه البطاقة؟' : 'Are you sure you want to delete this card?')) return;
     let cards = JSON.parse(localStorage.getItem('wishai_cards') || '[]');
     cards = cards.filter(c => c.id !== id);
     localStorage.setItem('wishai_cards', JSON.stringify(cards));

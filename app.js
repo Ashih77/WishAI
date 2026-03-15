@@ -191,9 +191,10 @@ let state = {
 // 🔒 Security Update: API Key moved to Netlify environment variables
 const API_BASE = '/.netlify/functions/gemini';
 const AI_MODEL = 'gemini-1.5-flash'; 
-const NB2_MODEL = 'gemini-1.5-flash'; // 💡 Using Flash for speed, proxy will decide
+const NB2_MODEL = 'gemini-1.5-flash'; // Confirmed stable for text+logic
+const NB2_IMAGE_MODEL = 'gemini-2.0-flash'; // High-end image model for v1beta
 const NB2_BACKUP = 'gemini-1.5-pro';
-const REQUEST_TIMEOUT = 12000; // 12s timeout for Gemini
+const REQUEST_TIMEOUT = 25000; // Increased to 25s for image heavy tasks
 
 
 function init() {
@@ -817,7 +818,7 @@ async function generateSuggestions() {
 }
 
 async function generate() {
-    console.log("🚀 WishAI Mastery Engine: Nano Banana 2 — Active");
+    console.log("🚀 WishAI Radical Engine — Status: IGNITION");
 
     const img = document.getElementById('generated-image');
     const loading = document.getElementById('loading-area');
@@ -827,25 +828,21 @@ async function generate() {
 
     // 1. Prepare UI
     img.style.opacity = '0.3';
-    greetingOverlay.textContent = '';
-    nameOverlay.textContent = '';
+    loading.classList.remove('hidden');
+    result.classList.add('hidden');
 
     // 2. Build Sophisticated Prompt
     const occ = occasions.find(o => o.id === state.occasion);
     const occDesc = state.lang === 'ar' ? occ.descAr : occ.descEn;
     const langLabel = state.lang === 'ar' ? 'Arabic' : 'English';
 
-    const typoStyle = state.lang === 'ar'
-        ? 'Majestic golden 3D Arabic calligraphy'
-        : 'Elegant premium 3D golden serif typography';
-
-    const prompt = `Create a stunning, ultra-premium vertical greeting card.
+    const prompt = `Create a stunning, high-resolution vertical greeting card.
 Occasion: ${occDesc}.
-Style: ${state.style}${state.subStyle ? ` (${state.subStyle})` : ''}.
-Quality: Detail ${state.details}/10, Intensity ${state.colorIntensity}/10.
-User Input: ${state.instructions || 'None'}.
-CRITICAL: Render text "${state.greeting}" prominently. Personal name "${state.name}" below it. 
-Perfectly connected ${langLabel} script.`;
+Style: ${state.style} (${state.subStyle || 'Modern'}).
+Quality: Cinematic lighting, 8k, professional.
+Instructions: ${state.instructions || 'None'}.
+TEXT TO RENDER: "${state.greeting}" (Main greeting) and "${state.name}" (Sender name).
+Ensure ${langLabel} text is clear and artistic. Connections must be correct.`;
 
     function showImage(base64, mimeType) {
         const src = `data:${mimeType};base64,${base64}`;
@@ -854,6 +851,7 @@ Perfectly connected ${langLabel} script.`;
         loading.classList.add('hidden');
         result.classList.remove('hidden');
         saveCard(src, state.occasion, state.name);
+        console.log("✅ Card Generated Successfully via Primary Engine.");
     }
 
     function showImageUrl(url) {
@@ -864,26 +862,25 @@ Perfectly connected ${langLabel} script.`;
             loading.classList.add('hidden');
             result.classList.remove('hidden');
             saveCard(url, state.occasion, state.name);
+            console.log("✅ Card Generated Successfully via Fallback Engine.");
         };
-        loader.onerror = () => fallback();
+        loader.onerror = () => {
+            console.error("Fallback URL failed to load.");
+            fallback();
+        };
         loader.src = url;
     }
 
-    function executeFallback() {
-        console.log("🎨 Backup Engine (Flux): Rendering Card...");
-        const seed = Math.floor(Math.random() * 1000000);
-        const fluxUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=800&height=1200&model=flux&seed=${seed}&nologo=true`;
-        showImageUrl(fluxUrl);
-    }
-
     try {
-        const imageModels = [NB2_MODEL, 'gemini-3.1-flash-image-preview', 'gemini-1.5-flash'];
-        let nbResponse = null;
+        const models = [NB2_IMAGE_MODEL, 'gemini-1.5-pro', 'gemini-1.5-flash'];
+        let success = false;
 
-        for (const model of imageModels) {
+        for (const model of models) {
+            console.log(`Attempting generation with: ${model}`);
             try {
                 const controller = new AbortController();
-                const tId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+                const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
                 const res = await fetch(API_BASE, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -895,25 +892,34 @@ Perfectly connected ${langLabel} script.`;
                         generationConfig: { responseModalities: ['IMAGE'] }
                     })
                 });
-                clearTimeout(tId);
-                if (res.ok) {
-                    nbResponse = res;
-                    break;
-                }
-            } catch (e) { console.warn(`Model ${model} try failed`); }
-        }
+                clearTimeout(timeout);
 
-        if (nbResponse) {
-            const data = await nbResponse.json();
-            const imgPart = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
-            if (imgPart) {
-                showImage(imgPart.inlineData.data, imgPart.inlineData.mimeType || 'image/png');
-                return;
+                if (res.ok) {
+                    const data = await res.json();
+                    const imgPart = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+                    if (imgPart) {
+                        showImage(imgPart.inlineData.data, imgPart.inlineData.mimeType || 'image/png');
+                        success = true;
+                        break;
+                    }
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    console.warn(`Model ${model} responded with error:`, err);
+                }
+            } catch (e) {
+                console.warn(`Model ${model} failed:`, e.message);
             }
         }
-        executeFallback();
+
+        if (!success) {
+            console.warn("All Gemini models failed. Using Public Visual Fallback...");
+            const seed = Math.floor(Math.random() * 999999);
+            const fluxUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=800&height=1200&model=flux&seed=${seed}&nologo=true`;
+            showImageUrl(fluxUrl);
+        }
+
     } catch (e) {
-        console.error("Gen logic failure:", e);
+        console.error("Radical Gen failure:", e);
         fallback();
     }
 }

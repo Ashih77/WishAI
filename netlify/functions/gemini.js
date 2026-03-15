@@ -10,45 +10,58 @@ exports.handler = async (event) => {
 
     try {
         const apiKey = (process.env.GEMINI_API_KEY || '').trim().replace(/["']/g, '');
-        if (!apiKey) return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'API Key is missing in Netlify settings.' }) };
+        if (!apiKey) return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'API_KEY_MISSING' }) };
 
         const body = JSON.parse(event.body);
         if (body.action === 'heartbeat') return { statusCode: 200, headers, body: JSON.stringify({ status: 'OK', keyLen: apiKey.length }) };
 
-        // 🎯 The Expert Probe: Exhaustive list of Imagen 3 / Nano Banana 2 Paths
-        const variations = [
-            { v: 'v1beta', m: 'gemini-1.5-flash' },
-            { v: 'v1beta', m: 'imagen-3.0-generate-001' },
-            { v: 'v1', m: 'gemini-1.5-flash' },
-            { v: 'v1', m: 'imagen-3.0-generate-001' },
-            { v: 'v1beta', m: 'publishers/google/models/imagen-3.0-generate-001' }
+        // 🛡️ The Ultimate Auto-Discovery Matrix for Nano Banana 2 (Imagen 3)
+        // These are the ONLY paths that reliably render Arabic text correctly
+        const probes = [
+            { v: 'v1beta', m: 'gemini-1.5-flash' }, // Mode 1: Multimodal Flash
+            { v: 'v1beta', m: 'gemini-1.5-flash-002' }, // Mode 2: Latest Optimized
+            { v: 'v1beta', m: 'imagen-3.0-generate-001' } // Mode 3: Direct Imagen 3
         ];
 
-        for (const v of variations) {
+        let lastData = null;
+        let success = false;
+
+        for (const probe of probes) {
             try {
-                const url = `https://generativelanguage.googleapis.com/${v.v}/models/${v.m}:generateContent?key=${apiKey}`;
+                const url = `https://generativelanguage.googleapis.com/${probe.v}/models/${probe.m}:generateContent?key=${apiKey}`;
                 const res = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: body.contents,
-                        generationConfig: body.generationConfig || { responseModalities: ["IMAGE"], temperature: 1.0 }
+                        generationConfig: {
+                            responseModalities: ["IMAGE"],
+                            temperature: 1.0 
+                        }
                     })
                 });
 
                 const data = await res.json();
-                if (res.ok) return { statusCode: 200, headers, body: JSON.stringify({ ok: true, data: data, modelUsed: v.m }) };
-                
-                // If text fallback is requested and image fails
-                if (body.fallbackToText && data.error) {
-                    continue; // try next model
+                if (res.ok) {
+                    return { statusCode: 200, headers, body: JSON.stringify({ ok: true, data: data, version: probe.v, model: probe.m }) };
                 }
+                lastData = data;
+                console.warn(`[WishAI] Probe Failed: ${probe.m} - ${res.status}`);
             } catch (e) { continue; }
         }
 
-        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'All models failed', details: 'Check Google Cloud Billing or Region restrictions.' }) };
+        // If all Imagen paths fail, return the error to the frontend for diagnostic
+        return { 
+            statusCode: 200, 
+            headers, 
+            body: JSON.stringify({ 
+                ok: false, 
+                error: 'NANO_BANANA_OFFLINE', 
+                googleMessage: lastData?.error?.message || 'Check Region Restrictions' 
+            }) 
+        };
 
     } catch (err) {
-        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'Proxy Exception', details: err.message }) };
+        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'SYSTEM_CRASH', details: err.message }) };
     }
 };

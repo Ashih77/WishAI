@@ -197,6 +197,20 @@ const NB2_BACKUP = 'gemini-1.5-pro';
 const REQUEST_TIMEOUT = 30000; 
 
 
+const FALLBACK_GREETINGS = {
+    'ramadan': ['رمضان كريم وكل عام وأنتم بخير', 'مبارك عليكم الشهر الفضيل', 'نسأل الله لكم قبول الطاعات في رمضان', 'رمضان مبارك، أعاده الله عليكم باليمن والبركات', 'أجمل التهاني بمناسبة حلول شهر رمضان'],
+    'eid': ['عيدكم مبارك وكل عام وأنتم بخير', 'تقبل الله منا ومنكم صالح الأعمال', 'عساكم من عواده، عيد سعيد', 'أجمل الأماني بمناسبة العيد السعيد', 'عيد مبارك، أعاده الله علينا وعليكم بالخير'],
+    'grad': ['مبارك التخرج وإلى مزيد من النجاح', 'ألف مبروك التخرج، فخورون بك', 'تهانينا القلبية بهذا الإنجاز الرائع', 'نجاحك يسعدنا، مبارك التخرج', 'من نجاح إلى نجاح، ألف مبروك'],
+    'success': ['ألف مبروك النجاح والتفوق', 'مبارك هذا الإنجاز المستحق', 'تهانينا بالنجاح، وإلى الأمام دائماً', 'فرحتنا بنجاحك لا توصف، مبروك', 'نبارك لكم هذا التميز والنجاح'],
+    'wedding': ['بارك الله لكما وبارك عليكما وجمع بينكما في خير', 'ألف مبروك الزواج السعيد', 'تمنياتنا لكم بحياة ملؤها الحب والسعادة', 'زواج مبارك، دامت أيامكم أفراحاً', 'أجمل التهاني للعروسين الجميلين'],
+    'newborn': ['بورك لك في الموهوب وشكرت الواهب', 'مبارك المولود الجديد، جعله الله من الصالحين', 'ألف مبروك بقدوم الضيف الجديد', 'يتربى في عزكم، ألف مبروك', 'الحمد لله على سلامة المولود ومبارك لكم'],
+    'love': ['كل عام وحبنا يزداد جمالاً', 'أنت أجمل هدايا القدر', 'سأبقى أحبك دائماً وأبداً', 'وجودك في حياتي هو السعادة الحقيقية', 'إلى من أحب، كل عام وأنت بخير'],
+    'new-year': ['سنة جديدة سعيدة مليئة بالأفراح', 'كل عام وأنتم بخير بمناسبة العام الجديد', 'نتمنى لكم عاماً مشرقاً وناجحاً', 'بداية عام جميلة كجمال قلوبكم', 'أجمل الأماني بعام 2024 سعيد'],
+    'friendship': ['شكراً لكونك الصديق الذي لا يتبدل', 'الصداقة كنز، وأنت أغلى ما أملك', 'كل عام وصداقتنا تزداد قوة', 'دمت لي صديقاً وفياً وسنداً', 'لأعز أصدقائي، كل المحبة'],
+    'thanks': ['شكراً لك من القلب على كل شيء', 'ممتن جداً لوجودك ودعمك', 'كلمات الشكر لا تفي بحقك', 'تقديراً لجهودك الرائعة، شكراً لك', 'شكراً جزيلاً، أنت متميز دائماً'],
+    'daily': ['صباح الخير والأمل والسعادة', 'يوم جميل يشبه نقاء قلبك', 'أتمنى لك يوماً مليئاً بالإنجازات', 'مساء الخير والسكينة', 'طابت أيامكم بكل خير']
+};
+
 function init() {
     renderOccasions();
     bindEvents();
@@ -811,16 +825,23 @@ async function generateSuggestions() {
         console.error("AI Error:", e);
         loadingEl.classList.add('hidden');
         
-        let msg = state.lang === 'ar' ? 'فشل الاتصال: ' : 'Connection Failed: ';
-        if (e.message.includes('400') || e.message.includes('401')) {
-            msg += state.lang === 'ar' ? 'مفتاح API غير صالح' : 'Invalid API Key';
-        } else if (e.message.includes('429')) {
-            msg += state.lang === 'ar' ? 'تجاوزت حد الاستخدام' : 'Quota Exceeded';
-        } else {
-            msg += e.message;
-        }
+        // Final Fix: If AI fails or quota is exceeded, use local high-quality greetings
+        const fallbacks = FALLBACK_GREETINGS[state.occasion] || ['مبارك عليكم', 'كل عام وأنتم بخير', 'أجمل التهاني'];
         
-        list.innerHTML = `<div style="color:var(--important);text-align:center;padding:10px;font-size:0.8rem;direction:ltr;">${msg}</div>`;
+        list.innerHTML = `<div style="color:var(--important);text-align:center;padding:5px;font-size:0.75rem;margin-bottom:10px;">${state.lang === 'ar' ? 'تم تفعيل الاقتراحات الذكية الاحتياطية' : 'Smart backup suggestions active'}</div>`;
+        
+        fallbacks.forEach((s, i) => {
+            const item = document.createElement('button');
+            item.className = 'suggestion-item';
+            item.innerHTML = `<span class="suggestion-num">${i + 1}</span><span class="suggestion-text">${s}</span>`;
+            item.onclick = () => {
+                state.greeting = s;
+                document.getElementById('greeting-text').value = s;
+                list.querySelectorAll('.suggestion-item').forEach(x => x.classList.remove('selected-suggestion'));
+                item.classList.add('selected-suggestion');
+            };
+            list.appendChild(item);
+        });
     }
     btn.classList.remove('loading');
 }

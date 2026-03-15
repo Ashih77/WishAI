@@ -47,8 +47,8 @@ exports.handler = async (event) => {
                         const errData = await res.json().catch(() => ({}));
                         errorResult = errData;
 
-                        // If quota or auth, stop retrying
-                        if (res.status === 429 || res.status === 401) {
+                        // If auth error, stop. If quota (429), try NEXT model/version
+                        if (res.status === 401 || res.status === 403) {
                             return { statusCode: res.status, headers, body: JSON.stringify(errData) };
                         }
                     }

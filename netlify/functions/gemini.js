@@ -13,54 +13,63 @@ exports.handler = async (event) => {
         if (!apiKey) return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'API_KEY_MISSING' }) };
 
         const body = JSON.parse(event.body);
-        if (body.action === 'heartbeat') return { statusCode: 200, headers, body: JSON.stringify({ status: 'OK', keyLen: apiKey.length }) };
+        
+        // 🔹 Heartbeat Diagnostic
+        if (body.action === 'heartbeat') {
+            return { statusCode: 200, headers, body: JSON.stringify({ status: 'OK', keyLen: apiKey.length }) };
+        }
 
-        // 🎯 THE ELITE MATRIX: Try all possible Imagen 3 / Nano Banana 2 endpoints
-        const variants = [
-            { ver: 'v1beta', mod: 'gemini-1.5-flash' },
-            { ver: 'v1', mod: 'gemini-1.5-flash' },
-            { ver: 'v1beta', mod: 'imagen-3.0-generate-001' }
+        // 🎯 THE FINAL PROBE: Targeted Nano Banana 2 (Imagen 3) Integration
+        // We try the two most likely successful paths for Imagen 3
+        const models = [
+            { v: 'v1beta', m: 'imagen-3.0-generate-001' },
+            { v: 'v1beta', m: 'gemini-1.5-flash' }
         ];
 
-        let failureLogs = [];
+        let lastError = null;
 
-        for (const variant of variants) {
+        for (const model of models) {
             try {
-                const url = `https://generativelanguage.googleapis.com/${variant.ver}/models/${variant.mod}:generateContent?key=${apiKey}`;
+                const url = `https://generativelanguage.googleapis.com/${model.v}/models/${model.m}:generateContent?key=${apiKey}`;
                 
-                const res = await fetch(url, {
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: body.contents,
                         generationConfig: body.action === 'suggestions' 
-                            ? { temperature: 0.7 } 
+                            ? { temperature: 0.7 }
                             : { responseModalities: ["IMAGE"], temperature: 1.0 }
                     })
                 });
 
-                const data = await res.json();
-                if (res.ok) {
-                    return { statusCode: 200, headers, body: JSON.stringify({ ok: true, data: data, route: `${variant.ver}/${variant.mod}` }) };
+                const data = await response.json();
+                
+                if (response.ok) {
+                    return { 
+                        statusCode: 200, 
+                        headers, 
+                        body: JSON.stringify({ ok: true, data: data, active_model: model.m }) 
+                    };
                 }
-                failureLogs.push(`${variant.ver}/${variant.mod}: ${data.error?.message || 'Unknown'}`);
+                lastError = data.error?.message || 'Unknown Error';
             } catch (e) {
-                failureLogs.push(`${variant.ver}/${variant.mod}: Proxy Error`);
+                lastError = e.message;
             }
         }
 
-        // Return a detailed diagnostic report if all fail
+        // Return a detailed diagnostic instead of a raw 404
         return { 
             statusCode: 200, 
             headers, 
             body: JSON.stringify({ 
                 ok: false, 
-                error: 'ALL_ENDPOINTS_REJECTED', 
-                details: failureLogs.join(' | ') 
+                error: 'NANO_BANANA_DENIED', 
+                message: lastError 
             }) 
         };
 
     } catch (err) {
-        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'SYSTEM_CRASH', details: err.message }) };
+        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'INTERNAL_CRASH', details: err.message }) };
     }
 };

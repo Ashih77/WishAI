@@ -190,11 +190,26 @@ let state = {
 
 // 🔒 Security Update: API Key moved to Netlify environment variables
 const API_BASE = '/.netlify/functions/gemini';
-const AI_MODEL = 'gemini-2.0-flash-exp'; 
-const NB2_MODEL = 'gemini-2.0-flash-exp'; 
-const NB2_IMAGE_MODEL = 'gemini-2.0-flash-exp'; 
+const AI_MODEL = 'gemini-1.5-flash'; 
+const NB2_MODEL = 'gemini-1.5-flash'; 
+const NB2_IMAGE_MODEL = 'gemini-1.5-flash'; 
 const NB2_BACKUP = 'gemini-1.5-pro';
-const REQUEST_TIMEOUT = 30000; 
+const REQUEST_TIMEOUT = 35000; 
+
+// Top 1% Engineering: Persistent Connectivity Monitor
+async function checkConnectivity() {
+    try {
+        const res = await fetch(API_BASE, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'heartbeat' })
+        });
+        const data = await res.json();
+        console.log(`[WishAI] System Heartbeat: ${data.status} (KeyLen: ${data.keyLength || 0})`);
+        return data.status === 'OK';
+    } catch {
+        return false;
+    }
+}
 
 
 const FALLBACK_GREETINGS = {
@@ -791,6 +806,7 @@ async function generateSuggestions() {
             headers: { 'Content-Type': 'application/json' },
             signal: controller.signal,
             body: JSON.stringify({ 
+                action: 'suggestions',
                 contents: [{ parts: [{ text: prompt }] }] 
             })
         });
@@ -798,8 +814,8 @@ async function generateSuggestions() {
 
         if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
-            const errorReason = errData.error?.message || errData.error || 'Unknown API Error';
-            throw new Error(`API ${res.status}: ${errorReason}`);
+            console.error("[WishAI Suggestion Error]", errData);
+            throw new Error(`API_${res.status}`);
         }
         const data = await res.json();
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -908,6 +924,7 @@ Ensure ${langLabel} text is clear and artistic. Connections must be correct.`;
             headers: { 'Content-Type': 'application/json' },
             signal: controller.signal,
             body: JSON.stringify({
+                action: 'generate',
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: { responseModalities: ['IMAGE'] }
             })

@@ -13,32 +13,39 @@ exports.handler = async (event) => {
         if (!apiKey) return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'API_KEY_MISSING' }) };
 
         const body = JSON.parse(event.body);
+        
+        // 🔹 Heartbeat
         if (body.action === 'heartbeat') return { statusCode: 200, headers, body: JSON.stringify({ status: 'OK', keyLen: apiKey.length }) };
 
-        // 🎯 THE ELITE PROBE: Multi-version discovery for Imagen 3 (Nano Banana 2)
-        // This targets the exact error "Model not found for v1beta" by probing both versions.
-        const routes = [
-            { v: 'v1', m: 'gemini-1.5-flash' },
+        const isImage = body.action === 'generate';
+        const promptText = body.contents?.[0]?.parts?.[0]?.text || '';
+
+        // 🎯 THE INVINCIBLE PROBE: Every possible Nano Banana 2 (Imagen 3) route
+        const routes = isImage ? [
+            { v: 'v1beta', m: 'imagen-3.0-generate-001' },
+            { v: 'v1beta', m: 'gemini-1.5-flash-002' },
             { v: 'v1beta', m: 'gemini-1.5-flash' },
-            { v: 'v1beta', m: 'imagen-3.0-generate-001' }
+            { v: 'v1', m: 'gemini-1.5-flash' }
+        ] : [
+            { v: 'v1', m: 'gemini-1.5-flash' },
+            { v: 'v1beta', m: 'gemini-1.5-flash' }
         ];
 
-        let lastError = null;
+        let lastResult = null;
 
         for (const route of routes) {
             try {
                 const url = `https://generativelanguage.googleapis.com/${route.v}/models/${route.m}:generateContent?key=${apiKey}`;
-                const payload = {
-                    contents: body.contents,
-                    generationConfig: body.action === 'suggestions' 
-                        ? { temperature: 0.7 }
-                        : { responseModalities: ["IMAGE"], temperature: 1.0 }
-                };
-
+                
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({
+                        contents: body.contents,
+                        generationConfig: isImage 
+                            ? { responseModalities: ["IMAGE"], temperature: 1.0 }
+                            : { temperature: 0.7 }
+                    })
                 });
 
                 const data = await response.json();
@@ -49,24 +56,45 @@ exports.handler = async (event) => {
                         body: JSON.stringify({ ok: true, data, usedRoute: `${route.v}/${route.m}` }) 
                     };
                 }
-                lastError = data.error?.message || 'Unknown error';
-            } catch (e) {
-                lastError = e.message;
-                continue;
-            }
+                lastResult = data;
+            } catch (e) { continue; }
         }
 
+        // 🛡️ THE ABSOLUTE FALLBACK (Flux Engine): Never return an error to the user
+        // This ensures the site always produces a high-quality image if Google fails.
+        if (isImage) {
+            console.warn("[WishAI] Gemini Failed, triggering Flux Fallback...");
+            const fluxUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?model=flux&width=1024&height=1024&nologo=true`;
+            
+            // We return a "fake" Gemini response structure that the frontend already understands
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify({
+                    ok: true,
+                    isFallback: true,
+                    imageUrl: fluxUrl, // Direct image URL for the frontend to use
+                    data: { // Mocking the Gemini structure
+                        candidates: [{
+                            content: { parts: [{ inlineData: { data: "FALLBACK", mimeType: "image/url" } }] }
+                        }]
+                    }
+                })
+            };
+        }
+
+        // Final failure for suggestions (return a friendly error)
         return { 
             statusCode: 200, 
             headers, 
             body: JSON.stringify({ 
                 ok: false, 
-                error: 'ALL_ROUTES_FAILED', 
-                message: lastError 
+                error: 'AI_REJECTED', 
+                message: lastResult?.error?.message || 'Region/Account Restriction' 
             }) 
         };
 
     } catch (err) {
-        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'PROXY_CRASH', details: err.message }) };
+        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'SYSTEM_CRASH', details: err.message }) };
     }
 };

@@ -937,6 +937,13 @@ Ensure ${langLabel} text is clear and artistic. Connections must be correct.`;
         const result = await res.json();
         
         if (result.ok) {
+            // Handle Direct Fallback URL
+            if (result.imageUrl) {
+                showImageUrl(result.imageUrl);
+                return;
+            }
+            
+            // Handle Standard Gemini Base64
             const imgPart = result.data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
             if (imgPart) {
                 showImage(imgPart.inlineData.data, imgPart.inlineData.mimeType || 'image/png');

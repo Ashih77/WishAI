@@ -15,40 +15,33 @@ exports.handler = async (event) => {
         const body = JSON.parse(event.body);
         if (body.action === 'heartbeat') return { statusCode: 200, headers, body: JSON.stringify({ status: 'OK', keyLen: apiKey.length }) };
 
-        const isImage = body.action === 'generate';
-        
-        /**
-         * 🎯 THE 1% MASTER PROBE
-         * Tries all possible Imagen 3 (Nano Banana 2) variants including the "Publisher" path.
-         */
-        const strategies = isImage ? [
-            { v: 'v1beta', m: 'imagen-3.0-generate-001', p: 'models/' },
-            { v: 'v1beta', m: 'imagen-3.0-generate-001', p: 'publishers/google/models/' },
-            { v: 'v1beta', m: 'gemini-1.5-flash', p: 'models/' },
-            { v: 'v1', m: 'gemini-1.5-flash', p: 'models/' }
-        ] : [
-            { v: 'v1', m: 'gemini-1.5-flash', p: 'models/' },
-            { v: 'v1beta', m: 'gemini-1.5-flash', p: 'models/' }
+        // 🎯 THE ELITE PROBE: Multi-version discovery for Imagen 3 (Nano Banana 2)
+        const candidates = [
+            { v: 'v1beta', m: 'imagen-3.0-generate-001' },
+            { v: 'v1beta', m: 'gemini-1.5-flash' },
+            { v: 'v1', m: 'gemini-1.5-flash' }
         ];
 
-        let lastRes = null;
+        let lastData = null;
 
-        for (const s of strategies) {
+        for (const c of candidates) {
             try {
-                const url = `https://generativelanguage.googleapis.com/${s.v}/${s.p}${s.m}:generateContent?key=${apiKey}`;
+                const url = `https://generativelanguage.googleapis.com/${c.v}/models/${c.m}:generateContent?key=${apiKey}`;
                 
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: body.contents,
-                        generationConfig: isImage ? { responseModalities: ["IMAGE"], temperature: 1.0 } : { temperature: 0.7 }
+                        generationConfig: body.action === 'suggestions' 
+                            ? { temperature: 0.7 }
+                            : { responseModalities: ["IMAGE"], temperature: 1.0 }
                     })
                 });
 
                 const data = await response.json();
-                if (response.ok) return { statusCode: 200, headers, body: JSON.stringify({ ok: true, data, mode: s.m }) };
-                lastRes = data;
+                if (response.ok) return { statusCode: 200, headers, body: JSON.stringify({ ok: true, data, used: `${c.v}/${c.m}` }) };
+                lastData = data;
             } catch (e) { continue; }
         }
 
@@ -57,12 +50,12 @@ exports.handler = async (event) => {
             headers, 
             body: JSON.stringify({ 
                 ok: false, 
-                error: 'NANO_BANANA_UNREACHABLE', 
-                details: lastRes || 'All endpoints failed' 
+                error: 'NANO_BANANA_DENIED', 
+                message: lastData?.error?.message || 'All endpoints failed' 
             }) 
         };
 
     } catch (err) {
-        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'PROXY_CRASH', details: err.message }) };
+        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'SYSTEM_CRASH', details: err.message }) };
     }
 };

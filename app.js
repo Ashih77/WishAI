@@ -189,7 +189,7 @@ let state = {
 };
 
 // 🔒 Security Update: API Key moved to Netlify environment variables
-const API_BASE = '/.netlify/functions/gemini';
+const API_BASE = '/api/gemini';
 const AI_MODEL = 'gemini-1.5-flash'; 
 const NB2_MODEL = 'gemini-1.5-flash'; 
 const NB2_IMAGE_MODEL = 'gemini-1.5-flash'; 
@@ -916,10 +916,10 @@ Ensure ${langLabel} text is clear and artistic. Connections must be correct.`;
     }
 
     try {
-        console.log("🚀 Initializing Nano Banana 2 (Imagen 3)...");
+        console.log("🚀 Calling Nano Banana 2 (Imagen 3)...");
         
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 20000); 
+        const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT); 
 
         const res = await fetch(API_BASE, {
             method: 'POST',
@@ -927,37 +927,30 @@ Ensure ${langLabel} text is clear and artistic. Connections must be correct.`;
             signal: controller.signal,
             body: JSON.stringify({
                 action: 'generate',
-                model: 'gemini-1.5-flash', // Required for Imagen 3 in many regions
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { 
-                    responseModalities: ['IMAGE'],
-                    temperature: 1.0 // Better for creative cards
-                }
+                contents: [{ parts: [{ text: prompt }] }]
             })
         });
         clearTimeout(timeout);
 
-        if (res.ok) {
-            const data = await res.json();
-            const imgPart = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+        const resultData = await res.json();
+        
+        if (resultData.ok) {
+            const imgPart = resultData.data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
             if (imgPart) {
                 showImage(imgPart.inlineData.data, imgPart.inlineData.mimeType || 'image/png');
                 return;
             }
         }
         
-        const errData = await res.json().catch(() => ({}));
-        console.error("[WishAI Gen Error]", errData);
-        throw new Error(errData.error?.message || "AI_REJECTED");
+        // Detailed Error Reporting for the User
+        const googleError = resultData.data?.error?.message || resultData.error || "Unknown Error";
+        throw new Error(googleError);
 
     } catch (e) {
-        console.warn("Nano Banana 2 Unavailable. Check your Key and Google Region.");
+        console.warn("Generation Issue:", e.message);
         const errorMsg = document.createElement('div');
-        errorMsg.className = 'error-overlay';
-        errorMsg.innerHTML = `<div style="color:var(--important);background:rgba(0,0,0,0.8);padding:20px;border-radius:10px;text-align:center;">
-            <b>عذراً، محرك نانو بنانا لم يستجب</b><br>
-            <span style="font-size:0.8rem;">السبب: ${e.message}</span>
-        </div>`;
+        errorMsg.style.cssText = "color:var(--important);background:rgba(0,0,0,0.8);padding:15px;border-radius:10px;text-align:center;margin-top:10px;font-size:0.85rem;";
+        errorMsg.innerHTML = `⚠️ <b>عذراً، لم نتمكن من الوصول لنانو بنانا</b><br>تأكد من صلاحية المفتاح والمنطقة الجغرافية.<br><small>السبب: ${e.message}</small>`;
         loading.appendChild(errorMsg);
     }
 }

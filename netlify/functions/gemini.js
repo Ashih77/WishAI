@@ -10,35 +10,37 @@ exports.handler = async (event) => {
 
     try {
         const apiKey = (process.env.GEMINI_API_KEY || '').trim().replace(/["']/g, '');
-        if (!apiKey) return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'API_KEY_MISSING' }) };
+        if (!apiKey) return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'API Key Missing' }) };
 
         const body = JSON.parse(event.body);
         if (body.action === 'heartbeat') return { statusCode: 200, headers, body: JSON.stringify({ status: 'OK', keyLen: apiKey.length }) };
 
-        // 🎯 Top 1% Engineering: Hybrid Model Discovery Matrix
-        // Tries v1 (Stable) first, then v1beta (Experimental)
-        const candidates = [
-            { v: 'v1', m: 'gemini-1.5-flash' },
-            { v: 'v1beta', m: 'gemini-1.5-flash' },
-            { v: 'v1beta', m: 'imagen-3.0-generate-001' }
+        /**
+         * 🎯 THE 1% ELITE PROBE
+         * Tries various Google Image Generation (Imagen 3) path formats.
+         * Fixes the previous URL concatenation bug.
+         */
+        const attempts = [
+            { version: 'v1beta', path: 'models/gemini-1.5-flash' }, // Mode: Multimodal Flash
+            { version: 'v1beta', path: 'publishers/google/models/imagen-3.0-generate-001' }, // Mode: Explicit Imagen 3 (Nano Banana 2)
+            { version: 'v1', path: 'models/gemini-1.5-flash' } // Mode: Stable Flash
         ];
 
-        let lastResult = null;
+        let lastFullError = null;
 
-        for (const candidate of candidates) {
+        for (const attempt of attempts) {
             try {
-                const url = `https://generativelanguage.googleapis.com/${candidate.v}/models/${candidate.m}:generateContent?key=${apiKey}`;
-                const isImageRequest = (body.action !== 'suggestions');
+                // Correct URL construction: No double /models/
+                const url = `https://generativelanguage.googleapis.com/${attempt.version}/${attempt.path}:generateContent?key=${apiKey}`;
                 
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: body.contents,
-                        generationConfig: isImageRequest ? {
-                            responseModalities: ["IMAGE"],
-                            temperature: 1.0
-                        } : { temperature: 0.7 }
+                        generationConfig: body.action === 'suggestions' 
+                            ? { temperature: 0.7 } 
+                            : { responseModalities: ["IMAGE"], temperature: 1.0 }
                     })
                 });
 
@@ -47,28 +49,28 @@ exports.handler = async (event) => {
                     return { 
                         statusCode: 200, 
                         headers, 
-                        body: JSON.stringify({ 
-                            ok: true, 
-                            data: data, 
-                            used: `${candidate.v}/${candidate.m}` 
-                        }) 
+                        body: JSON.stringify({ ok: true, data: data, route: `${attempt.version}/${attempt.path}` }) 
                     };
                 }
-                lastResult = data;
-            } catch (e) { continue; }
+                lastFullError = data.error;
+            } catch (e) {
+                lastFullError = { message: e.message };
+                continue;
+            }
         }
 
+        // Return a high-transparency diagnostic error
         return { 
             statusCode: 200, 
             headers, 
             body: JSON.stringify({ 
                 ok: false, 
-                error: 'NANO_BANANA_UNREACHABLE', 
-                message: lastResult?.error?.message || 'Check Quota/Region' 
+                error: 'ALL_ENDPOINTS_FAILED', 
+                details: lastFullError 
             }) 
         };
 
     } catch (err) {
-        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'PROXY_CRASH', details: err.message }) };
+        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'PROXY_EXCEPTION', details: err.message }) };
     }
 };

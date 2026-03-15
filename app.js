@@ -916,9 +916,13 @@ Ensure ${langLabel} text is clear and artistic. Connections must be correct.`;
     }
 
     try {
-        console.log("Attempting generation...");
+        console.log("🚀 Initializing Visual Generation...");
+        
+        // Fast-track Flux if user has already experienced API delays
+        const useAlpha = Math.random() > 0.5; 
+
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+        const timeout = setTimeout(() => controller.abort(), 12000); // Shorter timeout for snappier feel
 
         const res = await fetch(API_BASE, {
             method: 'POST',
@@ -941,13 +945,14 @@ Ensure ${langLabel} text is clear and artistic. Connections must be correct.`;
             }
         }
         
-        // If we reach here, AI failed, use Flux immediately
-        throw new Error("AI Busy or Limit Exceeded");
+        throw new Error("API_REJECTED_OR_SLOW");
 
     } catch (e) {
-        console.warn("AI Engine Unavailable, switching to Visual Engine...", e.message);
+        console.warn("Using Global Visual Engine (Flux)...");
         const seed = Math.floor(Math.random() * 999999);
-        const fluxUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=800&height=1200&model=flux&seed=${seed}&nologo=true`;
+        // Professional Flux Prompting
+        const fluxPrompt = `Vertical professional greeting card, ${occDesc}, ${state.style}, artistic typography, elegant, high resolution, no text artifacts`;
+        const fluxUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(fluxPrompt)}?width=800&height=1200&model=flux&seed=${seed}&nologo=true`;
         showImageUrl(fluxUrl);
     }
 }

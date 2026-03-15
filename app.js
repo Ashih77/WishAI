@@ -191,8 +191,9 @@ let state = {
 // 🔒 Security Update: API Key moved to Netlify environment variables
 const API_BASE = '/.netlify/functions/gemini';
 const AI_MODEL = 'gemini-1.5-flash'; 
-const NB2_MODEL = 'gemini-3.1-flash-image-preview'; 
-const NB2_BACKUP = 'nano-banana-pro-preview';
+const NB2_MODEL = 'gemini-1.5-flash'; // 💡 Using Flash for speed, proxy will decide
+const NB2_BACKUP = 'gemini-1.5-pro';
+const REQUEST_TIMEOUT = 12000; // 12s timeout for Gemini
 
 
 function init() {
@@ -569,6 +570,7 @@ function bindEvents() {
         state.name = document.getElementById('user-name').value.trim();
         state.greeting = document.getElementById('greeting-text').value.trim();
         state.instructions = document.getElementById('custom-instructions').value.trim();
+        console.log("State updated with instructions:", state.instructions);
 
         if (!state.name) return alert(state.lang === 'ar' ? 'أدخل اسمك' : 'Enter your name');
         if (!state.occasion) return alert(state.lang === 'ar' ? 'اختر مناسبة' : 'Select an occasion');
@@ -765,20 +767,25 @@ async function generateSuggestions() {
     const prompt = state.lang === 'ar'
         ? `اقترح 5 نصوص تهنئة قصيرة ومميزة بمناسبة ${occName}. النصوص يجب أن تكون بالعربية، قصيرة (لا تزيد عن 8 كلمات)، عامة (لا تستخدم أي أسماء أشخاص)، وقابلة لكتابتها على بطاقة تهنئة. أعطني النصوص فقط، كل نص في سطر منفصل مرقم (1. 2. 3. الخ)، بدون أي شرح إضافي.`
         : `Suggest 5 short and unique greeting texts for ${occName}. The texts should be in English, short (max 8 words), general (do not include any person names), and suitable for a greeting card. Give me only the texts, each on a separate numbered line (1. 2. 3. etc), without any extra explanation.`;
-
     try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
         const res = await fetch(API_BASE, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
             body: JSON.stringify({ 
                 action: 'suggestions',
                 model: AI_MODEL,
                 contents: [{ parts: [{ text: prompt }] }] 
             })
         });
+        clearTimeout(timeoutId);
+
         if (!res.ok) {
-            const errText = await res.text();
-            throw new Error(`API Error ${res.status}: ${errText}`);
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(`API ${res.status}: ${errData.error || 'Unknown Error'}`);
         }
         const data = await res.json();
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -819,8 +826,6 @@ async function generate() {
     const nameOverlay = document.getElementById('overlay-name');
 
     // 1. Prepare UI
-    // Do not clear img.src immediately so we don't get an empty space.
-    // Let the loader overlay it.
     img.style.opacity = '0.3';
     greetingOverlay.textContent = '';
     nameOverlay.textContent = '';
@@ -831,22 +836,17 @@ async function generate() {
     const langLabel = state.lang === 'ar' ? 'Arabic' : 'English';
 
     const typoStyle = state.lang === 'ar'
-        ? 'Majestic golden 3D Arabic calligraphy (Thuluth and Diwani mix)'
-        : 'Elegant premium 3D golden serif typography with artistic flourishes';
+        ? 'Majestic golden 3D Arabic calligraphy'
+        : 'Elegant premium 3D golden serif typography';
 
     const prompt = `Create a stunning, ultra-premium vertical greeting card.
-Description: ${occDesc}.
-Artistic Style: ${state.style}${state.subStyle ? ` (${state.subStyle})` : ''}.
-Design Quality: Detail Level ${state.details}/10, Color Intensity ${state.colorIntensity}/10, Color Palette: ${state.palette}.
-Additional User Directives: ${state.instructions || 'None'}.
+Occasion: ${occDesc}.
+Style: ${state.style}${state.subStyle ? ` (${state.subStyle})` : ''}.
+Quality: Detail ${state.details}/10, Intensity ${state.colorIntensity}/10.
+User Input: ${state.instructions || 'None'}.
+CRITICAL: Render text "${state.greeting}" prominently. Personal name "${state.name}" below it. 
+Perfectly connected ${langLabel} script.`;
 
-CRITICAL TYPOGRAPHY INSTRUCTIONS:
-1. MAIN GREETING: Render the text "${state.greeting}" exactly at the center of the card. Use ${typoStyle}. Must be in ${langLabel} and perfectly legible.
-2. PERSONAL NAME: Render the name "${state.name}" elegantly below the greeting. Keep the original script EXACTLY as-is.
-3. TECHNICAL QUALITY: 8k resolution, cinematic lighting, high-fidelity textures, professional design.
-4. TEXT GUARANTEE: ${langLabel} text must be perfectly written. Arabic must be correctly connected (Right-to-Left).`;
-
-    // Helper: display image from base64
     function showImage(base64, mimeType) {
         const src = `data:${mimeType};base64,${base64}`;
         img.src = src;
@@ -854,10 +854,8 @@ CRITICAL TYPOGRAPHY INSTRUCTIONS:
         loading.classList.add('hidden');
         result.classList.remove('hidden');
         saveCard(src, state.occasion, state.name);
-        console.log("✅ Nano Banana 2: Card Generated Successfully!");
     }
 
-    // Helper: display image from URL
     function showImageUrl(url) {
         const loader = new Image();
         loader.onload = () => {
@@ -866,74 +864,56 @@ CRITICAL TYPOGRAPHY INSTRUCTIONS:
             loading.classList.add('hidden');
             result.classList.remove('hidden');
             saveCard(url, state.occasion, state.name);
-            console.log("✅ Mastered (Fallback Engine): Card Generated.");
         };
         loader.onerror = () => fallback();
         loader.src = url;
     }
 
-    try {
-        // ── PRIMARY: Nano Banana 2 (gemini-3.1-flash-image-preview) ──
-        console.log("🧠 Nano Banana 2: Generating native image...");
-
-        // Try NB2 then NB2-Pro, both confirmed available in this API account
-        const imageModels = [NB2_MODEL, NB2_BACKUP];
-
-        let nbResponse = null;
-        for (const model of imageModels) {
-            try {
-                const res = await fetch(API_BASE, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            action: 'generate',
-                            model: model,
-                            contents: [{ parts: [{ text: prompt }] }],
-                            generationConfig: {
-                                responseModalities: ['IMAGE', 'TEXT']
-                            }
-                        })
-                    }
-                );
-                if (res.ok) {
-                    nbResponse = res;
-                    console.log(`✅ Connected to Nano Banana model: ${model}`);
-                    break;
-                } else {
-                    const errText = await res.text();
-                    console.warn(`⚠️ ${model} failed (${res.status}):`, errText.slice(0, 200));
-                }
-            } catch (err) {
-                console.warn(`⚠️ ${model} network error:`, err.message);
-            }
-        }
-
-        if (nbResponse && nbResponse.ok) {
-            const data = await nbResponse.json();
-            const parts = data.candidates?.[0]?.content?.parts;
-            if (parts) {
-                const imgPart = parts.find(p => p.inlineData);
-                if (imgPart) {
-                    showImage(imgPart.inlineData.data, imgPart.inlineData.mimeType || 'image/png');
-                    return; // ✅ Success
-                }
-            }
-            console.warn("⚠️ Nano Banana 2: No image part in response, switching to backup engine...");
-        } else if (nbResponse) {
-            const errText = await nbResponse.text();
-            console.warn("⚠️ Nano Banana 2 API Error:", nbResponse.status, errText);
-        } else {
-            console.warn("⚠️ Nano Banana 2: All Gemini image models failed to respond.");
-        }
-
-        // ── SECONDARY: Pollinations Flux (reliable fallback visual engine) ──
+    function executeFallback() {
         console.log("🎨 Backup Engine (Flux): Rendering Card...");
         const seed = Math.floor(Math.random() * 1000000);
         const fluxUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=800&height=1200&model=flux&seed=${seed}&nologo=true`;
         showImageUrl(fluxUrl);
+    }
 
+    try {
+        const imageModels = [NB2_MODEL, 'gemini-3.1-flash-image-preview', 'gemini-1.5-flash'];
+        let nbResponse = null;
+
+        for (const model of imageModels) {
+            try {
+                const controller = new AbortController();
+                const tId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+                const res = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    signal: controller.signal,
+                    body: JSON.stringify({
+                        action: 'generate',
+                        model: model,
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { responseModalities: ['IMAGE'] }
+                    })
+                });
+                clearTimeout(tId);
+                if (res.ok) {
+                    nbResponse = res;
+                    break;
+                }
+            } catch (e) { console.warn(`Model ${model} try failed`); }
+        }
+
+        if (nbResponse) {
+            const data = await nbResponse.json();
+            const imgPart = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+            if (imgPart) {
+                showImage(imgPart.inlineData.data, imgPart.inlineData.mimeType || 'image/png');
+                return;
+            }
+        }
+        executeFallback();
     } catch (e) {
-        console.error("Generation Error:", e);
+        console.error("Gen logic failure:", e);
         fallback();
     }
 }

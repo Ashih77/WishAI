@@ -1,7 +1,7 @@
-const API_BASE = 'https://generativelanguage.googleapis.com/v1/models';
+const API_V1BETA = 'https://generativelanguage.googleapis.com/v1beta/models';
+const API_V1 = 'https://generativelanguage.googleapis.com/v1/models';
 
 exports.handler = async (event) => {
-    // 1. Correct Headers for CORS & JSON
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type',
@@ -9,63 +9,40 @@ exports.handler = async (event) => {
         'Content-Type': 'application/json'
     };
 
-    // Handle OPTIONS request for CORS
-    if (event.httpMethod === 'OPTIONS') {
-        return { statusCode: 204, headers, body: '' };
-    }
-
-    if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method Not Allowed' }) };
-    }
+    if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers, body: '' };
+    if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: 'JSON.stringify({error: "Method Not Allowed"})' };
 
     try {
-        const body = JSON.parse(event.body);
-        const { action, model, contents, generationConfig } = body;
+        const { model, contents, generationConfig } = JSON.parse(event.body);
         
-        // 🔒 API KEY: Strict cleaning
+        // 🔒 Clean API Key: Remove whitespace and quotes
         const rawKey = process.env.GEMINI_API_KEY || '';
-        const apiKey = rawKey.trim().replace(/["']/g, '');
+        const apiKey = rawKey.trim().replace(/["']/g, '').replace(/\s/g, '');
 
         if (!apiKey || apiKey.length < 10) {
-            console.error('❌ CONFIG ERROR: Missing or invalid GEMINI_API_KEY');
-            return {
-                statusCode: 401,
-                headers,
-                body: JSON.stringify({ error: 'API Key not configured correctly in Netlify Environment Variables.' })
-            };
+            return { statusCode: 401, headers, body: JSON.stringify({ error: 'GEMINI_API_KEY is missing or invalid in Netlify settings.' }) };
         }
 
-        console.log(`🚀 Request: Action=${action}, Model=${model}`);
-
-        // Construct Google API URL
-        const url = `${API_BASE}/${model}:generateContent?key=${apiKey}`;
-
-        // Forwarding to Google
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+        // Try v1beta first (most features)
+        let url = `${API_V1BETA}/${model}:generateContent?key=${apiKey}`;
+        let response = await fetch(url, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents, generationConfig })
         });
 
-        const data = await response.json();
-
-        // Log if Google returns an error
-        if (!response.ok) {
-            console.error('⚠️ Google API Error:', response.status, JSON.stringify(data));
+        // Fallback to v1 if 404
+        if (response.status === 404) {
+            url = `${API_V1}/${model}:generateContent?key=${apiKey}`;
+            response = await fetch(url, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents, generationConfig })
+            });
         }
 
-        return {
-            statusCode: response.status,
-            headers,
-            body: JSON.stringify(data)
-        };
+        const data = await response.json();
+        return { statusCode: response.status, headers, body: JSON.stringify(data) };
 
     } catch (error) {
-        console.error('🔥 Function Crash:', error);
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ error: 'Internal Server Error', details: error.message })
-        };
+        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Backend Error', details: error.message }) };
     }
 };

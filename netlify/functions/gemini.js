@@ -10,30 +10,25 @@ exports.handler = async (event) => {
 
     try {
         const apiKey = (process.env.GEMINI_API_KEY || '').trim().replace(/["']/g, '');
-        if (!apiKey) return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'API Key Missing' }) };
+        if (!apiKey) return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'API_KEY_MISSING' }) };
 
         const body = JSON.parse(event.body);
         if (body.action === 'heartbeat') return { statusCode: 200, headers, body: JSON.stringify({ status: 'OK', keyLen: apiKey.length }) };
 
-        /**
-         * 🎯 THE 1% ELITE PROBE
-         * Tries various Google Image Generation (Imagen 3) path formats.
-         * Fixes the previous URL concatenation bug.
-         */
-        const attempts = [
-            { version: 'v1beta', path: 'models/gemini-1.5-flash' }, // Mode: Multimodal Flash
-            { version: 'v1beta', path: 'publishers/google/models/imagen-3.0-generate-001' }, // Mode: Explicit Imagen 3 (Nano Banana 2)
-            { version: 'v1', path: 'models/gemini-1.5-flash' } // Mode: Stable Flash
+        // 🎯 THE ELITE MATRIX: Try all possible Imagen 3 / Nano Banana 2 endpoints
+        const variants = [
+            { ver: 'v1beta', mod: 'gemini-1.5-flash' },
+            { ver: 'v1', mod: 'gemini-1.5-flash' },
+            { ver: 'v1beta', mod: 'imagen-3.0-generate-001' }
         ];
 
-        let lastFullError = null;
+        let failureLogs = [];
 
-        for (const attempt of attempts) {
+        for (const variant of variants) {
             try {
-                // Correct URL construction: No double /models/
-                const url = `https://generativelanguage.googleapis.com/${attempt.version}/${attempt.path}:generateContent?key=${apiKey}`;
+                const url = `https://generativelanguage.googleapis.com/${variant.ver}/models/${variant.mod}:generateContent?key=${apiKey}`;
                 
-                const response = await fetch(url, {
+                const res = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -44,33 +39,28 @@ exports.handler = async (event) => {
                     })
                 });
 
-                const data = await response.json();
-                if (response.ok) {
-                    return { 
-                        statusCode: 200, 
-                        headers, 
-                        body: JSON.stringify({ ok: true, data: data, route: `${attempt.version}/${attempt.path}` }) 
-                    };
+                const data = await res.json();
+                if (res.ok) {
+                    return { statusCode: 200, headers, body: JSON.stringify({ ok: true, data: data, route: `${variant.ver}/${variant.mod}` }) };
                 }
-                lastFullError = data.error;
+                failureLogs.push(`${variant.ver}/${variant.mod}: ${data.error?.message || 'Unknown'}`);
             } catch (e) {
-                lastFullError = { message: e.message };
-                continue;
+                failureLogs.push(`${variant.ver}/${variant.mod}: Proxy Error`);
             }
         }
 
-        // Return a high-transparency diagnostic error
+        // Return a detailed diagnostic report if all fail
         return { 
             statusCode: 200, 
             headers, 
             body: JSON.stringify({ 
                 ok: false, 
-                error: 'ALL_ENDPOINTS_FAILED', 
-                details: lastFullError 
+                error: 'ALL_ENDPOINTS_REJECTED', 
+                details: failureLogs.join(' | ') 
             }) 
         };
 
     } catch (err) {
-        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'PROXY_EXCEPTION', details: err.message }) };
+        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'SYSTEM_CRASH', details: err.message }) };
     }
 };

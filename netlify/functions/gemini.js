@@ -13,42 +13,53 @@ exports.handler = async (event) => {
         if (!apiKey) return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'API_KEY_MISSING' }) };
 
         const body = JSON.parse(event.body);
+
+        // 🔹 Heartbeat
+        if (body.action === 'heartbeat') {
+            return { statusCode: 200, headers, body: JSON.stringify({ status: 'OK', keyLen: apiKey.length }) };
+        }
+
         const isImage = body.action === 'generate';
 
-        // 🎯 TARGET: Nano Banana 2 ONLY for Image Generation
-        // This is the specific model the user is demanding.
-        const model = isImage ? 'nano-banana-pro-preview' : 'gemini-1.5-pro';
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        // 📝 TEXT: Use gemini-2.0-flash (VERIFIED to exist in your account)
+        // NOT gemini-1.5-pro (which does NOT exist and causes the 404)
+        if (!isImage) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: body.contents,
+                    generationConfig: { temperature: 0.8 }
+                })
+            });
+            const data = await res.json();
+            return { statusCode: 200, headers, body: JSON.stringify({ ok: res.ok, data }) };
+        }
 
-        const response = await fetch(url, {
+        // 🎨 IMAGE: Nano Banana 2 ONLY (nano-banana-pro-preview)
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/nano-banana-pro-preview:generateContent?key=${apiKey}`;
+        const res = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 contents: body.contents,
-                generationConfig: isImage 
-                    ? { responseModalities: ["IMAGE"], temperature: 1.0 }
-                    : { temperature: 0.8 }
+                generationConfig: { responseModalities: ["IMAGE"], temperature: 1.0 }
             })
         });
+        const data = await res.json();
 
-        const data = await response.json();
-
-        if (response.ok) {
-            return { 
-                statusCode: 200, 
-                headers, 
-                body: JSON.stringify({ ok: true, data, used: model }) 
-            };
+        if (res.ok) {
+            return { statusCode: 200, headers, body: JSON.stringify({ ok: true, data, used: 'nano-banana-pro-preview' }) };
         }
 
-        // Return the RAW error from Google if it fails, no fallbacks allowed.
         return { 
             statusCode: 200, 
             headers, 
             body: JSON.stringify({ 
                 ok: false, 
                 error: 'NANO_BANANA_DENIED', 
-                message: data.error?.message || 'Check Quota' 
+                message: data.error?.message || 'Quota exceeded' 
             }) 
         };
 

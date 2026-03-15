@@ -10,37 +10,35 @@ exports.handler = async (event) => {
 
     try {
         const apiKey = (process.env.GEMINI_API_KEY || '').trim().replace(/["']/g, '');
-        if (!apiKey) return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'API Key Missing' }) };
+        if (!apiKey) return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'API_KEY_MISSING' }) };
 
         const body = JSON.parse(event.body);
         if (body.action === 'heartbeat') return { statusCode: 200, headers, body: JSON.stringify({ status: 'OK', keyLen: apiKey.length }) };
 
-        /**
-         * 🎯 THE 1% ELITE PROBE
-         * This matrix tries all regional and publisher variations to find Nano Banana 2.
-         */
-        const strategies = [
-            { v: 'v1beta', m: 'imagen-3.0-generate-001', p: 'publishers/google/models/' },
-            { v: 'v1beta', m: 'gemini-1.5-flash', p: 'models/' },
-            { v: 'v1', m: 'gemini-1.5-flash', p: 'models/' },
-            { v: 'v1beta', m: 'imagen-3.0-generate-001', p: 'models/' }
+        // 🎯 THE ELITE PROBE: Multi-version discovery for Imagen 3 (Nano Banana 2)
+        // This targets the exact error "Model not found for v1beta" by probing both versions.
+        const routes = [
+            { v: 'v1', m: 'gemini-1.5-flash' },
+            { v: 'v1beta', m: 'gemini-1.5-flash' },
+            { v: 'v1beta', m: 'imagen-3.0-generate-001' }
         ];
 
-        let lastData = null;
+        let lastError = null;
 
-        for (const s of strategies) {
+        for (const route of routes) {
             try {
-                const url = `https://generativelanguage.googleapis.com/${s.v}/${s.p}${s.m}:generateContent?key=${apiKey}`;
-                
+                const url = `https://generativelanguage.googleapis.com/${route.v}/models/${route.m}:generateContent?key=${apiKey}`;
+                const payload = {
+                    contents: body.contents,
+                    generationConfig: body.action === 'suggestions' 
+                        ? { temperature: 0.7 }
+                        : { responseModalities: ["IMAGE"], temperature: 1.0 }
+                };
+
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: body.contents,
-                        generationConfig: body.action === 'suggestions' 
-                            ? { temperature: 0.7 } 
-                            : { responseModalities: ["IMAGE"], temperature: 1.0 }
-                    })
+                    body: JSON.stringify(payload)
                 });
 
                 const data = await response.json();
@@ -48,11 +46,14 @@ exports.handler = async (event) => {
                     return { 
                         statusCode: 200, 
                         headers, 
-                        body: JSON.stringify({ ok: true, data, route: `${s.v}/${s.m}` }) 
+                        body: JSON.stringify({ ok: true, data, usedRoute: `${route.v}/${route.m}` }) 
                     };
                 }
-                lastData = data;
-            } catch (e) { continue; }
+                lastError = data.error?.message || 'Unknown error';
+            } catch (e) {
+                lastError = e.message;
+                continue;
+            }
         }
 
         return { 
@@ -61,11 +62,11 @@ exports.handler = async (event) => {
             body: JSON.stringify({ 
                 ok: false, 
                 error: 'ALL_ROUTES_FAILED', 
-                message: lastData?.error?.message || 'Region blockage detected.' 
+                message: lastError 
             }) 
         };
 
     } catch (err) {
-        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'CRITICAL_EXCEPTION', details: err.message }) };
+        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'PROXY_CRASH', details: err.message }) };
     }
 };

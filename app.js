@@ -227,6 +227,7 @@ const FALLBACK_GREETINGS = {
 };
 
 function init() {
+    checkConnectivity();
     renderOccasions();
     bindEvents();
     updateText();

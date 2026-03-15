@@ -189,7 +189,8 @@ let state = {
 };
 
 // 🔒 Security Update: API Key moved to Netlify environment variables
-const API_BASE = '/.netlify/functions/gemini';
+const API_BASE = '/.netlify/functions/gemini'; 
+console.log(`[WishAI] Initializing with API_BASE: ${API_BASE}`);
 const AI_MODEL = 'gemini-1.5-flash'; 
 const NB2_MODEL = 'gemini-1.5-flash'; 
 const NB2_IMAGE_MODEL = 'gemini-1.5-flash'; 

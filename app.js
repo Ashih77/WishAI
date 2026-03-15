@@ -794,12 +794,14 @@ async function generateSuggestions() {
     list.innerHTML = '';
     loadingEl.classList.remove('hidden');
 
-    const occ = occasions.find(o => o.id === state.occasion);
-    const occName = state.lang === 'ar' ? occ.nameAr : occ.nameEn;
+        const occ = occasions.find(o => o.id === state.occasion);
+        const occName = state.lang === 'ar' ? occ.nameAr : occ.nameEn;
+        const occDesc = state.lang === 'ar' ? occ.descAr : occ.descEn;
 
-    const prompt = state.lang === 'ar'
-        ? `اقترح 5 نصوص تهنئة قصيرة ومميزة بمناسبة ${occName}. النصوص يجب أن تكون بالعربية، قصيرة (لا تزيد عن 8 كلمات)، عامة (لا تستخدم أي أسماء أشخاص)، وقابلة لكتابتها على بطاقة تهنئة. أعطني النصوص فقط، كل نص في سطر منفصل مرقم (1. 2. 3. الخ)، بدون أي شرح إضافي.`
-        : `Suggest 5 short and unique greeting texts for ${occName}. The texts should be in English, short (max 8 words), general (do not include any person names), and suitable for a greeting card. Give me only the texts, each on a separate numbered line (1. 2. 3. etc), without any extra explanation.`;
+        const prompt = state.lang === 'ar'
+            ? `اقترح 5 نصوص تهنئة مميزة وقصيرة جداً بمناسبة ${occName}. الوصف: ${occDesc}. النصوص يجب أن تكون بالعربية، بليغة، ولا تزيد عن 6 كلمات، بدون أسماء. أعطني قائمة مرقمة بالنصوص فقط.`
+            : `Suggest 5 unique and very short greeting texts for ${occName}. Context: ${occDesc}. Texts must be short (max 6 words) and suitable for a card. Give me only a numbered list of texts.`;
+
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
@@ -817,19 +819,13 @@ async function generateSuggestions() {
 
         const result = await res.json();
         
-        // Use result.data or fallback suggestions based on occasion
-        let suggestions = [];
-        if (result.ok && result.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
-            const text = result.data.candidates[0].content.parts[0].text;
-            suggestions = text.split('\n').map(l => l.replace(/^\d+[\.\)\-]\s*/, '').trim()).filter(l => l.length > 0);
+        if (!result.ok) {
+            throw new Error(result.message || result.error || "Suggestions failed");
         }
 
-        if (suggestions.length === 0) {
-            console.warn(`[WishAI] Using Local Fallback Greetings for ${state.occasion}`);
-            suggestions = FALLBACK_GREETINGS[state.occasion] || FALLBACK_GREETINGS['daily'];
-        }
-        
-        suggestions = suggestions.slice(0, 5);
+        const data = result.data;
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        const suggestions = text.split('\n').filter(l => l.match(/^\d+[\.\)\-]\s*/)).map(l => l.replace(/^\d+[\.\)\-]\s*/, '').trim()).filter(l => l.length > 0).slice(0, 5);
 
         loadingEl.classList.add('hidden');
         suggestions.forEach((s, i) => {

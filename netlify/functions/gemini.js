@@ -14,68 +14,42 @@ exports.handler = async (event) => {
 
         const body = JSON.parse(event.body);
         const isImage = body.action === 'generate';
-        const originalPrompt = body.contents?.[0]?.parts?.[0]?.text || '';
 
-        // 📝 TEXT SUGGESTIONS: Gemini 1.5 Flash
-        if (!isImage) {
-            try {
-                const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-                const res = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: body.contents,
-                        generationConfig: { temperature: 0.7 }
-                    })
-                });
-                const data = await res.json();
-                return { statusCode: 200, headers, body: JSON.stringify({ ok: res.ok, data }) };
-            } catch (e) {
-                return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'AI_OFFLINE' }) };
-            }
-        }
+        // 🎯 TARGET: Nano Banana 2 ONLY for Image Generation
+        // This is the specific model the user is demanding.
+        const model = isImage ? 'nano-banana-pro-preview' : 'gemini-1.5-pro';
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-        // 🎨 IMAGE GENERATION: Gemini (Primary) -> Flux (Failsafe)
-        const models = ['gemini-1.5-flash-002', 'gemini-1.5-flash'];
-        for (const model of models) {
-            try {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-                const res = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: body.contents,
-                        generationConfig: { responseModalities: ["IMAGE"], temperature: 1.0 }
-                    })
-                });
-                const data = await res.json();
-                if (res.ok) return { statusCode: 200, headers, body: JSON.stringify({ ok: true, data }) };
-            } catch (e) { continue; }
-        }
-
-        // 🛡️ THE FAILSAFE: FLUX (Pollinations AI)
-        // Cleanup prompt for artistic clarity in Flux
-        const fluxPrompt = originalPrompt
-            .replace(/Create a stunning.*vertical greeting card\./gi, '')
-            .replace(/Style:.*?\./gi, '')
-            .replace(/Quality:.*?\./gi, '')
-            .replace(/Instructions:.*?\./gi, '')
-            .replace(/TEXT TO RENDER:.*?\./gi, '')
-            .replace(/Ensure.*?text is clear and artistic\./gi, '')
-            .trim();
-
-        const finalFluxPrompt = `${fluxPrompt || 'Greeting Card'}, stunning design, cinematic lighting, vertical card, 8k, bokeh photography.`;
-        const fluxUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalFluxPrompt)}?model=flux&width=800&height=1200&nologo=true&seed=${Math.floor(Math.random()*1000000)}`;
-
-        return {
-            statusCode: 200,
-            headers,
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                ok: true,
-                isFallback: true,
-                imageUrl: fluxUrl,
-                data: { candidates: [{ content: { parts: [{ inlineData: { data: "FLUX", mimeType: "image/url" } }] } }] }
+                contents: body.contents,
+                generationConfig: isImage 
+                    ? { responseModalities: ["IMAGE"], temperature: 1.0 }
+                    : { temperature: 0.8 }
             })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            return { 
+                statusCode: 200, 
+                headers, 
+                body: JSON.stringify({ ok: true, data, used: model }) 
+            };
+        }
+
+        // Return the RAW error from Google if it fails, no fallbacks allowed.
+        return { 
+            statusCode: 200, 
+            headers, 
+            body: JSON.stringify({ 
+                ok: false, 
+                error: 'NANO_BANANA_DENIED', 
+                message: data.error?.message || 'Check Quota' 
+            }) 
         };
 
     } catch (err) {

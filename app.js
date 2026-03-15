@@ -204,7 +204,7 @@ async function checkConnectivity() {
             body: JSON.stringify({ action: 'heartbeat' })
         });
         const data = await res.json();
-        console.log(`[WishAI] System Heartbeat: ${data.status} (KeyLen: ${data.keyLength || 0})`);
+        console.log(`[WishAI] System Heartbeat: ${data.status} (KeyLen: ${data.keyLen || data.keyLength || 0})`);
         return data.status === 'OK';
     } catch {
         return false;
@@ -916,13 +916,10 @@ Ensure ${langLabel} text is clear and artistic. Connections must be correct.`;
     }
 
     try {
-        console.log("🚀 Initializing Visual Generation...");
+        console.log("🚀 Initializing Nano Banana 2 (Imagen 3)...");
         
-        // Fast-track Flux if user has already experienced API delays
-        const useAlpha = Math.random() > 0.5; 
-
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 12000); // Shorter timeout for snappier feel
+        const timeout = setTimeout(() => controller.abort(), 20000); 
 
         const res = await fetch(API_BASE, {
             method: 'POST',
@@ -930,8 +927,12 @@ Ensure ${langLabel} text is clear and artistic. Connections must be correct.`;
             signal: controller.signal,
             body: JSON.stringify({
                 action: 'generate',
+                model: 'gemini-1.5-flash', // Required for Imagen 3 in many regions
                 contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { responseModalities: ['IMAGE'] }
+                generationConfig: { 
+                    responseModalities: ['IMAGE'],
+                    temperature: 1.0 // Better for creative cards
+                }
             })
         });
         clearTimeout(timeout);
@@ -945,15 +946,19 @@ Ensure ${langLabel} text is clear and artistic. Connections must be correct.`;
             }
         }
         
-        throw new Error("API_REJECTED_OR_SLOW");
+        const errData = await res.json().catch(() => ({}));
+        console.error("[WishAI Gen Error]", errData);
+        throw new Error(errData.error?.message || "AI_REJECTED");
 
     } catch (e) {
-        console.warn("Using Global Visual Engine (Flux)...");
-        const seed = Math.floor(Math.random() * 999999);
-        // Professional Flux Prompting
-        const fluxPrompt = `Vertical professional greeting card, ${occDesc}, ${state.style}, artistic typography, elegant, high resolution, no text artifacts`;
-        const fluxUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(fluxPrompt)}?width=800&height=1200&model=flux&seed=${seed}&nologo=true`;
-        showImageUrl(fluxUrl);
+        console.warn("Nano Banana 2 Unavailable. Check your Key and Google Region.");
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'error-overlay';
+        errorMsg.innerHTML = `<div style="color:var(--important);background:rgba(0,0,0,0.8);padding:20px;border-radius:10px;text-align:center;">
+            <b>عذراً، محرك نانو بنانا لم يستجب</b><br>
+            <span style="font-size:0.8rem;">السبب: ${e.message}</span>
+        </div>`;
+        loading.appendChild(errorMsg);
     }
 }
 

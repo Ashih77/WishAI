@@ -791,8 +791,6 @@ async function generateSuggestions() {
             headers: { 'Content-Type': 'application/json' },
             signal: controller.signal,
             body: JSON.stringify({ 
-                action: 'suggestions',
-                model: AI_MODEL,
                 contents: [{ parts: [{ text: prompt }] }] 
             })
         });
@@ -901,61 +899,38 @@ Ensure ${langLabel} text is clear and artistic. Connections must be correct.`;
     }
 
     try {
-        const models = [NB2_IMAGE_MODEL, 'gemini-1.5-pro', 'gemini-1.5-flash'];
-        let success = false;
+        console.log("Attempting generation...");
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
 
-        for (const model of models) {
-            console.log(`Attempting generation with: ${model}`);
-            try {
-                const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+        const res = await fetch(API_BASE, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { responseModalities: ['IMAGE'] }
+            })
+        });
+        clearTimeout(timeout);
 
-                const res = await fetch(API_BASE, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    signal: controller.signal,
-                    body: JSON.stringify({
-                        action: 'generate',
-                        model: model,
-                        contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: { responseModalities: ['IMAGE'] }
-                    })
-                });
-                clearTimeout(timeout);
-
-                if (res.ok) {
-                    const data = await res.json();
-                    const imgPart = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
-                    if (imgPart) {
-                        showImage(imgPart.inlineData.data, imgPart.inlineData.mimeType || 'image/png');
-                        success = true;
-                        break;
-                    }
-                } else {
-                    const err = await res.json().catch(() => ({}));
-                    console.warn(`Model ${model} responded with error:`, err);
-                }
-            } catch (e) {
-                console.warn(`Model ${model} failed:`, e.message);
+        if (res.ok) {
+            const data = await res.json();
+            const imgPart = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+            if (imgPart) {
+                showImage(imgPart.inlineData.data, imgPart.inlineData.mimeType || 'image/png');
+                return;
             }
         }
-
-        if (!success) {
-            console.warn("All Gemini models failed. Using Public Visual Fallback...");
-            const seed = Math.floor(Math.random() * 999999);
-            const fluxUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=800&height=1200&model=flux&seed=${seed}&nologo=true`;
-            showImageUrl(fluxUrl);
-        }
+        
+        // If we reach here, AI failed, use Flux immediately
+        throw new Error("AI Busy or Limit Exceeded");
 
     } catch (e) {
-        console.error("Radical Gen failure:", e);
-        const errorMsg = document.createElement('div');
-        errorMsg.style.color = 'var(--important)';
-        errorMsg.style.fontSize = '0.8rem';
-        errorMsg.style.marginTop = '10px';
-        errorMsg.textContent = `General Error: ${e.message}`;
-        loading.appendChild(errorMsg);
-        setTimeout(() => fallback(), 3000);
+        console.warn("AI Engine Unavailable, switching to Visual Engine...", e.message);
+        const seed = Math.floor(Math.random() * 999999);
+        const fluxUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=800&height=1200&model=flux&seed=${seed}&nologo=true`;
+        showImageUrl(fluxUrl);
     }
 }
 

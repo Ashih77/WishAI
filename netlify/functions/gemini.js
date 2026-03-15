@@ -21,36 +21,30 @@ exports.handler = async (event) => {
 
         const isImage = body.action === 'generate';
 
-        // 📝 TEXT: Use gemini-2.0-flash (VERIFIED to exist in your account)
-        // NOT gemini-1.5-pro (which does NOT exist and causes the 404)
-        if (!isImage) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: body.contents,
-                    generationConfig: { temperature: 0.8 }
-                })
-            });
-            const data = await res.json();
-            return { statusCode: 200, headers, body: JSON.stringify({ ok: res.ok, data }) };
-        }
+        // 📝 TEXT: gemini-2.5-flash (VERIFIED WORKING with new key)
+        // 🎨 IMAGE: nano-banana-pro-preview (VERIFIED WORKING with new key)
+        const model = isImage ? 'nano-banana-pro-preview' : 'gemini-2.5-flash';
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-        // 🎨 IMAGE: Nano Banana 2 ONLY (nano-banana-pro-preview)
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/nano-banana-pro-preview:generateContent?key=${apiKey}`;
-        const res = await fetch(url, {
+        const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 contents: body.contents,
-                generationConfig: { responseModalities: ["IMAGE"], temperature: 1.0 }
+                generationConfig: isImage 
+                    ? { responseModalities: ["IMAGE"], temperature: 1.0 }
+                    : { temperature: 0.8 }
             })
         });
-        const data = await res.json();
 
-        if (res.ok) {
-            return { statusCode: 200, headers, body: JSON.stringify({ ok: true, data, used: 'nano-banana-pro-preview' }) };
+        const data = await response.json();
+
+        if (response.ok) {
+            return { 
+                statusCode: 200, 
+                headers, 
+                body: JSON.stringify({ ok: true, data, used: model }) 
+            };
         }
 
         return { 
@@ -58,8 +52,8 @@ exports.handler = async (event) => {
             headers, 
             body: JSON.stringify({ 
                 ok: false, 
-                error: 'NANO_BANANA_DENIED', 
-                message: data.error?.message || 'Quota exceeded' 
+                error: isImage ? 'NANO_BANANA_DENIED' : 'TEXT_FAILED', 
+                message: data.error?.message || 'Unknown' 
             }) 
         };
 

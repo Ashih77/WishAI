@@ -937,6 +937,7 @@ Ensure ${langLabel} text is clear and artistic. Connections must be correct.`;
         const result = await res.json();
         
         if (result.ok) {
+            console.log(`[WishAI] Success using route: ${result.used || 'Direct'}`);
             // Handle Direct Fallback URL
             if (result.imageUrl) {
                 showImageUrl(result.imageUrl);

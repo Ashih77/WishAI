@@ -900,6 +900,10 @@ Ensure ${langLabel} text is clear and artistic. Connections must be correct.`;
         const src = `data:${mimeType};base64,${base64}`;
         img.src = src;
         img.style.opacity = '1';
+        
+        // Hide overlays for Gemini (it draws text)
+        document.querySelector('.card-overlay').classList.add('hidden');
+        
         loading.classList.add('hidden');
         result.classList.remove('hidden');
         saveCard(src, state.occasion, state.name);
@@ -911,6 +915,12 @@ Ensure ${langLabel} text is clear and artistic. Connections must be correct.`;
         loader.onload = () => {
             img.src = url;
             img.style.opacity = '1';
+            
+            // Show overlays for Fallback/Flux (it doesn't draw text)
+            greetingOverlay.textContent = state.greeting;
+            nameOverlay.textContent = state.name;
+            document.querySelector('.card-overlay').classList.remove('hidden');
+            
             loading.classList.add('hidden');
             result.classList.remove('hidden');
             saveCard(url, state.occasion, state.name);

@@ -813,12 +813,13 @@ async function generateSuggestions() {
         });
         clearTimeout(timeoutId);
 
-        if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            console.error("[WishAI Suggestion Error]", errData);
-            throw new Error(`API_${res.status}`);
+        const result = await res.json();
+        if (!result.ok) {
+            console.error("[WishAI Sync Error]", result);
+            throw new Error(result.message || result.error || "AI_OFFLINE");
         }
-        const data = await res.json();
+
+        const data = result.data;
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (!text) throw new Error('Empty response from AI');
         const suggestions = text.split('\n').map(l => l.replace(/^\d+[\.\)\-]\s*/, '').trim()).filter(l => l.length > 0).slice(0, 5);
@@ -932,19 +933,17 @@ Ensure ${langLabel} text is clear and artistic. Connections must be correct.`;
         });
         clearTimeout(timeout);
 
-        const resultData = await res.json();
+        const result = await res.json();
         
-        if (resultData.ok) {
-            const imgPart = resultData.data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+        if (result.ok) {
+            const imgPart = result.data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
             if (imgPart) {
                 showImage(imgPart.inlineData.data, imgPart.inlineData.mimeType || 'image/png');
                 return;
             }
         }
         
-        // Detailed Error Reporting for the User
-        const googleError = resultData.data?.error?.message || resultData.error || "Unknown Error";
-        throw new Error(googleError);
+        throw new Error(result.message || result.error || "GEN_FAILED");
 
     } catch (e) {
         console.warn("Generation Issue:", e.message);

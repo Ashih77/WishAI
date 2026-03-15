@@ -13,71 +13,62 @@ exports.handler = async (event) => {
         if (!apiKey) return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'API_KEY_MISSING' }) };
 
         const body = JSON.parse(event.body);
-        
-        // 🔹 Heartbeat Diagnostic
-        if (body.action === 'heartbeat') {
-            return { statusCode: 200, headers, body: JSON.stringify({ status: 'OK', keyLen: apiKey.length }) };
-        }
+        if (body.action === 'heartbeat') return { statusCode: 200, headers, body: JSON.stringify({ status: 'OK', keyLen: apiKey.length }) };
 
-        // 🛡️ The Matrix: Multiple attempts to find the correct Model/Version combo
-        // This solves the "Not Found for v1beta" error radically.
-        const routes = [
-            { v: 'v1beta', m: 'gemini-1.5-flash' },
+        // 🎯 Top 1% Engineering: Hybrid Model Discovery Matrix
+        // Tries v1 (Stable) first, then v1beta (Experimental)
+        const candidates = [
             { v: 'v1', m: 'gemini-1.5-flash' },
-            { v: 'v1beta', m: 'imagen-3.0-generate-001' },
-            { v: 'v1beta', m: 'gemini-1.5-pro' }
+            { v: 'v1beta', m: 'gemini-1.5-flash' },
+            { v: 'v1beta', m: 'imagen-3.0-generate-001' }
         ];
 
-        let lastError = null;
+        let lastResult = null;
 
-        for (const route of routes) {
+        for (const candidate of candidates) {
             try {
-                const url = `https://generativelanguage.googleapis.com/${route.v}/models/${route.m}:generateContent?key=${apiKey}`;
+                const url = `https://generativelanguage.googleapis.com/${candidate.v}/models/${candidate.m}:generateContent?key=${apiKey}`;
+                const isImageRequest = (body.action !== 'suggestions');
                 
-                // Construct payload based on action
-                const payload = {
-                    contents: body.contents,
-                    generationConfig: body.action === 'suggestions' 
-                        ? { temperature: 0.7 } 
-                        : { responseModalities: ["IMAGE"], temperature: 1.0 }
-                };
-
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({
+                        contents: body.contents,
+                        generationConfig: isImageRequest ? {
+                            responseModalities: ["IMAGE"],
+                            temperature: 1.0
+                        } : { temperature: 0.7 }
+                    })
                 });
 
                 const data = await response.json();
-
                 if (response.ok) {
                     return { 
                         statusCode: 200, 
                         headers, 
-                        body: JSON.stringify({ ok: true, data: data, usedRoute: `${route.v}/${route.m}` }) 
+                        body: JSON.stringify({ 
+                            ok: true, 
+                            data: data, 
+                            used: `${candidate.v}/${candidate.m}` 
+                        }) 
                     };
                 }
-                
-                lastError = data.error?.message || JSON.stringify(data);
-                console.warn(`[WishAI] Failed route ${route.v}/${route.m}: ${lastError}`);
-            } catch (e) {
-                lastError = e.message;
-                continue;
-            }
+                lastResult = data;
+            } catch (e) { continue; }
         }
 
-        // Final failure: No routes worked
         return { 
             statusCode: 200, 
             headers, 
             body: JSON.stringify({ 
                 ok: false, 
-                error: 'ALL_ROUTES_FAILED', 
-                details: lastError 
+                error: 'NANO_BANANA_UNREACHABLE', 
+                message: lastResult?.error?.message || 'Check Quota/Region' 
             }) 
         };
 
     } catch (err) {
-        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'PROXY_EXCEPTION', details: err.message }) };
+        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'PROXY_CRASH', details: err.message }) };
     }
 };

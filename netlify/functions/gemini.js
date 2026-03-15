@@ -13,9 +13,14 @@ exports.handler = async (event) => {
         if (!apiKey) return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'API_KEY_MISSING' }) };
 
         const body = JSON.parse(event.body);
-        if (body.action === 'heartbeat') return { statusCode: 200, headers, body: JSON.stringify({ status: 'OK', keyLen: apiKey.length }) };
+        
+        // 🔹 Heartbeat Diagnostic
+        if (body.action === 'heartbeat') {
+            return { statusCode: 200, headers, body: JSON.stringify({ status: 'OK', keyLen: apiKey.length }) };
+        }
 
-        // 🎯 THE ELITE PROBE: Multi-version discovery for Imagen 3 (Nano Banana 2)
+        // 🎯 THE ELITE MATRIX: Multi-version discovery for Imagen 3 (Nano Banana 2)
+        // This solves the "Not Found for v1beta" error radically.
         const candidates = [
             { v: 'v1beta', m: 'imagen-3.0-generate-001' },
             { v: 'v1beta', m: 'gemini-1.5-flash' },
@@ -40,22 +45,33 @@ exports.handler = async (event) => {
                 });
 
                 const data = await response.json();
-                if (response.ok) return { statusCode: 200, headers, body: JSON.stringify({ ok: true, data, used: `${c.v}/${c.m}` }) };
+                
+                if (response.ok) {
+                    return { 
+                        statusCode: 200, 
+                        headers, 
+                        body: JSON.stringify({ ok: true, data, source: `${c.v}/${c.m}` }) 
+                    };
+                }
                 lastData = data;
-            } catch (e) { continue; }
+                console.warn(`[WishAI] Probe ${c.v}/${c.m} failed:`, data.error?.message);
+            } catch (e) {
+                continue;
+            }
         }
 
+        // If all routes fail, return a descriptive diagnostic body (Status 200 to ensure frontend sees it)
         return { 
             statusCode: 200, 
             headers, 
             body: JSON.stringify({ 
                 ok: false, 
-                error: 'NANO_BANANA_DENIED', 
-                message: lastData?.error?.message || 'All endpoints failed' 
+                error: 'ALL_ROUTES_REJECTED', 
+                message: lastData?.error?.message || 'Check Google Cloud billing and region quotas.' 
             }) 
         };
 
     } catch (err) {
-        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'SYSTEM_CRASH', details: err.message }) };
+        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'PROXY_CRASH', details: err.message }) };
     }
 };

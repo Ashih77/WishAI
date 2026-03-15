@@ -781,26 +781,62 @@ function go(n) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// 🧠 Smart Suggestion Mode: Alternates between Popular and Creative
+let suggestionClickCount = 0;
+let lastSuggestionOccasion = null;
+
 async function generateSuggestions() {
     const btn = document.getElementById('ai-suggest-btn');
     const container = document.getElementById('suggestions-container');
     const list = document.getElementById('suggestions-list');
     const loadingEl = document.getElementById('suggestions-loading');
+    const headerEl = document.querySelector('.suggestions-header');
 
     if (!state.occasion) return;
+
+    // Reset counter if occasion changed
+    if (lastSuggestionOccasion !== state.occasion) {
+        suggestionClickCount = 0;
+        lastSuggestionOccasion = state.occasion;
+    }
+
+    // Determine mode: even clicks = popular, odd clicks = creative
+    const isCreativeMode = suggestionClickCount % 2 !== 0;
+    suggestionClickCount++;
 
     btn.classList.add('loading');
     container.classList.remove('hidden');
     list.innerHTML = '';
     loadingEl.classList.remove('hidden');
 
-        const occ = occasions.find(o => o.id === state.occasion);
-        const occName = state.lang === 'ar' ? occ.nameAr : occ.nameEn;
-        const occDesc = state.lang === 'ar' ? occ.descAr : occ.descEn;
+    // Update header to show current mode
+    const modeLabel = isCreativeMode 
+        ? (state.lang === 'ar' ? '💡 اقتراحات مبتكرة' : '💡 Creative Suggestions')
+        : (state.lang === 'ar' ? '⭐ اقتراحات مشهورة' : '⭐ Popular Suggestions');
+    
+    if (headerEl) {
+        headerEl.innerHTML = `<span class="suggestions-sparkle">${isCreativeMode ? '💡' : '⭐'}</span><span>${modeLabel}</span>`;
+    }
 
-        const prompt = state.lang === 'ar'
-            ? `اقترح 5 نصوص تهنئة مميزة وقصيرة جداً بمناسبة ${occName}. الوصف: ${occDesc}. النصوص يجب أن تكون بالعربية، بليغة، ولا تزيد عن 6 كلمات، بدون أسماء. أعطني قائمة مرقمة بالنصوص فقط.`
-            : `Suggest 5 unique and very short greeting texts for ${occName}. Context: ${occDesc}. Texts must be short (max 6 words) and suitable for a card. Give me only a numbered list of texts.`;
+    const occ = occasions.find(o => o.id === state.occasion);
+    const occName = state.lang === 'ar' ? occ.nameAr : occ.nameEn;
+    const occDesc = state.lang === 'ar' ? occ.descAr : occ.descEn;
+
+    // 🎯 Two distinct prompt strategies
+    let prompt;
+    if (state.lang === 'ar') {
+        if (isCreativeMode) {
+            prompt = `اكتب 5 نصوص تهنئة عربية مبتكرة وعصرية وغير تقليدية بمناسبة ${occName}. ${occDesc}. يجب أن تكون النصوص إبداعية وجديدة وملهمة وغير مألوفة، قصيرة جداً (4-7 كلمات)، بدون أسماء أشخاص. أعطني قائمة مرقمة فقط بدون شرح.`;
+        } else {
+            prompt = `اكتب 5 من أشهر وأجمل نصوص التهنئة العربية المتعارف عليها والمحببة للناس بمناسبة ${occName}. ${occDesc}. اختر النصوص الأكثر شعبية والتي يستخدمها الناس كثيراً في بطاقات التهنئة، قصيرة (4-7 كلمات)، بدون أسماء. أعطني قائمة مرقمة فقط بدون شرح.`;
+        }
+    } else {
+        if (isCreativeMode) {
+            prompt = `Write 5 creative, unique, and unconventional greeting texts for ${occName}. ${occDesc}. Be innovative and inspiring. Short (4-7 words), no names. Numbered list only.`;
+        } else {
+            prompt = `Write 5 of the most popular and beloved greeting texts for ${occName}. ${occDesc}. Choose classic, widely-used, heartfelt greetings. Short (4-7 words), no names. Numbered list only.`;
+        }
+    }
 
     try {
         const controller = new AbortController();
@@ -825,12 +861,21 @@ async function generateSuggestions() {
 
         const data = result.data;
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-        const suggestions = text.split('\n').filter(l => l.match(/^\d+[\.\)\-]\s*/)).map(l => l.replace(/^\d+[\.\)\-]\s*/, '').trim()).filter(l => l.length > 0).slice(0, 5);
+        
+        // Parse suggestions: handle both numbered and unnumbered formats
+        let suggestions = text.split('\n')
+            .map(l => l.replace(/^\d+[\.\)\-]\s*/, '').replace(/^\*+\s*/, '').replace(/\*+/g, '').trim())
+            .filter(l => l.length > 2 && l.length < 60)
+            .slice(0, 5);
+
+        if (suggestions.length === 0) throw new Error("Empty suggestions");
 
         loadingEl.classList.add('hidden');
+        
         suggestions.forEach((s, i) => {
             const item = document.createElement('button');
             item.className = 'suggestion-item';
+            item.style.animationDelay = `${i * 0.08}s`;
             item.innerHTML = `<span class="suggestion-num">${i + 1}</span><span class="suggestion-text">${s}</span>`;
             item.onclick = () => {
                 state.greeting = s;
@@ -840,12 +885,22 @@ async function generateSuggestions() {
             };
             list.appendChild(item);
         });
+
+        // Show next mode hint
+        const nextMode = isCreativeMode 
+            ? (state.lang === 'ar' ? 'اضغط مرة أخرى لاقتراحات مشهورة ⭐' : 'Click again for popular suggestions ⭐')
+            : (state.lang === 'ar' ? 'اضغط مرة أخرى لاقتراحات مبتكرة 💡' : 'Click again for creative suggestions 💡');
+        
+        const hint = document.createElement('div');
+        hint.className = 'suggestion-mode-hint';
+        hint.textContent = nextMode;
+        list.appendChild(hint);
+
     } catch (e) {
         console.error("AI Error:", e);
         loadingEl.classList.add('hidden');
         
-        // Final Fix: If AI fails or quota is exceeded, use local high-quality greetings
-        const fallbacks = FALLBACK_GREETINGS[state.occasion] || ['مبارك عليكم', 'كل عام وأنتم بخير', 'أجمل التهاني'];
+        const fallbacks = FALLBACK_GREETINGS[state.occasion] || FALLBACK_GREETINGS['daily'];
         
         list.innerHTML = `<div style="color:var(--important);text-align:center;padding:5px;font-size:0.75rem;margin-bottom:10px;">${state.lang === 'ar' ? 'تم تفعيل الاقتراحات الذكية الاحتياطية' : 'Smart backup suggestions active'}</div>`;
         

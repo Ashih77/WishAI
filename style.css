@@ -678,6 +678,16 @@ textarea {
     line-height: 1.4;
 }
 
+.suggestion-mode-hint {
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--primary);
+    opacity: 0.7;
+    padding: 8px 0 2px;
+    cursor: default;
+    animation: fadeSlideIn 0.5s var(--ease);
+}
+
 .suggestion-item.selected-suggestion {
     background: rgba(139, 92, 246, 0.2);
     border-color: var(--primary);

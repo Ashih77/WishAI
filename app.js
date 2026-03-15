@@ -190,11 +190,11 @@ let state = {
 
 // 🔒 Security Update: API Key moved to Netlify environment variables
 const API_BASE = '/.netlify/functions/gemini';
-const AI_MODEL = 'gemini-1.5-flash'; 
-const NB2_MODEL = 'gemini-1.5-flash'; 
-const NB2_IMAGE_MODEL = 'gemini-1.5-flash'; 
+const AI_MODEL = 'gemini-2.0-flash-exp'; 
+const NB2_MODEL = 'gemini-2.0-flash-exp'; 
+const NB2_IMAGE_MODEL = 'gemini-2.0-flash-exp'; 
 const NB2_BACKUP = 'gemini-1.5-pro';
-const REQUEST_TIMEOUT = 25000; 
+const REQUEST_TIMEOUT = 30000; 
 
 
 function init() {

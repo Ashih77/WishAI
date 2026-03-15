@@ -1,9 +1,9 @@
 const VERSIONS = ['v1beta', 'v1'];
-const FALLBACK_MODELS = [
+const MODELS = [
+    'gemini-2.0-flash-exp',
+    'gemini-2.0-flash',
     'gemini-1.5-flash',
-    'gemini-1.5-flash-latest',
-    'gemini-1.5-pro',
-    'gemini-pro'
+    'gemini-1.5-pro'
 ];
 
 exports.handler = async (event) => {
@@ -20,56 +20,51 @@ exports.handler = async (event) => {
         const { model, contents, generationConfig } = JSON.parse(event.body);
         const apiKey = (process.env.GEMINI_API_KEY || '').trim().replace(/["']/g, '').replace(/\s/g, '');
 
-        if (!apiKey) return { statusCode: 401, headers, body: JSON.stringify({ error: 'API Key Missing in Netlify' }) };
+        if (!apiKey) return { statusCode: 401, headers, body: JSON.stringify({ error: 'API Key Missing' }) };
 
-        // 🛡️ INVINCIBLE RETRY LOOP
-        // We try the requested model first, then fallbacks, across all API versions.
-        const modelsToTry = [...new Set([model, ...FALLBACK_MODELS])].filter(Boolean);
-        let lastResponse = null;
-        let lastErrorData = null;
+        // Try combinations
+        const tryList = [...new Set([model, ...MODELS])].filter(Boolean);
+        let errorResult = null;
 
-        for (const m of modelsToTry) {
+        for (const m of tryList) {
             for (const v of VERSIONS) {
                 try {
-                    const url = `https://generativelanguage.googleapis.com/${v}/models/${m}:generateContent?key=${apiKey}`;
-                    console.log(`Trying: ${v} / ${m}`);
-                    
-                    const res = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents, generationConfig })
-                    });
+                    // Try both direct and publishers path
+                    const paths = [`models/${m}`, `publishers/google/models/${m}`];
+                    for (const p of paths) {
+                        const url = `https://generativelanguage.googleapis.com/${v}/${p}:generateContent?key=${apiKey}`;
+                        const res = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ contents, generationConfig })
+                        });
 
-                    const data = await res.json();
+                        if (res.ok) {
+                            const data = await res.json();
+                            return { statusCode: 200, headers, body: JSON.stringify(data) };
+                        }
+                        
+                        const errData = await res.json().catch(() => ({}));
+                        errorResult = errData;
 
-                    if (res.ok) {
-                        return { statusCode: 200, headers, body: JSON.stringify(data) };
-                    }
-                    
-                    lastResponse = res;
-                    lastErrorData = data;
-                    
-                    // If it's a 429 (Quota) or 401 (Auth), don't keep trying other models, they will fail too.
-                    if (res.status === 429 || res.status === 401 || res.status === 403) {
-                        return { statusCode: res.status, headers, body: JSON.stringify(data) };
+                        // If quota or auth, stop retrying
+                        if (res.status === 429 || res.status === 401) {
+                            return { statusCode: res.status, headers, body: JSON.stringify(errData) };
+                        }
                     }
                 } catch (e) {
-                    console.error(`Fetch failed for ${m} on ${v}:`, e.message);
+                    console.error(`Retry failed for ${m} on ${v}`);
                 }
             }
         }
 
-        // If we reach here, all combinations failed
         return {
-            statusCode: lastResponse ? lastResponse.status : 404,
+            statusCode: 404,
             headers,
-            body: JSON.stringify({
-                error: 'All Gemini routes failed.',
-                googleError: lastErrorData || 'Is the API key valid?'
-            })
+            body: JSON.stringify({ error: 'All Google routes failed.', details: errorResult })
         };
 
-    } catch (error) {
-        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Internal Function Crash', details: error.message }) };
+    } catch (err) {
+        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Internal Error', details: err.message }) };
     }
 };

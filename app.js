@@ -815,14 +815,18 @@ async function generateSuggestions() {
         clearTimeout(timeoutId);
 
         const result = await res.json();
-        if (!result.ok) {
-            console.error("[WishAI Sync Error]", result);
-            throw new Error(result.message || result.error || "AI_OFFLINE");
+        
+        // Use result.data or fallback suggestions
+        let text = "";
+        if (result.ok) {
+            text = result.data.candidates?.[0]?.content?.parts?.[0]?.text;
         }
 
-        const data = result.data;
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!text) throw new Error('Empty response from AI');
+        if (!text) {
+            console.warn("[WishAI] Using Local Fallback Suggestions.");
+            text = "يوم جميل يشبه نقاء قلبك\nعام مليء بالسعادة والنجاح\nمبروك التخرج وفخورون بك جداً\nرمضان كريم وكل عام وأنتم بخير";
+        }
+        
         const suggestions = text.split('\n').map(l => l.replace(/^\d+[\.\)\-]\s*/, '').trim()).filter(l => l.length > 0).slice(0, 5);
 
         loadingEl.classList.add('hidden');

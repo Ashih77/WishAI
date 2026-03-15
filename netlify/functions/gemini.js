@@ -8,15 +8,6 @@ exports.handler = async (event) => {
 
     if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers, body: '' };
 
-    // 🛡️ EMERGENCY BACKUP: High-quality Arabic greetings if AI fails
-    const FALLBACK_SUGGESTIONS = [
-        "يوم جميل يشبه نقاء قلبك",
-        "أتمنى لك عاماً مليئاً بالنجاح والسعادة",
-        "مبروك التخرج، وفخورون جداً بك",
-        "رمضان كريم، أعاده الله عليك بالخير والبركات",
-        "كل عام وأنت بخير بمناسبة عيد ميلادك"
-    ];
-
     try {
         const apiKey = (process.env.GEMINI_API_KEY || '').trim().replace(/["']/g, '');
         if (!apiKey) return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'API_KEY_MISSING' }) };
@@ -26,64 +17,60 @@ exports.handler = async (event) => {
 
         const isImage = body.action === 'generate';
         
-        // 🎯 THE ULTIMATE PROBE: Multi-Model Discovery for both Text and Image
-        const textModels = [
-            { v: 'v1', m: 'gemini-1.5-flash' },
-            { v: 'v1beta', m: 'gemini-1.5-flash' },
-            { v: 'v1', m: 'gemini-pro' }
-        ];
+        // 🎯 THE SCIENTIFIC ACCURACY: Targeted Models from Account Audit
+        // Use Gemini 2.0 for instantaneous Text, and the verified Nano Banana for Images.
+        const TEXT_MODEL = 'gemini-2.0-flash-latest';
+        const IMAGE_MODEL = 'nano-banana-pro-preview'; 
 
-        const imageModels = [
-            { v: 'v1beta', m: 'imagen-3.0-generate-001' },
-            { v: 'v1beta', m: 'gemini-1.5-flash-002' },
-            { v: 'v1beta', m: 'gemini-1.5-flash' }
-        ];
+        const selectedModel = isImage ? IMAGE_MODEL : TEXT_MODEL;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
 
-        const routes = isImage ? imageModels : textModels;
-        let lastError = null;
+        const payload = {
+            contents: body.contents,
+            generationConfig: isImage 
+                ? { responseModalities: ["IMAGE"], temperature: 1.0 }
+                : { temperature: 0.7 }
+        };
 
-        for (const route of routes) {
-            try {
-                const url = `https://generativelanguage.googleapis.com/${route.v}/models/${route.m}:generateContent?key=${apiKey}`;
-                
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: body.contents,
-                        generationConfig: isImage 
-                            ? { responseModalities: ["IMAGE"], temperature: 1.0 }
-                            : { temperature: 0.7 }
-                    })
-                });
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
 
-                const data = await response.json();
-                if (response.ok) return { statusCode: 200, headers, body: JSON.stringify({ ok: true, data, used: `${route.v}/${route.m}` }) };
-                lastError = data.error?.message || 'Unknown Error';
-            } catch (e) {
-                lastError = e.message;
-            }
-        }
+        const data = await response.json();
 
-        // 🚨 CRITICAL RECOVERY: If Text fails, return fallback suggestions so the UI never stays empty
-        if (!isImage) {
-            console.warn("[WishAI] Text AI failed, providing emergency fallback suggestions.");
+        if (response.ok) {
             return { 
                 statusCode: 200, 
                 headers, 
-                body: JSON.stringify({ 
-                    ok: true, 
-                    isFallback: true,
-                    data: {
-                        candidates: [{ content: { parts: [{ text: FALLBACK_SUGGESTIONS.join('\n') }] } }]
-                    }
-                }) 
+                body: JSON.stringify({ ok: true, data, used: selectedModel }) 
             };
         }
 
-        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'SERVICE_UNAVAILABLE', details: lastError }) };
+        // 🛡️ High-Tier Resilience: Fallback to Multimodal Gamma if Nano Banana is busy
+        if (isImage) {
+            const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-latest:generateContent?key=${apiKey}`;
+            const fallbackRes = await fetch(fallbackUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const fallbackData = await fallbackRes.json();
+            if (fallbackRes.ok) return { statusCode: 200, headers, body: JSON.stringify({ ok: true, data: fallbackData, used: 'gemini-2.0-fallback' }) };
+        }
+
+        return { 
+            statusCode: 200, 
+            headers, 
+            body: JSON.stringify({ 
+                ok: false, 
+                error: 'PROVIDER_ISSUE', 
+                message: data.error?.message || 'Check Quota' 
+            }) 
+        };
 
     } catch (err) {
-        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'CRITICAL_CRASH', details: err.message }) };
+        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'PROXY_CRASH', details: err.message }) };
     }
 };

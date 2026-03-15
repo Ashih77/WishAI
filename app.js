@@ -807,12 +807,19 @@ async function generateSuggestions() {
             list.appendChild(item);
         });
     } catch (e) {
-        console.error(e);
+        console.error("AI Error:", e);
         loadingEl.classList.add('hidden');
-        const msg = (e.message.includes('400') || e.message.includes('401')) 
-            ? (state.lang === 'ar' ? 'نم إدخال مفتاح API غير صالح أو منتهي في Netlify' : 'Invalid or expired API key in Netlify')
-            : (state.lang === 'ar' ? 'حدث خطأ، حاول مرة أخرى' : 'Error, try again');
-        list.innerHTML = `<div style="color:var(--important);text-align:center;padding:10px;font-size:0.9rem;">${msg}</div>`;
+        
+        let msg = state.lang === 'ar' ? 'فشل الاتصال: ' : 'Connection Failed: ';
+        if (e.message.includes('400') || e.message.includes('401')) {
+            msg += state.lang === 'ar' ? 'مفتاح API غير صالح' : 'Invalid API Key';
+        } else if (e.message.includes('429')) {
+            msg += state.lang === 'ar' ? 'تجاوزت حد الاستخدام' : 'Quota Exceeded';
+        } else {
+            msg += e.message;
+        }
+        
+        list.innerHTML = `<div style="color:var(--important);text-align:center;padding:10px;font-size:0.8rem;direction:ltr;">${msg}</div>`;
     }
     btn.classList.remove('loading');
 }
@@ -920,7 +927,13 @@ Ensure ${langLabel} text is clear and artistic. Connections must be correct.`;
 
     } catch (e) {
         console.error("Radical Gen failure:", e);
-        fallback();
+        const errorMsg = document.createElement('div');
+        errorMsg.style.color = 'var(--important)';
+        errorMsg.style.fontSize = '0.8rem';
+        errorMsg.style.marginTop = '10px';
+        errorMsg.textContent = `General Error: ${e.message}`;
+        loading.appendChild(errorMsg);
+        setTimeout(() => fallback(), 3000);
     }
 }
 

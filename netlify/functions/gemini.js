@@ -1,5 +1,3 @@
-const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
-
 exports.handler = async (event) => {
     const headers = {
         'Access-Control-Allow-Origin': '*',
@@ -20,29 +18,48 @@ exports.handler = async (event) => {
             return { statusCode: 200, headers, body: JSON.stringify({ status: 'OK', keyLen: apiKey.length }) };
         }
 
-        // 🎯 Nano Banana 2 (Imagen 3) Protocol
-        const res = await fetch(`${API_URL}?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: body.contents,
-                generationConfig: {
-                    responseModalities: ["IMAGE"],
-                    temperature: 1.0
-                }
-            })
-        });
+        // 🛡️ Top Engineering: Try multiple model/version combinations for Imagen 3 (Nano Banana 2)
+        const attempts = [
+            { v: 'v1beta', m: 'gemini-1.5-flash' },
+            { v: 'v1', m: 'gemini-1.5-flash' },
+            { v: 'v1beta', m: 'imagen-3.0-generate-001' }
+        ];
 
-        const data = await res.json();
-        
-        // 🛡️ Top Engineering: Never return 404 to browser, return 200 with error details
+        let lastResult = null;
+
+        for (const attempt of attempts) {
+            try {
+                const url = `https://generativelanguage.googleapis.com/${attempt.v}/models/${attempt.m}:generateContent?key=${apiKey}`;
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: body.contents,
+                        generationConfig: body.generationConfig || {
+                            responseModalities: ["IMAGE"],
+                            temperature: 1.0
+                        }
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    return { statusCode: 200, headers, body: JSON.stringify({ ok: true, data: data }) };
+                }
+                lastResult = { status: res.status, data: data };
+            } catch (e) {
+                console.error(`Attempt with ${attempt.m} failed`);
+            }
+        }
+
+        // Return the last error details if all failed
         return { 
             statusCode: 200, 
             headers, 
             body: JSON.stringify({ 
-                ok: res.ok, 
-                data: data,
-                status: res.status 
+                ok: false, 
+                data: lastResult?.data || 'All model variations failed.',
+                status: lastResult?.status || 404
             }) 
         };
 

@@ -1,7 +1,4 @@
-const API_V1BETA = 'https://generativelanguage.googleapis.com/v1beta/models';
-const API_V1 = 'https://generativelanguage.googleapis.com/v1/models';
-
-exports.handler = async (event, context) => {
+exports.handler = async (event) => {
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type',
@@ -13,51 +10,51 @@ exports.handler = async (event, context) => {
 
     try {
         const apiKey = (process.env.GEMINI_API_KEY || '').trim().replace(/["']/g, '');
-        
-        if (!apiKey) {
-            console.error('[WishAI PROXY] CRITICAL: GEMINI_API_KEY is missing.');
-            return { statusCode: 401, headers, body: JSON.stringify({ error: 'CONFIG_MISSING', message: 'API Key not found in Environment Variables' }) };
-        }
+        if (!apiKey) return { statusCode: 401, headers, body: JSON.stringify({ error: 'CONFIG_MISSING' }) };
 
         const body = JSON.parse(event.body);
         
-        // 🔹 Action Dispatcher
+        // 🔹 Heartbeat Diagnostic
         if (body.action === 'heartbeat') {
-            return { statusCode: 200, headers, body: JSON.stringify({ status: 'OK', keyLength: apiKey.length }) };
+            return { statusCode: 200, headers, body: JSON.stringify({ status: 'OK', keyLen: apiKey.length }) };
         }
 
-        // 🔹 Default to Gemini 1.5 Flash for maximum stability
-        const model = body.model || 'gemini-1.5-flash';
-        const url = `${API_V1BETA}/${model}:generateContent?key=${apiKey}`;
-
-        console.log(`[WishAI PROXY] Calling Gemini: ${model}`);
+        // 🔹 Nano Banana 2 (Imagen 3) Dedicated Protocol
+        // In AI Studio, Imagen 3 is accessed via gemini-1.5-flash + responseModalities: ["IMAGE"]
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
         const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 contents: body.contents,
-                generationConfig: body.generationConfig || { temperature: 0.7 }
+                generationConfig: body.generationConfig || {
+                    temperature: 0.7,
+                    responseModalities: ["IMAGE"]
+                },
+                safetySettings: [
+                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
+                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
+                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
+                ]
             })
         });
 
         const data = await response.json();
         
-        // Fallback to v1 if v1beta fails with 404
-        if (response.status === 404) {
-             const v1Url = `${API_V1}/${model}:generateContent?key=${apiKey}`;
-             const v1Response = await fetch(v1Url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: body.contents })
-             });
-             return { statusCode: v1Response.status, headers, body: JSON.stringify(await v1Response.json()) };
+        if (!response.ok) {
+            console.error('[Google API Error]', JSON.stringify(data));
+            return { 
+                statusCode: response.status, 
+                headers, 
+                body: JSON.stringify({ error: 'GOOGLE_REJECTED', details: data.error || data }) 
+            };
         }
 
-        return { statusCode: response.status, headers, body: JSON.stringify(data) };
+        return { statusCode: 200, headers, body: JSON.stringify(data) };
 
     } catch (err) {
-        console.error('[WishAI PROXY] Crash:', err.message);
-        return { statusCode: 500, headers, body: JSON.stringify({ error: 'PROXY_CRASH', details: err.message }) };
+        return { statusCode: 500, headers, body: JSON.stringify({ error: 'PROXY_CRASH', message: err.message }) };
     }
 };

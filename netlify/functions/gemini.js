@@ -13,55 +13,58 @@ exports.handler = async (event) => {
         if (!apiKey) return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'API_KEY_MISSING' }) };
 
         const body = JSON.parse(event.body);
+        
+        // 🔹 Heartbeat
         if (body.action === 'heartbeat') return { statusCode: 200, headers, body: JSON.stringify({ status: 'OK', keyLen: apiKey.length }) };
 
-        /**
-         * 🎯 THE 100% RELIABILITY MATRIX
-         * Tries all possible Stable and Beta endpoints for Imagen 3 (Nano Banana 2)
-         */
-        const matrix = [
-            { v: 'v1', m: 'gemini-1.5-flash' },
-            { v: 'v1beta', m: 'gemini-1.5-flash' },
-            { v: 'v1beta', m: 'imagen-3.0-generate-001' },
-            { v: 'v1', m: 'gemini-1.5-pro' }
-        ];
+        let url, payload;
 
-        let lastErr = null;
-
-        for (const route of matrix) {
-            try {
-                const url = `https://generativelanguage.googleapis.com/${route.v}/models/${route.m}:generateContent?key=${apiKey}`;
-                
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: body.contents,
-                        generationConfig: body.action === 'suggestions' 
-                            ? { temperature: 0.7 }
-                            : { responseModalities: ["IMAGE"], temperature: 1.0 }
-                    })
-                });
-
-                const data = await response.json();
-                if (response.ok) {
-                    return { statusCode: 200, headers, body: JSON.stringify({ ok: true, data, used: `${route.v}/${route.m}` }) };
+        if (body.action === 'suggestions') {
+            // 📝 Text Route: Stable v1 for instant suggestions
+            url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+            payload = {
+                contents: body.contents,
+                generationConfig: { temperature: 0.7 }
+            };
+        } else {
+            // 🎨 Image Route: Nano Banana 2 (Imagen 3) Dedicated Path
+            url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:generateContent?key=${apiKey}`;
+            payload = {
+                contents: body.contents,
+                generationConfig: {
+                    responseModalities: ["IMAGE"],
+                    temperature: 1.0
                 }
-                lastErr = data.error?.message || 'Unknown Failure';
-            } catch (e) { continue; }
+            };
         }
 
-        return { 
-            statusCode: 200, 
-            headers, 
-            body: JSON.stringify({ 
-                ok: false, 
-                error: 'ALL_ENDPOINTS_FAILED', 
-                details: lastErr 
-            }) 
-        };
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        // 🛡️ Failover: If Imagen 3 fails, try Multimodal Flash on v1beta
+        if (!response.ok && body.action === 'generate') {
+            const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+            const fallbackRes = await fetch(fallbackUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const fallbackData = await fallbackRes.json();
+            return { 
+                statusCode: 200, 
+                headers, 
+                body: JSON.stringify({ ok: fallbackRes.ok, data: fallbackData }) 
+            };
+        }
+
+        return { statusCode: 200, headers, body: JSON.stringify({ ok: response.ok, data: data }) };
 
     } catch (err) {
-        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'SYSTEM_CRASH', details: err.message }) };
+        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'SYSTEM_ERROR', details: err.message }) };
     }
 };

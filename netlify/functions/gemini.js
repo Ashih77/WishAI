@@ -13,20 +13,19 @@ exports.handler = async (event) => {
         if (!apiKey) return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'API_KEY_MISSING' }) };
 
         const body = JSON.parse(event.body);
-        
-        // 🔹 Heartbeat Diagnostic
-        if (body.action === 'heartbeat') {
-            return { statusCode: 200, headers, body: JSON.stringify({ status: 'OK', keyLen: apiKey.length }) };
-        }
+        if (body.action === 'heartbeat') return { statusCode: 200, headers, body: JSON.stringify({ status: 'OK', keyLen: apiKey.length }) };
 
-        // 🎯 THE FINAL PROBE: Targeted Nano Banana 2 (Imagen 3) Integration
-        // We try the two most likely successful paths for Imagen 3
+        /**
+         * 🎯 THE 1% ELITE PROBE
+         * Tries stable v1 paths first to avoid the 404 error, then fallbacks to v1beta.
+         */
         const models = [
-            { v: 'v1beta', m: 'imagen-3.0-generate-001' },
-            { v: 'v1beta', m: 'gemini-1.5-flash' }
+            { v: 'v1', m: 'gemini-1.5-flash' },     // Attempt 1: Stable v1 (Most likely to succeed)
+            { v: 'v1beta', m: 'gemini-1.5-flash' }, // Attempt 2: Beta version
+            { v: 'v1beta', m: 'imagen-3.0-generate-001' } // Attempt 3: Direct Imagen 3
         ];
 
-        let lastError = null;
+        let lastRes = null;
 
         for (const model of models) {
             try {
@@ -44,32 +43,24 @@ exports.handler = async (event) => {
                 });
 
                 const data = await response.json();
-                
                 if (response.ok) {
-                    return { 
-                        statusCode: 200, 
-                        headers, 
-                        body: JSON.stringify({ ok: true, data: data, active_model: model.m }) 
-                    };
+                    return { statusCode: 200, headers, body: JSON.stringify({ ok: true, data, used: model.m }) };
                 }
-                lastError = data.error?.message || 'Unknown Error';
-            } catch (e) {
-                lastError = e.message;
-            }
+                lastRes = data;
+            } catch (e) { continue; }
         }
 
-        // Return a detailed diagnostic instead of a raw 404
         return { 
             statusCode: 200, 
             headers, 
             body: JSON.stringify({ 
                 ok: false, 
-                error: 'NANO_BANANA_DENIED', 
-                message: lastError 
+                error: 'ALL_MODELS_FAILED', 
+                details: lastRes?.error?.message || 'Check Billing/Region'
             }) 
         };
 
     } catch (err) {
-        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'INTERNAL_CRASH', details: err.message }) };
+        return { statusCode: 200, headers, body: JSON.stringify({ ok: false, error: 'PROXY_CRASH', details: err.message }) };
     }
 };

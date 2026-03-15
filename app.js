@@ -190,11 +190,11 @@ let state = {
 
 // 🔒 Security Update: API Key moved to Netlify environment variables
 const API_BASE = '/.netlify/functions/gemini';
-const AI_MODEL = 'gemini-1.5-flash'; 
-const NB2_MODEL = 'gemini-1.5-flash'; // Confirmed stable for text+logic
-const NB2_IMAGE_MODEL = 'gemini-2.0-flash'; // High-end image model for v1beta
-const NB2_BACKUP = 'gemini-1.5-pro';
-const REQUEST_TIMEOUT = 25000; // Increased to 25s for image heavy tasks
+const AI_MODEL = 'gemini-1.5-flash-latest'; 
+const NB2_MODEL = 'gemini-1.5-flash-latest'; 
+const NB2_IMAGE_MODEL = 'gemini-1.5-flash-latest'; 
+const NB2_BACKUP = 'gemini-1.5-pro-latest';
+const REQUEST_TIMEOUT = 30000; 
 
 
 function init() {
@@ -786,7 +786,8 @@ async function generateSuggestions() {
 
         if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
-            throw new Error(`API ${res.status}: ${errData.error || 'Unknown Error'}`);
+            const errorReason = errData.error?.message || errData.error || 'Unknown API Error';
+            throw new Error(`API ${res.status}: ${errorReason}`);
         }
         const data = await res.json();
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;

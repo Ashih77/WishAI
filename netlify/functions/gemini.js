@@ -1,4 +1,4 @@
-const API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+const API_BASE = 'https://generativelanguage.googleapis.com/v1/models';
 
 exports.handler = async (event) => {
     // 1. Correct Headers for CORS & JSON

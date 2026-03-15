@@ -43,7 +43,7 @@ const translations = {
         'style-cinematic': 'تصوير سينمائي',
         'style-illustration': 'رسم توضيحي',
         'style-papercraft': 'فن ورقي',
-        'live-preview': 'معاينة مباشرة (تصميم تخيلي)',
+        'content-elements': 'عناصر البطاقة:',
         'share': 'مشاركة 🔗'
     },
     en: {
@@ -90,7 +90,7 @@ const translations = {
         'style-cinematic': 'Cinematic',
         'style-illustration': 'Illustration',
         'style-papercraft': 'Papercraft',
-        'live-preview': 'Live Preview (Estimated)',
+        'content-elements': 'Card Elements:',
         'share': 'Share 🔗'
     }
 };
@@ -185,7 +185,8 @@ let state = {
     style: 'modern',
     details: 7,
     colorIntensity: 5,
-    palette: 'auto'
+    palette: 'auto',
+    contentElements: []
 };
 
 // 🔒 Security Update: API Key moved to Netlify environment variables
@@ -599,11 +600,23 @@ function bindEvents() {
         };
     });
 
+    // Content Elements Toggle
+    document.querySelectorAll('.element-chip[data-element]').forEach(chip => {
+        chip.onclick = () => {
+            chip.classList.toggle('active');
+            const el = chip.dataset.element;
+            if (chip.classList.contains('active')) {
+                if (!state.contentElements.includes(el)) state.contentElements.push(el);
+            } else {
+                state.contentElements = state.contentElements.filter(e => e !== el);
+            }
+        };
+    });
+
     document.getElementById('generate-btn').onclick = () => {
         state.name = document.getElementById('user-name').value.trim();
         state.greeting = document.getElementById('greeting-text').value.trim();
         state.instructions = document.getElementById('custom-instructions').value.trim();
-        console.log("State updated with instructions:", state.instructions);
 
         if (!state.name) return alert(state.lang === 'ar' ? 'أدخل اسمك' : 'Enter your name');
         if (!state.occasion) return alert(state.lang === 'ar' ? 'اختر مناسبة' : 'Select an occasion');
@@ -747,32 +760,7 @@ function updateText() {
 }
 
 function updatePreview() {
-    const name = document.getElementById('user-name').value.trim();
-    const greeting = document.getElementById('greeting-text').value.trim();
-    
-    document.getElementById('preview-greeting-text').textContent = greeting || (state.lang === 'ar' ? 'نص التهنئة' : 'Greeting Text');
-    document.getElementById('preview-name-text').textContent = name ? (state.lang === 'ar' ? `بواسطة: ${name}` : `By: ${name}`) : '';
-    
-    // Update mini-card background based on occasion
-    const previewCard = document.getElementById('mini-card-preview');
-    if (state.occasion) {
-        const colors = {
-            ramadan: 'linear-gradient(135deg, #1e3a8a, #1e1b4b)',
-            eid: 'linear-gradient(135deg, #065f46, #064e3b)',
-            birthday: 'linear-gradient(135deg, #9d174d, #831843)',
-            wedding: 'linear-gradient(135deg, #f59e0b, #d97706)',
-            graduation: 'linear-gradient(135deg, #1f2937, #111827)',
-            success: 'linear-gradient(135deg, #ca8a04, #a16207)',
-            newborn: 'linear-gradient(135deg, #0ea5e9, #0284c7)',
-            love: 'linear-gradient(135deg, #dc2626, #991b1b)',
-            friendship: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
-            daily: 'linear-gradient(135deg, #22c55e, #15803d)',
-            newyear: 'linear-gradient(135deg, #4b5563, #1f2937)',
-            thankyou: 'linear-gradient(135deg, #6366f1, #4338ca)'
-        };
-        const bg = document.querySelector('.mini-card-bg');
-        if (bg) bg.style.background = colors[state.occasion] || colors.daily;
-    }
+    // Live preview removed; function kept as no-op for compatibility
 }
 
 function go(n) {
@@ -939,13 +927,29 @@ async function generate() {
     const occDesc = state.lang === 'ar' ? occ.descAr : occ.descEn;
     const langLabel = state.lang === 'ar' ? 'Arabic' : 'English';
 
+    // Build content elements description
+    const elemMap = {
+        people: state.lang === 'ar' ? 'أشخاص يحتفلون' : 'people celebrating',
+        landmarks: state.lang === 'ar' ? 'معالم ومساجد وأماكن دينية' : 'landmarks, mosques, and religious places',
+        food: state.lang === 'ar' ? 'طعام وحلويات وكعك المناسبة' : 'food, sweets, and occasion-specific treats',
+        decorations: state.lang === 'ar' ? 'زخارف إسلامية وفوانيس وإضاءات احتفالية' : 'Islamic patterns, lanterns, and festive decorations',
+        nature: state.lang === 'ar' ? 'طبيعة خلابة وورود وأزهار' : 'beautiful nature, roses, and flowers',
+        candles: state.lang === 'ar' ? 'شموع مضيئة وإضاءة دافئة وأنوار رومانسية' : 'glowing candles, warm lighting, and romantic ambiance'
+    };
+    const selectedElements = state.contentElements.map(e => elemMap[e] || e).join(', ');
+    const elemInstruction = selectedElements 
+        ? `MUST INCLUDE these elements in the image: ${selectedElements}.` 
+        : '';
+
     const prompt = `Create a stunning, high-resolution vertical greeting card.
 Occasion: ${occDesc}.
 Style: ${state.style} (${state.subStyle || 'Modern'}).
 Quality: Cinematic lighting, 8k, professional.
+${elemInstruction}
 Instructions: ${state.instructions || 'None'}.
-TEXT TO RENDER: "${state.greeting}" (Main greeting) and "${state.name}" (Sender name).
-Ensure ${langLabel} text is clear and artistic. Connections must be correct.`;
+TEXT TO RENDER ON THE CARD: "${state.greeting}". Write the sender name "${state.name}" only once at the bottom.
+IMPORTANT: Do NOT duplicate any text. Each text element must appear exactly once.
+Ensure ${langLabel} text is clear, artistic, and properly connected.`;
 
     function showImage(base64, mimeType) {
         const src = `data:${mimeType};base64,${base64}`;

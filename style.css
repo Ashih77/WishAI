@@ -1434,7 +1434,25 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 @media (max-width: 600px) {
     .app-shell {
-        padding: 16px 16px 32px;
+        padding: 16px 12px 32px;
+    }
+
+    .header {
+        flex-direction: column;
+        gap: 16px;
+        height: auto;
+        margin-bottom: 24px;
+    }
+
+    .brand-name {
+        font-size: 1.5rem;
+    }
+
+    .header-actions {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 12px;
     }
 
     .card {
@@ -1443,11 +1461,20 @@ input[type="range"]::-webkit-slider-thumb:hover {
     }
 
     .card-header h2 {
-        font-size: 1.3rem;
+        font-size: 1.4rem;
+        padding-bottom: 4px;
+    }
+
+    .subtitle {
+        font-size: 0.9rem;
     }
 
     .occasions {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .content-elements-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 
     .chip-group {
@@ -1465,14 +1492,13 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
     .btn-row {
         flex-direction: column;
+        width: 100%;
     }
 
-    .btn-row .btn-primary {
+    .btn-row .btn-primary, 
+    .btn-row .btn-outline {
         max-width: 100%;
-    }
-
-    .brand-name {
-        font-size: 1.3rem;
+        width: 100%;
     }
 
     .gallery-grid {
@@ -1481,6 +1507,28 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
     .advanced-panel.open {
         padding: 16px 12px;
+    }
+
+    .style-cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 400px) {
+    .occasions {
+        grid-template-columns: 1fr;
+    }
+    
+    .content-elements-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .style-cards-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .palette-group {
+        grid-template-columns: 1fr;
     }
 }
 

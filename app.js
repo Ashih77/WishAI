@@ -25,6 +25,7 @@ const translations = {
         'no-cards-saved': 'لم تقم بتوليد أي بطاقات حتى الآن.',
         'back-home': 'العودة للرئيسية',
         'delete-card': 'حذف',
+        'remix': 'تعديل',
         'download': 'تحميل البطاقة',
         'create-new': 'تصميم جديد',
         'logout': 'تسجيل الخروج',
@@ -72,6 +73,7 @@ const translations = {
         'no-cards-saved': 'You haven\'t generated any cards yet.',
         'back-home': 'Back Home',
         'delete-card': 'Delete',
+        'remix': 'Remix / Edit',
         'download': 'Download Card',
         'create-new': 'New Design',
         'logout': 'Logout',
@@ -568,20 +570,27 @@ function bindEvents() {
                 subPanel.classList.remove('hidden');
                 options.forEach((opt, index) => {
                     const btn = document.createElement('button');
+                    const enVal = subStylesConfig[state.style].en[index];
                     btn.className = 'chip';
                     btn.type = 'button';
+                    btn.dataset.en = enVal;
                     btn.innerHTML = `<span class="chip-icon">✨</span><span>${opt}</span>`;
                     btn.onclick = () => {
                         document.querySelectorAll('#sub-style-chips .chip').forEach(x => x.classList.remove('active', 'selected'));
                         btn.classList.add('active', 'selected');
-                        // Use English equivalent for state.subStyle value to keep prompt consistent for AI
-                        state.subStyle = subStylesConfig[state.style].en[index];
+                        state.subStyle = enVal;
                     };
                     subContainer.appendChild(btn);
                 });
 
-                // Select first option by default
-                subContainer.firstChild.click();
+                // Select first option by default unless state already has one that matches
+                if (state.subStyle) {
+                    const existingBtn = subContainer.querySelector(`[data-en="${state.subStyle}"]`);
+                    if (existingBtn) existingBtn.click();
+                    else subContainer.firstChild.click();
+                } else {
+                    subContainer.firstChild.click();
+                }
             } else {
                 subPanel.classList.add('hidden');
             }
@@ -636,6 +645,10 @@ function bindEvents() {
         document.getElementById('suggestions-container').classList.add('hidden');
         go(1);
         renderOccasions();
+    };
+
+    document.getElementById('remix-btn').onclick = () => {
+        go(1); // Go back without resetting state
     };
 
     document.getElementById('my-cards-btn').onclick = () => {
@@ -936,16 +949,27 @@ async function generate() {
         nature: state.lang === 'ar' ? 'طبيعة خلابة وورود وأزهار' : 'beautiful nature, roses, and flowers',
         candles: state.lang === 'ar' ? 'شموع مضيئة وإضاءة دافئة وأنوار رومانسية' : 'glowing candles, warm lighting, and romantic ambiance'
     };
-    const selectedElements = state.contentElements.map(e => elemMap[e] || e).join(', ');
+    
+    const selectedElements = state.contentElements.map(e => elemMap[e]).join(' AND ');
+    const allElements = Object.keys(elemMap);
+    const unselectedElements = allElements.filter(e => !state.contentElements.includes(e)).map(e => elemMap[e]).join(', ');
+
     const elemInstruction = selectedElements 
-        ? `MUST INCLUDE these elements in the image: ${selectedElements}.` 
+        ? `CRITICAL REQUIREMENT: You MUST clearly and prominently INCLUDE THESE SPECIFIC ELEMENTS in the image: ${selectedElements}.` 
+        : '';
+        
+    const negativeInstruction = unselectedElements
+        ? `CRITICAL REQUIREMENT: You MUST NOT INCLUDE any of the following elements under any circumstances (ignore them even if the occasion usually has them): ${unselectedElements}.`
         : '';
 
     const prompt = `Create a stunning, high-resolution vertical greeting card.
-Occasion: ${occDesc}.
+Occasion Context: ${occDesc}
 Style: ${state.style} (${state.subStyle || 'Modern'}).
 Quality: Cinematic lighting, 8k, professional.
+
 ${elemInstruction}
+${negativeInstruction}
+
 Instructions: ${state.instructions || 'None'}.
 TEXT TO RENDER ON THE CARD: "${state.greeting}". Write the sender name "${state.name}" only once at the bottom.
 IMPORTANT: Do NOT duplicate any text. Each text element must appear exactly once.
@@ -1055,7 +1079,8 @@ function fallback() {
 function saveCard(src, occId, name, isFallback = false) {
     try {
         let cards = JSON.parse(localStorage.getItem('wishai_cards') || '[]');
-        cards.unshift({ id: Date.now(), src, occId, name, date: new Date().toISOString(), isFallback });
+        const cardState = JSON.parse(JSON.stringify(state)); // Clone current state 
+        cards.unshift({ id: Date.now(), src, occId, name, date: new Date().toISOString(), isFallback, state: cardState });
         if (cards.length > 15) cards.pop();
 
         // Try to save. If it fails due to quota, keep popping until it fits, or abandon.
@@ -1084,17 +1109,81 @@ function renderGallery() {
     } else {
         empty.classList.add('hidden');
         grid.classList.remove('hidden');
-        grid.innerHTML = cards.map(c => `
+        grid.innerHTML = cards.map(c => {
+            const safeName = c.name ? c.name.replace(/'/g, "\\'") : '';
+            return `
             <div class="gallery-item">
                 <img src="${c.src}">
                 <div class="gallery-overlay">
                     <div class="gallery-actions">
-                        <button onclick="downloadCard('${c.src}', '${c.name}')">⬇️</button>
-                        <button onclick="deleteCard(${c.id})">🗑️</button>
+                        <button onclick="remixCard(${c.id})" title="${state.lang === 'ar' ? 'تعديل وإعادة توليد' : 'Remix'}">✏️</button>
+                        <button onclick="downloadCard('${c.src}', '${safeName}')" title="${state.lang === 'ar' ? 'تحميل' : 'Download'}">⬇️</button>
+                        <button onclick="deleteCard(${c.id})" title="${state.lang === 'ar' ? 'حذف' : 'Delete'}">🗑️</button>
                     </div>
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
+    }
+}
+
+function remixCard(id) {
+    const cards = JSON.parse(localStorage.getItem('wishai_cards') || '[]');
+    const card = cards.find(c => c.id === id);
+    if (!card || !card.state) return alert(state.lang === 'ar' ? 'بيانات هذه البطاقة غير متوفرة للتعديل' : 'Card data not available for remix');
+    
+    // Restore generation parameters only (protect auth and lang)
+    const savedState = card.state;
+    const params = ['name', 'occasion', 'greeting', 'instructions', 'style', 'subStyle', 'details', 'colorIntensity', 'palette', 'contentElements'];
+    params.forEach(p => {
+        if (savedState[p] !== undefined) state[p] = JSON.parse(JSON.stringify(savedState[p]));
+    });
+
+    // Update Text Inputs
+    document.getElementById('user-name').value = state.name || '';
+    document.getElementById('greeting-text').value = state.greeting || '';
+    document.getElementById('custom-instructions').value = state.instructions || '';
+    
+    // Occasions UI (implicitly re-binds greeting if changed, so do this first, then override greeting)
+    renderOccasions();
+    document.getElementById('greeting-text').value = state.greeting || ''; 
+    document.getElementById('greeting-field').classList.remove('hidden');
+
+    // Advanced UI Sliders
+    document.getElementById('pref-details').value = state.details;
+    document.getElementById('detail-value').textContent = state.details;
+    
+    document.getElementById('pref-colors').value = state.colorIntensity;
+    const labels = state.lang === 'ar' ? ['باهت', 'متوازن', 'غني'] : ['Pale', 'Balanced', 'Rich'];
+    let label = labels[1];
+    if (state.colorIntensity < 4) label = labels[0];
+    else if (state.colorIntensity > 7) label = labels[2];
+    document.getElementById('color-value').textContent = label;
+
+    // Style Chips
+    const styleCard = document.querySelector(`.style-card[data-value="${state.style}"]`);
+    if (styleCard) styleCard.click(); 
+
+    // Palette Chips
+    document.querySelectorAll('.palette-chip').forEach(c => c.classList.remove('active', 'selected'));
+    const pChip = document.querySelector(`.palette-chip[data-palette="${state.palette}"]`);
+    if (pChip) pChip.classList.add('active', 'selected');
+
+    // Content Elements
+    document.querySelectorAll('.element-chip').forEach(c => {
+        c.classList.remove('active');
+        if (state.contentElements && state.contentElements.includes(c.dataset.element)) {
+            c.classList.add('active');
+        }
+    });
+
+    // Go to Form
+    go(1);
+    
+    // Open advanced panel to show restored settings
+    const panel = document.getElementById('advanced-panel');
+    if (!panel.classList.contains('open')) {
+        document.getElementById('advanced-toggle').click();
     }
 }
 

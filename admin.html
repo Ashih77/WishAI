@@ -50,6 +50,18 @@
         }
         .loading { text-align: center; margin-top: 2rem; display: none; }
         .hidden { display: none !important; }
+
+        /* AI Analysis Modal & Buttons */
+        .btn-sm { padding: 8px 12px; font-size: 0.85rem; border-radius: 6px; border: none; cursor: pointer; color: #fff; width: auto; font-family: inherit; font-weight: bold; flex: 1; }
+        .btn-json { background: #3b82f6; }
+        .btn-json:hover { background: #2563eb; }
+        .btn-ai { background: #10b981; }
+        .btn-ai:hover { background: #059669; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 50; align-items: center; justify-content: center; }
+        .modal-content { background: var(--surface); padding: 2rem; border-radius: 12px; max-width: 600px; width: 90%; position: relative; max-height: 85vh; overflow-y: auto;}
+        .close-modal { position: absolute; top: 1rem; left: 1rem; background: none; border: none; color: #cbd5e1; font-size: 1.5rem; cursor: pointer; width: auto; padding: 0; }
+        .close-modal:hover { color: #fff; }
+        .ai-results h3 { margin-top: 0; color: var(--primary); border-bottom: 1px solid #334155; padding-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -78,6 +90,14 @@
             
             <div id="loading" class="loading">جاري جلب البيانات السحابية... ⏳</div>
             <div id="cloud-grid" class="grid"></div>
+        </div>
+
+        <!-- AI Modal -->
+        <div id="ai-modal" class="modal">
+            <div class="modal-content">
+                <button class="close-modal" aria-label="أغلق" onclick="document.getElementById('ai-modal').style.display='none'">✖</button>
+                <div id="ai-results"></div>
+            </div>
         </div>
     </div>
 
@@ -154,6 +174,10 @@
                             <strong>التهنئة:</strong> ${meta.greeting || '-'}<br>
                             ${meta.instructions ? `<strong>تعليمات إضافية:</strong> <span style="color:#fbbf24">${meta.instructions}</span>` : ''}
                         </div>
+                        <div style="padding: 12px; border-top: 1px solid #334155; background: #0f172a; display: flex; gap: 8px;">
+                            <button class="btn-sm btn-json" onclick='copyJson(${JSON.stringify(meta).replace(/'/g, "&#39;")})'>📋 نسخ JSON</button>
+                            <button class="btn-sm btn-ai" onclick='evaluateAI("${item.key}", "${pass}", ${JSON.stringify(meta).replace(/'/g, "&#39;")})'>🤖 تقييم AI</button>
+                        </div>
                     </div>
                 `;
             });
@@ -170,6 +194,83 @@
         passInput.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') loginBtn.click();
         });
+
+        // Copy JSON logic
+        function copyJson(meta) {
+            navigator.clipboard.writeText(JSON.stringify(meta, null, 2)).then(() => {
+                alert("تم نسخ وصف JSON بنجاح!");
+            });
+        }
+
+        // AI Evaluation Logic
+        async function evaluateAI(key, pass, meta) {
+            const modal = document.getElementById('ai-modal');
+            const resultsDiv = document.getElementById('ai-results');
+            modal.style.display = 'flex';
+            resultsDiv.innerHTML = '<div style="text-align:center; padding: 20px;">جاري دراسة الصورة وتقييم المعطيات بالذكاء الاصطناعي... ⏳<br><br><span style="font-size:0.85rem;color:#94a3b8;">قد يستغرق هذا بضع ثوانٍ</span></div>';
+
+            try {
+                // Fetch image base64
+                const imgRes = await fetch(`/api/get-cloud-image?key=${key}&pass=${pass}`);
+                const blob = await imgRes.blob();
+                const base64data = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                    reader.readAsDataURL(blob);
+                });
+
+                const prompt = `أنت خبير ذكاء اصطناعي يقوم بتقييم بطاقة تهنئة تم توليدها.
+المعطيات (JSON) التي طلبها المستخدم:
+\`\`\`json
+${JSON.stringify(meta, null, 2)}
+\`\`\`
+يرجى مطابقة الصورة المرفقة مع المعطيات، وإعطاء التقييم بناءً على: مدى الالتزام بـ (المناسبة، الأسلوب، التشكيل، موقع الاسم، التعليمات) والجودة الفنية للصورة.
+اكتب التقرير باللغة العربية حصراً بالضبط بالصيغة التالية (بدون زيادات):
+التقييم: [رقم من 10]
+الملخص: [جملتين تلخص نقاط القوة والضعف بشكل احترافي]
+الاقتراحات:
+- [نصيحة عملية 1 لتحسين معطيات JSON للحصول على نتيجة أفضل مستقبلا]
+- [نصيحة عملية 2]`;
+
+                const payload = {
+                    action: 'evaluate',
+                    contents: [
+                        {
+                            role: 'user',
+                            parts: [
+                                { text: prompt },
+                                { inlineData: { mimeType: 'image/jpeg', data: base64data } }
+                            ]
+                        }
+                    ]
+                };
+
+                const res = await fetch('/api/gemini', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await res.json();
+                
+                if (!data.ok) throw new Error(data.error || data.message || 'Failed to analyze');
+                
+                let aiText = data.data.candidates[0].content.parts[0].text;
+                // Format markdown list dashes and bolder text
+                aiText = aiText.replace(/\n- /g, '<br>• ')
+                               .replace(/التقييم:/g, '<strong>التقييم:</strong>')
+                               .replace(/الملخص:/g, '<br><strong>الملخص:</strong>')
+                               .replace(/الاقتراحات:/g, '<br><br><strong>الاقتراحات:</strong>');
+
+                resultsDiv.innerHTML = `
+                    <h3>🤖 تقرير التقييم الذكي</h3>
+                    <div style="line-height:1.7; font-size:1rem;">${aiText}</div>
+                `;
+            } catch (err) {
+                console.error(err);
+                resultsDiv.innerHTML = `<div style="color:#ef4444;text-align:center; padding: 20px;">حدث خطأ أثناء التقييم: ${err.message}</div>`;
+            }
+        }
     </script>
 </body>
 </html>

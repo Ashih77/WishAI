@@ -129,6 +129,22 @@
                         </div>
                     </div>
 
+                    <!-- Name Position (Moved here for priority) -->
+                    <div class="field hidden" id="position-field" style="margin-top: 10px;">
+                        <label data-i18n="name-position">موقع الاسم (أولوية):</label>
+                        <div class="position-group" id="name-position-group">
+                            <button type="button" class="position-chip" data-pos="top">
+                                <span data-i18n="pos-top">أعلى</span>
+                            </button>
+                            <button type="button" class="position-chip" data-pos="middle">
+                                <span data-i18n="pos-middle">وسط</span>
+                            </button>
+                            <button type="button" class="position-chip selected" data-pos="bottom">
+                                <span data-i18n="pos-bottom">أسفل</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Advanced Controls Toggle -->
                     <div class="advanced-toggle" id="advanced-toggle">
                         <div class="toggle-line"></div>
@@ -340,22 +356,6 @@
                             </div>
                         </div>
 
-                        <!-- Name Position -->
-                        <div class="field">
-                            <label data-i18n="name-position">موقع الاسم:</label>
-                            <div class="position-group" id="name-position-group">
-                                <button type="button" class="position-chip" data-pos="top">
-                                    <span data-i18n="pos-top">أعلى</span>
-                                </button>
-                                <button type="button" class="position-chip" data-pos="middle">
-                                    <span data-i18n="pos-middle">وسط</span>
-                                </button>
-                                <button type="button" class="position-chip selected" data-pos="bottom">
-                                    <span data-i18n="pos-bottom">أسفل</span>
-                                </button>
-                            </div>
-                        </div>
-
                     </div>
 
                     <!-- Custom Instructions -->
@@ -429,6 +429,23 @@
                         <button id="share-btn" class="btn-outline" data-i18n="share">مشاركة 🔗</button>
                         <button id="restart-btn" class="btn-primary" data-i18n="create-new">تصميم جديد</button>
                     </div>
+
+                    <!-- Post-Generation Rating -->
+                    <div id="rating-container" class="rating-container hidden">
+                        <div style="margin-top:24px; padding-top:24px; border-top:1px solid var(--border); text-align:center;">
+                            <h3 style="font-size:1.1rem; margin-bottom:10px;" data-i18n="rate-experience">كيف تقيم النتيجة؟</h3>
+                            <div class="stars" id="rating-stars" style="display:inline-flex; flex-direction:row-reverse; justify-content:center; gap:8px; font-size:2.2rem; cursor:pointer; margin-bottom:15px; color:var(--surface);">
+                                <span data-value="5">★</span>
+                                <span data-value="4">★</span>
+                                <span data-value="3">★</span>
+                                <span data-value="2">★</span>
+                                <span data-value="1">★</span>
+                            </div>
+                            <textarea id="rating-feedback" rows="2" placeholder="اكتب رأيك أو اقتراحك للتحسين (اختياري)..." style="width:100%; border-radius:12px; margin-bottom:15px;"></textarea>
+                            <button id="submit-rating-btn" class="btn-primary" style="width:100%;" disabled>إرسال التقييم</button>
+                            <div id="rating-thanks" class="hidden" style="color:var(--primary); font-weight:bold; margin-top:10px;">شكرًا لمشاركتك! أرسلنا رأيك للتحسين.</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -457,6 +474,13 @@
                 </div>
             </div>
         </section>
+
+        <!-- Site Footer -->
+        <footer class="site-footer" style="text-align:center; padding-top:30px; opacity:0.8; font-size:0.8rem;">
+            <p class="designer" style="margin-bottom:5px;">Designed with ❤️ by <a href="https://github.com/Ashih77" target="_blank" style="color:var(--primary);text-decoration:none;font-weight:bold;">Hossam Ashi</a></p>
+            <p class="notice" style="font-size:0.7rem; color:var(--dim);">تنويه: سيتم استخدام الصور والتقييمات لأغراض التطوير وتحسين جودة الخدمة.</p>
+        </footer>
+
     </div>
 
     <!-- Fullscreen Image Modal -->

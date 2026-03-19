@@ -38,10 +38,11 @@ const translations = {
         'text-formatting': 'تنسيق النص والاسم:',
         'tashkeel': 'تشكيل (حركات)',
         'zakhrafa': 'زخرفة خطية',
-        'name-position': 'موقع الاسم:',
+        'name-position': 'موقع الاسم (أولوية):',
         'pos-top': 'أعلى',
         'pos-middle': 'وسط',
         'pos-bottom': 'أسفل',
+        'rate-experience': 'كيف تقيم النتيجة؟',
         'style-modern': 'عصري وحديث',
         'style-traditional': 'تراثي كلاسيكي',
         'style-minimalist': 'بسيط وأنيق',
@@ -93,10 +94,11 @@ const translations = {
         'text-formatting': 'Text & Name Formatting:',
         'tashkeel': 'Diacritics (Tashkeel)',
         'zakhrafa': 'Calligraphy (Zakhrafa)',
-        'name-position': 'Name Position:',
+        'name-position': 'Name Position (Priority):',
         'pos-top': 'Top',
         'pos-middle': 'Middle',
         'pos-bottom': 'Bottom',
+        'rate-experience': 'How do you rate the result?',
         'style-modern': 'Modern',
         'style-traditional': 'Traditional / Classic',
         'style-minimalist': 'Minimalist',
@@ -206,7 +208,8 @@ let state = {
     details: 7,
     colorIntensity: 5,
     palette: 'auto',
-    contentElements: []
+    contentElements: [],
+    currentFileKey: null
 };
 
 // 🔒 Security Update: API Key moved to Netlify environment variables
@@ -669,15 +672,22 @@ function bindEvents() {
         generate();
     };
 
+    // Restart/New Design button
     document.getElementById('restart-btn').onclick = () => {
         state.occasion = null;
         state.name = '';
         state.greeting = '';
+        state.currentFileKey = null;
         document.getElementById('user-name').value = '';
         document.getElementById('greeting-text').value = '';
         document.getElementById('custom-instructions').value = '';
         document.getElementById('greeting-field').classList.add('hidden');
+        document.getElementById('position-field').classList.add('hidden'); // Also hide the position field
         document.getElementById('suggestions-container').classList.add('hidden');
+        document.getElementById('rating-container').classList.add('hidden');
+        document.getElementById('rating-thanks').classList.add('hidden');
+        document.getElementById('rating-feedback').value = '';
+        resetStars();
         go(1);
         renderOccasions();
     };
@@ -775,6 +785,61 @@ function bindEvents() {
             alert(state.lang === 'ar' ? 'المشاركة غير مدعومة في هذا المتصفح' : 'Sharing not supported in this browser');
         }
     };
+
+    // ==========================================
+    // Rating Logic
+    // ==========================================
+    let currentRating = 0;
+    const stars = document.querySelectorAll('#rating-stars span');
+    const submitRatingBtn = document.getElementById('submit-rating-btn');
+    
+    function resetStars() {
+        currentRating = 0;
+        stars.forEach(s => s.style.color = 'var(--surface)');
+        submitRatingBtn.disabled = true;
+    }
+
+    stars.forEach(star => {
+        star.onclick = () => {
+            currentRating = parseInt(star.dataset.value);
+            // Notice: The HTML is flex-direction: row-reverse, so the loop naturally works
+            stars.forEach(s => {
+                if (parseInt(s.dataset.value) <= currentRating) {
+                    s.style.color = '#fbbf24'; // yellow
+                } else {
+                    s.style.color = 'var(--surface)';
+                }
+            });
+            submitRatingBtn.disabled = false;
+        };
+    });
+
+    submitRatingBtn.onclick = async () => {
+        if (!state.currentFileKey || currentRating === 0) return;
+        
+        submitRatingBtn.disabled = true;
+        const feedback = document.getElementById('rating-feedback').value.trim();
+        
+        try {
+            await fetch('/api/save-rating', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    fileKey: state.currentFileKey, 
+                    rating: currentRating,
+                    feedback 
+                })
+            });
+            
+            document.getElementById('rating-thanks').classList.remove('hidden');
+            submitRatingBtn.classList.add('hidden');
+            document.getElementById('rating-feedback').classList.add('hidden');
+            document.getElementById('rating-stars').style.pointerEvents = 'none';
+        } catch (err) {
+            console.error('Failed to submit rating', err);
+            submitRatingBtn.disabled = false;
+        }
+    };
 }
 
 function renderOccasions() {
@@ -790,6 +855,7 @@ function renderOccasions() {
             state.greeting = defaultGreeting;
             document.getElementById('greeting-text').value = defaultGreeting;
             document.getElementById('greeting-field').classList.remove('hidden');
+            document.getElementById('position-field').classList.remove('hidden'); // Show Name Position explicitly
             document.getElementById('suggestions-container').classList.add('hidden');
             updatePreview();
             renderOccasions();
@@ -1138,7 +1204,15 @@ function saveCard(src, occId, name, isFallback = false) {
                     image: src, 
                     stateParams: state // full generation parameters
                 })
-            }).catch(err => console.error('Failed to save to cloud:', err));
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.ok) {
+                    state.currentFileKey = data.fileKey;
+                    document.getElementById('rating-container').classList.remove('hidden');
+                }
+            })
+            .catch(err => console.error('Failed to save to cloud:', err));
         }
 
         let cards = JSON.parse(localStorage.getItem('wishai_cards') || '[]');
@@ -1211,6 +1285,7 @@ function remixCard(id) {
     renderOccasions();
     document.getElementById('greeting-text').value = state.greeting || ''; 
     document.getElementById('greeting-field').classList.remove('hidden');
+    document.getElementById('position-field').classList.remove('hidden');
 
     // Advanced UI Sliders
     document.getElementById('pref-details').value = state.details;

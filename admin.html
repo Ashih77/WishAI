@@ -64,9 +64,16 @@
         </div>
 
         <div id="dashboard-view" class="hidden">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <p>إجمالي الصور المتعقبة: <span id="total-count">0</span></p>
-                <button onclick="location.reload()" style="width: auto; padding: 8px 16px;">تحديث</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; background:var(--surface); padding:1.2rem; border-radius:12px; margin-bottom:1.5rem; border: 1px solid #334155;">
+                <div>
+                    <h2 style="margin:0 0 8px 0; color:var(--primary); font-size:1.3rem;">تقرير الأداء والتقييمات 📊</h2>
+                    <p style="margin:0; font-size:0.95rem; color:#cbd5e1;">
+                        إجمالي البطاقات المتعقبة: <strong id="total-count" style="color:#fff;">0</strong> |
+                        المراجعات المستلمة: <strong id="total-ratings" style="color:#fff;">0</strong> |
+                        متوسط التقييم: <strong id="avg-rating" style="color:#fbbf24;">0.0</strong> ⭐
+                    </p>
+                </div>
+                <button onclick="location.reload()" style="width: auto; padding: 10px 20px;">تحديث التقرير 🔄</button>
             </div>
             
             <div id="loading" class="loading">جاري جلب البيانات السحابية... ⏳</div>
@@ -107,17 +114,37 @@
             }
         };
 
+        function getStars(rating) {
+            if (!rating) return '<span style="color:#64748b; font-size:0.8rem;">بدون تقييم</span>';
+            return '<span style="color:#fbbf24; letter-spacing: 2px;">' + '★'.repeat(rating) + '☆'.repeat(5 - rating) + '</span>';
+        }
+
         function renderDashboard(items, pass) {
             document.getElementById('total-count').textContent = items.length;
+            
+            let totalRatingSum = 0;
+            let ratingsCount = 0;
+
             const grid = document.getElementById('cloud-grid');
-            grid.innerHTML = items.map(item => {
+            const htmlContent = items.map(item => {
                 const meta = item.metadata || {};
                 const date = new Date(meta.timestamp || Date.now()).toLocaleString('ar-EG');
                 
+                if (meta.rating) {
+                    totalRatingSum += parseInt(meta.rating);
+                    ratingsCount++;
+                }
+
                 return `
                     <div class="card">
                         <img src="/api/get-cloud-image?key=${item.key}&pass=${pass}" alt="Generated Image" loading="lazy">
-                        <div class="card-info">
+                        
+                        <div class="card-info" style="border-bottom: 1px solid #334155; padding-bottom: 12px; margin-bottom: 6px;">
+                            <div style="font-size: 1.1rem; margin-bottom: 5px;">${getStars(meta.rating)}</div>
+                            ${meta.feedback ? `<div style="margin-top:8px; padding:10px; background:#0f172a; border-radius:8px; font-size:0.9rem; line-height:1.4; border-left: 3px solid var(--primary);">"${meta.feedback}"</div>` : ''}
+                        </div>
+
+                        <div class="card-info" style="padding-top:0;">
                             <strong>التاريخ:</strong> ${date}<br>
                             <strong>المستخدم:</strong> ${meta.name || 'مجهول'}<br>
                             <strong>المناسبة:</strong> <span class="badge">${meta.occasion || 'غير محدد'}</span><br>
@@ -129,7 +156,14 @@
                         </div>
                     </div>
                 `;
-            }).join('');
+            });
+
+            grid.innerHTML = htmlContent.join('');
+            
+            // Update Dashboard Stats
+            document.getElementById('total-ratings').textContent = ratingsCount;
+            const avg = ratingsCount > 0 ? (totalRatingSum / ratingsCount).toFixed(1) : '0.0';
+            document.getElementById('avg-rating').textContent = avg;
         }
 
         // Allow 'Enter' key login

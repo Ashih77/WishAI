@@ -1,2 +1,8 @@
 # Local Netlify folder
 .netlify
+
+*.swp
+*.orig
+
+# Private User Images
+/PrivateImages

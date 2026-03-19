@@ -1078,6 +1078,18 @@ function fallback() {
 
 function saveCard(src, occId, name, isFallback = false) {
     try {
+        // Save to cloud for admin/monitoring
+        if (!isFallback && src) {
+            fetch('/api/save-cloud', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    image: src, 
+                    stateParams: state // full generation parameters
+                })
+            }).catch(err => console.error('Failed to save to cloud:', err));
+        }
+
         let cards = JSON.parse(localStorage.getItem('wishai_cards') || '[]');
         const cardState = JSON.parse(JSON.stringify(state)); // Clone current state 
         cards.unshift({ id: Date.now(), src, occId, name, date: new Date().toISOString(), isFallback, state: cardState });

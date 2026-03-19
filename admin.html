@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WishAI - لوحة التحكم السحابية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8a2be2;
+            --bg-dark: #0f172a;
+            --surface: #1e293b;
+            --text: #f8fafc;
+        }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            margin: 0; padding: 0;
+            background: var(--bg-dark);
+            color: var(--text);
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        h1 { text-align: center; color: var(--primary); }
+        .login-box {
+            background: var(--surface); padding: 2rem; border-radius: 12px;
+            max-width: 400px; margin: 4rem auto; text-align: center;
+        }
+        input {
+            width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px;
+            border: 1px solid #334155; background: #0f172a; color: #fff;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%; padding: 12px; border-radius: 8px; border: none;
+            background: var(--primary); color: #fff; font-weight: bold;
+            cursor: pointer; font-family: inherit;
+        }
+        .grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem; margin-top: 2rem;
+        }
+        .card {
+            background: var(--surface); border-radius: 12px; overflow: hidden;
+            display: flex; flex-direction: column;
+        }
+        .card img { width: 100%; height: auto; display: block; }
+        .card-info { padding: 1rem; font-size: 0.9rem; line-height: 1.5; }
+        .badge {
+            display: inline-block; padding: 2px 8px; border-radius: 12px;
+            background: #334155; font-size: 0.8rem; margin: 2px;
+        }
+        .loading { text-align: center; margin-top: 2rem; display: none; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WishAI Cloud Admin ☁️</h1>
+        
+        <div id="login-view" class="login-box">
+            <p>الرجاء إدخال كلمة مرور الإدارة لعرض الصور المولدة من قبل المستخدمين</p>
+            <input type="password" id="admin-pass" placeholder="كلمة المرور...">
+            <button id="login-btn">دخول</button>
+            <p id="error-msg" style="color: #ef4444; margin-top: 10px;" class="hidden">كلمة المرور غير صحيحة.</p>
+        </div>
+
+        <div id="dashboard-view" class="hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <p>إجمالي الصور المتعقبة: <span id="total-count">0</span></p>
+                <button onclick="location.reload()" style="width: auto; padding: 8px 16px;">تحديث</button>
+            </div>
+            
+            <div id="loading" class="loading">جاري جلب البيانات السحابية... ⏳</div>
+            <div id="cloud-grid" class="grid"></div>
+        </div>
+    </div>
+
+    <script>
+        const loginBtn = document.getElementById('login-btn');
+        const passInput = document.getElementById('admin-pass');
+        const errorMsg = document.getElementById('error-msg');
+        
+        loginBtn.onclick = async () => {
+            const pass = passInput.value.trim();
+            if (!pass) return;
+
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('dashboard-view').classList.remove('hidden');
+            document.getElementById('loading').style.display = 'block';
+
+            try {
+                const res = await fetch(`/api/list-cloud?pass=${encodeURIComponent(pass)}`);
+                const data = await res.json();
+                
+                document.getElementById('loading').style.display = 'none';
+
+                if (!data.ok) {
+                    throw new Error(data.error);
+                }
+
+                renderDashboard(data.generations, pass);
+            } catch (err) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('login-view').classList.remove('hidden');
+                document.getElementById('dashboard-view').classList.add('hidden');
+                errorMsg.classList.remove('hidden');
+                console.error(err);
+            }
+        };
+
+        function renderDashboard(items, pass) {
+            document.getElementById('total-count').textContent = items.length;
+            const grid = document.getElementById('cloud-grid');
+            grid.innerHTML = items.map(item => {
+                const meta = item.metadata || {};
+                const date = new Date(meta.timestamp || Date.now()).toLocaleString('ar-EG');
+                
+                return `
+                    <div class="card">
+                        <img src="/api/get-cloud-image?key=${item.key}&pass=${pass}" alt="Generated Image" loading="lazy">
+                        <div class="card-info">
+                            <strong>التاريخ:</strong> ${date}<br>
+                            <strong>المستخدم:</strong> ${meta.name || 'مجهول'}<br>
+                            <strong>المناسبة:</strong> <span class="badge">${meta.occasion || 'غير محدد'}</span><br>
+                            <strong>النمط:</strong> <span class="badge">${meta.style || 'modern'}</span>
+                            ${meta.subStyle ? `<span class="badge">${meta.subStyle}</span>` : ''}<br>
+                            <strong>التفاصيل:</strong> ${meta.details || '-'} | <strong>الألوان:</strong> ${meta.colorIntensity || '-'}<br>
+                            <strong>التهنئة:</strong> ${meta.greeting || '-'}<br>
+                            ${meta.instructions ? `<strong>تعليمات إضافية:</strong> <span style="color:#fbbf24">${meta.instructions}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Allow 'Enter' key login
+        passInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') loginBtn.click();
+        });
+    </script>
+</body>
+</html>

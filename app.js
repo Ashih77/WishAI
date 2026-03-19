@@ -35,6 +35,13 @@ const translations = {
         'friendship': 'صداقة', 'daily': 'تحية يومية', 'newyear': 'سنة جديدة', 'thankyou': 'شكر',
         'btn-guest': 'المتابعة كزائر',
         'sub-style': 'خيارات الأسلوب المتقدمة:',
+        'text-formatting': 'تنسيق النص والاسم:',
+        'tashkeel': 'تشكيل (حركات)',
+        'zakhrafa': 'زخرفة خطية',
+        'name-position': 'موقع الاسم:',
+        'pos-top': 'أعلى',
+        'pos-middle': 'وسط',
+        'pos-bottom': 'أسفل',
         'style-modern': 'عصري وحديث',
         'style-traditional': 'تراثي كلاسيكي',
         'style-minimalist': 'بسيط وأنيق',
@@ -83,6 +90,13 @@ const translations = {
         'friendship': 'Friendship', 'daily': 'Daily Greeting', 'newyear': 'New Year', 'thankyou': 'Thank You',
         'btn-guest': 'Continue as Guest',
         'sub-style': 'Advanced Style Options:',
+        'text-formatting': 'Text & Name Formatting:',
+        'tashkeel': 'Diacritics (Tashkeel)',
+        'zakhrafa': 'Calligraphy (Zakhrafa)',
+        'name-position': 'Name Position:',
+        'pos-top': 'Top',
+        'pos-middle': 'Middle',
+        'pos-bottom': 'Bottom',
         'style-modern': 'Modern',
         'style-traditional': 'Traditional / Classic',
         'style-minimalist': 'Minimalist',
@@ -185,6 +199,10 @@ let state = {
     greeting: '',
     instructions: '',
     style: 'modern',
+    subStyle: null,
+    tashkeel: false,
+    zakhrafa: false,
+    namePosition: 'bottom',
     details: 7,
     colorIntensity: 5,
     palette: 'auto',
@@ -609,6 +627,23 @@ function bindEvents() {
         };
     });
 
+    // Text Formatting & Position Toggles
+    document.getElementById('pref-tashkeel').onchange = (e) => {
+        state.tashkeel = e.target.checked;
+    };
+    
+    document.getElementById('pref-zakhrafa').onchange = (e) => {
+        state.zakhrafa = e.target.checked;
+    };
+
+    document.querySelectorAll('.position-chip').forEach(chip => {
+        chip.onclick = () => {
+            document.querySelectorAll('.position-chip').forEach(c => c.classList.remove('selected'));
+            chip.classList.add('selected');
+            state.namePosition = chip.dataset.pos;
+        };
+    });
+
     // Content Elements Toggle
     document.querySelectorAll('.element-chip[data-element]').forEach(chip => {
         chip.onclick = () => {
@@ -962,6 +997,21 @@ async function generate() {
         ? `CRITICAL REQUIREMENT: You MUST NOT INCLUDE any of the following elements under any circumstances (ignore them even if the occasion usually has them): ${unselectedElements}.`
         : '';
 
+    const posMap = {
+        top: 'at the top',
+        middle: 'in the middle',
+        bottom: 'at the bottom'
+    };
+    const namePosInstruction = `Write the sender name "${state.name}" only once ${posMap[state.namePosition] || 'at the bottom'}.`;
+    
+    let textStyleInstruction = '';
+    if (state.tashkeel || state.zakhrafa) {
+        textStyleInstruction = `CRITICAL TEXT STYLE: The Arabic text must be `;
+        if (state.tashkeel) textStyleInstruction += `fully vocalized with precise Arabic diacritics (Tashkeel) `;
+        if (state.tashkeel && state.zakhrafa) textStyleInstruction += `and `;
+        if (state.zakhrafa) textStyleInstruction += `written in a highly decorative, ornate calligraphy style (Zakhrafa).`;
+    }
+
     const prompt = `Create a stunning, high-resolution vertical greeting card.
 Occasion Context: ${occDesc}
 Style: ${state.style} (${state.subStyle || 'Modern'}).
@@ -971,9 +1021,10 @@ ${elemInstruction}
 ${negativeInstruction}
 
 Instructions: ${state.instructions || 'None'}.
-TEXT TO RENDER ON THE CARD: "${state.greeting}". Write the sender name "${state.name}" only once at the bottom.
+TEXT TO RENDER ON THE CARD: "${state.greeting}". ${namePosInstruction}
 IMPORTANT: Do NOT duplicate any text. Each text element must appear exactly once.
-Ensure ${langLabel} text is clear, artistic, and properly connected.`;
+Ensure ${langLabel} text is clear, artistic, and properly connected.
+${textStyleInstruction}`;
 
     function showImage(base64, mimeType) {
         const src = `data:${mimeType};base64,${base64}`;
@@ -1146,7 +1197,7 @@ function remixCard(id) {
     
     // Restore generation parameters only (protect auth and lang)
     const savedState = card.state;
-    const params = ['name', 'occasion', 'greeting', 'instructions', 'style', 'subStyle', 'details', 'colorIntensity', 'palette', 'contentElements'];
+    const params = ['name', 'occasion', 'greeting', 'instructions', 'style', 'subStyle', 'details', 'colorIntensity', 'palette', 'contentElements', 'tashkeel', 'zakhrafa', 'namePosition'];
     params.forEach(p => {
         if (savedState[p] !== undefined) state[p] = JSON.parse(JSON.stringify(savedState[p]));
     });
@@ -1187,6 +1238,15 @@ function remixCard(id) {
         if (state.contentElements && state.contentElements.includes(c.dataset.element)) {
             c.classList.add('active');
         }
+    });
+
+    // Text Formatting & Position
+    document.getElementById('pref-tashkeel').checked = !!state.tashkeel;
+    document.getElementById('pref-zakhrafa').checked = !!state.zakhrafa;
+    
+    document.querySelectorAll('.position-chip').forEach(c => {
+        c.classList.remove('selected');
+        if (c.dataset.pos === state.namePosition) c.classList.add('selected');
     });
 
     // Go to Form

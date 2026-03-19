@@ -795,7 +795,7 @@ function bindEvents() {
     
     function resetStars() {
         currentRating = 0;
-        stars.forEach(s => s.style.color = 'var(--surface)');
+        stars.forEach(s => s.style.color = '#475569');
         submitRatingBtn.disabled = true;
     }
 
@@ -807,7 +807,7 @@ function bindEvents() {
                 if (parseInt(s.dataset.value) <= currentRating) {
                     s.style.color = '#fbbf24'; // yellow
                 } else {
-                    s.style.color = 'var(--surface)';
+                    s.style.color = '#475569';
                 }
             });
             submitRatingBtn.disabled = false;

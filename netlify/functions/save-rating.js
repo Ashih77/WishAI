@@ -28,19 +28,19 @@ export default async (req, context) => {
         const store = getStore("wishai_generations");
 
         // Fetch the existing metadata
-        const metadata = await store.getMetadata(fileKey);
+        const metadataResponse = await store.getMetadata(fileKey);
         
-        if (!metadata) {
+        if (!metadataResponse) {
              return new Response(JSON.stringify({ error: 'Image not found in cloud' }), { status: 404, headers });
         }
+
+        const metadata = metadataResponse.metadata || {};
 
         // Add the new rating data
         metadata.rating = rating;
         metadata.feedback = feedback || '';
 
-        // Update the blob's metadata without modifying the blob content itself
-        // But Netlify Blobs API requires setting data again if we edit metadata directly, 
-        // wait, let's just get the image blob, and re-set it with new metadata.
+        // Update the blob's metadata
         const imageBlob = await store.get(fileKey, { type: 'blob' });
         
         await store.set(fileKey, imageBlob, { metadata });

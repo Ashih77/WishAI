@@ -31,15 +31,71 @@ export default async (req, context) => {
         const timestamp = Date.now();
         const fileKey = `WishAI-${safeOccasion}-${timestamp}`;
 
+        // --------- AUTOMATIC AI EVALUATION ---------
+        let ai_score = 0;
+        let ai_summary = "";
+        let ai_adherence = false; 
+        let ai_advice = [];
+
+        try {
+            const apiKey = (process.env.GEMINI_API_KEY || '').trim().replace(/["']/g, '');
+            if (apiKey) {
+                const base64data = image.includes(',') ? image.split(',')[1] : image;
+                const prompt = `أنت خبير ذكاء اصطناعي يقوم بتقييم بطاقة تهنئة تم توليدها.
+المعطيات (JSON) التي طلبها المستخدم:
+\`\`\`json
+${JSON.stringify(stateParams, null, 2)}
+\`\`\`
+يرجى مطابقة الصورة مع المعطيات، وإعطاء التقييم بناءً على: مدى الالتزام بـ (المناسبة، الأسلوب، التشكيل، موقع الاسم، التعليمات).
+يجب أن ترجع النتيجة كـ JSON صارم فقط، بهذا الشكل بالضبط:
+{
+  "score": 8,
+  "summary": "نص التلخيص",
+  "adherence": true,
+  "advice": ["نصيحة 1", "نصيحة 2"]
+}`;
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+                const evalResponse = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            role: 'user',
+                            parts: [
+                                { text: prompt },
+                                { inlineData: { mimeType: 'image/jpeg', data: base64data } }
+                            ]
+                        }],
+                        generationConfig: { temperature: 0.1, responseMimeType: "application/json" }
+                    })
+                });
+
+                const data = await evalResponse.json();
+                if (evalResponse.ok && data.candidates && data.candidates[0].content.parts[0].text) {
+                    const aiResult = JSON.parse(data.candidates[0].content.parts[0].text);
+                    ai_score = aiResult.score || 0;
+                    ai_summary = aiResult.summary || "لا يوجد تقييم";
+                    ai_adherence = !!aiResult.adherence;
+                    if (Array.isArray(aiResult.advice)) ai_advice = aiResult.advice;
+                }
+            }
+        } catch (evalErr) {
+            console.error('[WishAI-Cloud] Automatic AI eval failed:', evalErr);
+        }
+
         // Save base64 image data to the blob store 
         await store.set(fileKey, image, {
             metadata: {
                 timestamp,
+                ai_score,
+                ai_summary,
+                ai_adherence,
+                ai_advice,
                 ...stateParams // save name, style, details, etc.
             }
         });
 
-        console.log(`[WishAI-Cloud] Successfully saved tracking image: ${fileKey}`);
+        console.log(`[WishAI-Cloud] Successfully saved tracking image: ${fileKey} with AI Score: ${ai_score}`);
 
         return new Response(JSON.stringify({ ok: true, fileKey }), { status: 200, headers });
 

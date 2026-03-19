@@ -797,6 +797,9 @@ function bindEvents() {
         currentRating = 0;
         stars.forEach(s => s.style.color = '#475569');
         submitRatingBtn.disabled = true;
+        submitRatingBtn.classList.remove('hidden');
+        document.getElementById('rating-feedback').classList.remove('hidden');
+        document.getElementById('rating-stars').style.pointerEvents = 'auto';
     }
 
     stars.forEach(star => {

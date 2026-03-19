@@ -41,7 +41,7 @@ export default async (req, context) => {
         metadata.feedback = feedback || '';
 
         // Update the blob's metadata
-        const imageBlob = await store.get(fileKey, { type: 'blob' });
+        const imageBlob = await store.get(fileKey, { type: 'text' });
         
         await store.set(fileKey, imageBlob, { metadata });
 

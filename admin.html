@@ -272,6 +272,32 @@
             const modal = document.getElementById('ai-modal');
             const resultsDiv = document.getElementById('ai-results');
             modal.style.display = 'flex';
+
+            if (meta.ai_score !== undefined) {
+                const adherenceColor = meta.ai_adherence ? '#10b981' : '#ef4444';
+                const adherenceText = meta.ai_adherence ? '✅ ملتزم بالضوابط' : '❌ لم يلتزم بالضوابط';
+                
+                let adviceHTML = 'لا توجد مقترحات إضافية.';
+                if (Array.isArray(meta.ai_advice) && meta.ai_advice.length > 0) {
+                    adviceHTML = meta.ai_advice.map(adv => `• ${adv}`).join('<br>');
+                }
+
+                resultsDiv.innerHTML = `
+                    <h3>🤖 تقرير التقييم الذكي</h3>
+                    <div style="line-height:1.7; font-size:1rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                            <strong>التقييم: <span style="font-size:1.3rem; color:var(--primary);">${meta.ai_score}/10</span></strong>
+                            <span style="font-size:0.9rem; background:${adherenceColor}20; color:${adherenceColor}; padding:4px 10px; border-radius:12px; font-weight:bold; border: 1px solid ${adherenceColor}50;">
+                                ${adherenceText}
+                            </span>
+                        </div>
+                        <br><strong>الملخص:</strong><br>${meta.ai_summary || "لا يوجد ملخص"}<br><br>
+                        <strong>الاقتراحات:</strong><br>${adviceHTML}
+                    </div>
+                `;
+                return;
+            }
+
             resultsDiv.innerHTML = '<div style="text-align:center; padding: 20px;">جاري دراسة الصورة وتقييم المعطيات بالذكاء الاصطناعي... ⏳<br><br><span style="font-size:0.85rem;color:#94a3b8;">قد يستغرق هذا بضع ثوانٍ</span></div>';
 
             try {

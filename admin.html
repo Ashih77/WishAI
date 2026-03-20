@@ -197,6 +197,14 @@
                         <div class="card-info" style="border-bottom: 1px solid #334155; padding-bottom: 12px; margin-bottom: 6px;">
                             <div style="font-size: 1.1rem; margin-bottom: 5px;">${getStars(meta.rating)}</div>
                             ${meta.feedback ? `<div style="margin-top:8px; padding:10px; background:#0f172a; border-radius:8px; font-size:0.9rem; line-height:1.4; border-left: 3px solid var(--primary);">"${meta.feedback}"</div>` : ''}
+                            ${(meta.chips && meta.chips.length > 0) ? `
+                            <div style="margin-top: 8px; display:flex; gap: 5px; flex-wrap:wrap;">
+                                ${meta.chips.map(c => {
+                                    const labels = { typo: '✍️ نص خطأ', colors: '🎨 ألوان سيئة', style: '🚫 تصميم غير مناسب', layout: '📏 الاسم في مكان خاطئ' };
+                                    return `<span style="font-size:0.75rem; background:rgba(255,255,255,0.1); color:#cbd5e1; padding: 4px 8px; border-radius:12px;">${labels[c] || c}</span>`;
+                                }).join('')}
+                            </div>
+                            ` : ''}
                             ${aiBadgeHTML}
                         </div>
 

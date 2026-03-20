@@ -33,7 +33,7 @@ exports.handler = async (event) => {
                 contents: body.contents,
                 generationConfig: isImage 
                     ? { responseModalities: ["IMAGE"], temperature: 1.0 }
-                    : { temperature: 0.8 }
+                    : (body.action === 'evaluate' ? { temperature: 0.1, responseMimeType: "application/json" } : { temperature: 0.8 })
             })
         });
 

@@ -1464,7 +1464,9 @@ ${JSON.stringify(stateParams, null, 2)}
        
        const evalData = await evalRes.json();
        if (evalData.ok && evalData.data && evalData.data.candidates) {
-           const aiText = evalData.data.candidates[0].content.parts[0].text;
+           let aiText = evalData.data.candidates[0].content.parts[0].text;
+           // Remove potential markdown json wrappers
+           aiText = aiText.replace(/```json/gi, '').replace(/```/g, '').trim();
            const aiResult = JSON.parse(aiText);
            
            // Forward to save-evaluation

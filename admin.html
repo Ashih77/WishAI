@@ -443,16 +443,47 @@ ${JSON.stringify(meta, null, 2)}
                 if (!data.ok) throw new Error(data.error || data.message || 'Failed to analyze');
                 
                 let aiText = data.data.candidates[0].content.parts[0].text;
-                // Format markdown list dashes and bolder text
-                aiText = aiText.replace(/\n- /g, '<br>• ')
-                               .replace(/التقييم:/g, '<strong>التقييم:</strong>')
-                               .replace(/الملخص:/g, '<br><strong>الملخص:</strong>')
-                               .replace(/الاقتراحات:/g, '<br><br><strong>الاقتراحات:</strong>');
+                // Remove potential markdown JSON wrappers
+                let cleanAiText = aiText.replace(/```json/gi, '').replace(/```/g, '').trim();
+                
+                let aiResult = {};
+                try {
+                    aiResult = JSON.parse(cleanAiText);
+                } catch(e) {
+                    console.warn("Failed to parse AI response as JSON", e);
+                    throw new Error("تنسيق تقييم غير صالح من الخادم.");
+                }
+
+                // Call save-evaluation API so it saves permanently!
+                await fetch('/api/save-evaluation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fileKey: key, aiResult })
+                });
+
+                const adherenceColor = aiResult.adherence ? '#10b981' : '#ef4444';
+                const adherenceText = aiResult.adherence ? '✅ ملتزم بالضوابط' : '❌ لم يلتزم بالضوابط';
+                let adviceHTML = 'لا توجد مقترحات إضافية.';
+                if (Array.isArray(aiResult.advice) && aiResult.advice.length > 0) {
+                    adviceHTML = aiResult.advice.map(adv => `• ${adv}`).join('<br>');
+                }
 
                 resultsDiv.innerHTML = `
-                    <h3>🤖 تقرير التقييم الذكي</h3>
-                    <div style="line-height:1.7; font-size:1rem;">${aiText}</div>
+                    <h3>🤖 تقرير التقييم الذكي المستمر</h3>
+                    <div style="line-height:1.7; font-size:1rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                            <strong>التقييم: <span style="font-size:1.3rem; color:var(--primary);">${aiResult.score}/10</span></strong>
+                            <span style="font-size:0.9rem; background:${adherenceColor}20; color:${adherenceColor}; padding:4px 10px; border-radius:12px; font-weight:bold; border: 1px solid ${adherenceColor}50;">
+                                ${adherenceText}
+                            </span>
+                        </div>
+                        <br><strong>الملخص:</strong><br>${aiResult.summary || "لا يوجد ملخص"}<br><br>
+                        <strong>الاقتراحات:</strong><br>${adviceHTML}
+                    </div>
                 `;
+
+                // Optionally reload the page to update graphs
+                setTimeout(() => location.reload(), 2000);
             } catch (err) {
                 console.error(err);
                 resultsDiv.innerHTML = `<div style="color:#ef4444;text-align:center; padding: 20px;">حدث خطأ أثناء التقييم: ${err.message}</div>`;

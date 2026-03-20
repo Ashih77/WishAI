@@ -868,7 +868,7 @@ function bindEvents() {
         const feedback = document.getElementById('rating-feedback').value.trim();
         
         try {
-            await fetch('/api/save-rating', {
+            const res = await fetch('/api/save-rating', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
@@ -879,6 +879,8 @@ function bindEvents() {
                 })
             });
             
+            if (!res.ok) throw new Error("فشل حفظ التقييم في الخادم");
+            
             document.getElementById('rating-thanks').classList.remove('hidden');
             submitRatingBtn.classList.add('hidden');
             if(chipContainer) chipContainer.classList.add('hidden');
@@ -886,6 +888,7 @@ function bindEvents() {
             document.getElementById('rating-stars').style.pointerEvents = 'none';
         } catch (err) {
             console.error('Failed to submit rating', err);
+            alert("عذراً، حدث خطأ أثناء إرسال التقييم. حاول مرة أخرى.");
             submitRatingBtn.disabled = false;
         }
     };
@@ -1425,7 +1428,26 @@ document.addEventListener('DOMContentLoaded', init);
 async function runAutoEvaluation(imageSrc, stateParams, fileKey) {
    try {
        console.log("[WishAI-Eval] Starting background AI evaluation...");
-       const base64data = imageSrc.includes(',') ? imageSrc.split(',')[1] : imageSrc;
+       let base64data = imageSrc.includes(',') ? imageSrc.split(',')[1] : imageSrc;
+       
+       // Resize image aggressively for Gemini to avoid 6MB payload limits and speed up eval
+       base64data = await new Promise((resolve) => {
+           const img = new Image();
+           img.src = 'data:image/jpeg;base64,' + base64data;
+           img.onload = () => {
+               const canvas = document.createElement('canvas');
+               const MAX_WIDTH = 800;
+               const ratio = MAX_WIDTH / img.width;
+               if (ratio >= 1) return resolve(base64data);
+               canvas.width = MAX_WIDTH;
+               canvas.height = img.height * ratio;
+               const ctx = canvas.getContext('2d');
+               ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+               resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
+           };
+           img.onerror = () => resolve(base64data);
+       });
+
        const prompt = `أنت خبير ذكاء اصطناعي يقوم بتقييم بطاقة تهنئة تم توليدها.
 المعطيات (JSON) التي طلبها المستخدم:
 \`\`\`json

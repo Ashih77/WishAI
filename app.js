@@ -790,17 +790,47 @@ function bindEvents() {
     // Rating Logic
     // ==========================================
     let currentRating = 0;
+    let selectedChips = [];
     const stars = document.querySelectorAll('#rating-stars span');
     const submitRatingBtn = document.getElementById('submit-rating-btn');
+    const feedbackChips = document.querySelectorAll('.feedback-chip');
+    const chipContainer = document.getElementById('quick-feedback-container');
     
-    function resetStars() {
+    window.resetStars = function() { // Expose globally for restart-btn
         currentRating = 0;
+        selectedChips = [];
         stars.forEach(s => s.style.color = '#475569');
+        if(feedbackChips) feedbackChips.forEach(c => c.classList.remove('active', 'selected', 'primary'));
+        if(chipContainer) chipContainer.classList.add('hidden');
         submitRatingBtn.disabled = true;
         submitRatingBtn.classList.remove('hidden');
         document.getElementById('rating-feedback').classList.remove('hidden');
         document.getElementById('rating-stars').style.pointerEvents = 'auto';
+        document.getElementById('rating-thanks').classList.add('hidden');
+        document.getElementById('rating-feedback').value = '';
     }
+
+    feedbackChips.forEach(chip => {
+        chip.onclick = () => {
+            chip.classList.toggle('active');
+            // Adding dynamic style for selection state visually
+            if (chip.classList.contains('active')) {
+                chip.style.backgroundColor = 'var(--primary)';
+                chip.style.color = 'white';
+                chip.style.borderColor = 'var(--primary)';
+            } else {
+                chip.style.backgroundColor = '';
+                chip.style.color = '';
+                chip.style.borderColor = '';
+            }
+            const reason = chip.dataset.reason;
+            if (selectedChips.includes(reason)) {
+                selectedChips = selectedChips.filter(r => r !== reason);
+            } else {
+                selectedChips.push(reason);
+            }
+        };
+    });
 
     stars.forEach(star => {
         star.onclick = () => {
@@ -813,6 +843,20 @@ function bindEvents() {
                     s.style.color = '#475569';
                 }
             });
+            
+            if (currentRating < 4) {
+                if(chipContainer) chipContainer.classList.remove('hidden');
+            } else {
+                if(chipContainer) chipContainer.classList.add('hidden');
+                selectedChips = [];
+                feedbackChips.forEach(c => {
+                    c.classList.remove('active');
+                    c.style.backgroundColor = '';
+                    c.style.color = '';
+                    c.style.borderColor = '';
+                });
+            }
+            
             submitRatingBtn.disabled = false;
         };
     });
@@ -830,12 +874,14 @@ function bindEvents() {
                 body: JSON.stringify({ 
                     fileKey: state.currentFileKey, 
                     rating: currentRating,
-                    feedback 
+                    feedback,
+                    chips: selectedChips
                 })
             });
             
             document.getElementById('rating-thanks').classList.remove('hidden');
             submitRatingBtn.classList.add('hidden');
+            if(chipContainer) chipContainer.classList.add('hidden');
             document.getElementById('rating-feedback').classList.add('hidden');
             document.getElementById('rating-stars').style.pointerEvents = 'none';
         } catch (err) {
@@ -1081,6 +1127,15 @@ async function generate() {
         if (state.zakhrafa) textStyleInstruction += `written in a highly decorative, ornate calligraphy style (Zakhrafa).`;
     }
 
+    let autoCorrections = "";
+    try {
+        const learnRes = await fetch('/api/get-learnings');
+        const learnData = await learnRes.json();
+        if (learnData.ok && learnData.rules && learnData.rules.length > 0) {
+            autoCorrections = `\n\nCRITICAL AUTO-CORRECTION RULES (Learn from past mistakes):\n` + learnData.rules.join('\n');
+        }
+    } catch(e) { console.warn("Could not fetch learnings:", e); }
+
     const prompt = `Create a stunning, high-resolution vertical greeting card.
 Occasion Context: ${occDesc}
 Style: ${state.style} (${state.subStyle || 'Modern'}).
@@ -1093,7 +1148,7 @@ Instructions: ${state.instructions || 'None'}.
 TEXT TO RENDER ON THE CARD: "${state.greeting}". ${namePosInstruction}
 IMPORTANT: Do NOT duplicate any text. Each text element must appear exactly once.
 Ensure ${langLabel} text is clear, artistic, and properly connected.
-${textStyleInstruction}`;
+${textStyleInstruction}${autoCorrections}`;
 
     function showImage(base64, mimeType) {
         const src = `data:${mimeType};base64,${base64}`;

@@ -63,6 +63,7 @@
         .close-modal:hover { color: #fff; }
         .ai-results h3 { margin-top: 0; color: var(--primary); border-bottom: 1px solid #334155; padding-bottom: 10px; }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
@@ -91,6 +92,17 @@
                 </div>
             </div>
             
+            <div id="analytics-section" style="display: none; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                <div style="background: var(--surface); padding: 1.5rem; border-radius: 12px; border: 1px solid #334155;">
+                    <h3 style="margin-top:0; color:var(--primary); text-align:center;">إحصائيات الذكاء الاصطناعي 📈</h3>
+                    <canvas id="scoreChart"></canvas>
+                </div>
+                <div style="background: var(--surface); padding: 1.5rem; border-radius: 12px; border: 1px solid #334155; display:flex; flex-direction:column; align-items:center;">
+                    <h3 style="margin-top:0; color:var(--primary); text-align:center;">الالتزام بالضوابط (Adherence) 🎯</h3>
+                    <div style="width: 100%; max-width: 250px;"><canvas id="adherenceChart"></canvas></div>
+                </div>
+            </div>
+
             <div id="loading" class="loading">جاري جلب البيانات السحابية... ⏳</div>
             <div id="cloud-grid" class="grid"></div>
         </div>
@@ -212,6 +224,37 @@
             document.getElementById('total-ratings').textContent = ratingsCount;
             const avg = ratingsCount > 0 ? (totalRatingSum / ratingsCount).toFixed(1) : '0.0';
             document.getElementById('avg-rating').textContent = avg;
+
+            // Analytics Calculation
+            const dates = [];
+            const scores = [];
+            let adherenceTrue = 0;
+            let adherenceFalse = 0;
+            let hasAIdata = false;
+
+            const sortedItems = [...items].sort((a,b) => {
+                const ta = a.metadata?.timestamp || 0;
+                const tb = b.metadata?.timestamp || 0;
+                return ta - tb;
+            });
+
+            sortedItems.forEach(item => {
+                const meta = item.metadata || {};
+                if (meta.ai_score !== undefined) {
+                    hasAIdata = true;
+                    // Add shorter date labels if many items, for simplicity just use time if recent, or date if old.
+                    const d = new Date(meta.timestamp || Date.now());
+                    dates.push(d.toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}));
+                    scores.push(meta.ai_score);
+                    if (meta.ai_adherence) adherenceTrue++;
+                    else adherenceFalse++;
+                }
+            });
+
+            if (hasAIdata) {
+                document.getElementById('analytics-section').style.display = 'grid';
+                renderCharts(dates, scores, adherenceTrue, adherenceFalse);
+            }
         }
 
         // Allow 'Enter' key login
@@ -223,6 +266,51 @@
         function copyJson(meta) {
             navigator.clipboard.writeText(JSON.stringify(meta, null, 2)).then(() => {
                 alert("تم نسخ وصف JSON بنجاح!");
+            });
+        }
+
+        let scoreChartInst = null;
+        let adherenceChartInst = null;
+
+        function renderCharts(labels, dataScores, adhered, failed) {
+            Chart.defaults.color = '#cbd5e1';
+            Chart.defaults.font.family = 'Tajawal';
+
+            if (scoreChartInst) scoreChartInst.destroy();
+            const ctxScore = document.getElementById('scoreChart').getContext('2d');
+            scoreChartInst = new Chart(ctxScore, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'تقييم الذكاء الاصطناعي (من 10)',
+                        data: dataScores,
+                        borderColor: '#8a2be2',
+                        backgroundColor: 'rgba(138,43,226,0.2)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { min: 0, max: 10 } }
+                }
+            });
+
+            if (adherenceChartInst) adherenceChartInst.destroy();
+            const ctxAdh = document.getElementById('adherenceChart').getContext('2d');
+            adherenceChartInst = new Chart(ctxAdh, {
+                type: 'doughnut',
+                data: {
+                    labels: ['ملتزم بالضوابط', 'غير ملتزم'],
+                    datasets: [{
+                        data: [adhered, failed],
+                        backgroundColor: ['#10b981', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, cutout: '70%', plugins: { legend: { position: 'bottom' } } }
             });
         }
 

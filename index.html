@@ -441,7 +441,19 @@
                                 <span data-value="2">★</span>
                                 <span data-value="1">★</span>
                             </div>
-                            <textarea id="rating-feedback" rows="2" placeholder="اكتب رأيك أو اقتراحك للتحسين (اختياري)..." style="width:100%; border-radius:12px; margin-bottom:15px;"></textarea>
+                            
+                            <!-- Quick Feedback Chips (Shown for < 4 stars) -->
+                            <div id="quick-feedback-container" class="hidden" style="margin-bottom: 15px;">
+                                <p style="font-size: 0.85rem; color: var(--text-color); margin-bottom: 8px;">ما هي المشكلة الأبرز؟</p>
+                                <div class="chip-group" id="rating-chips" style="justify-content: center;">
+                                    <button type="button" class="chip feedback-chip" data-reason="typo" style="font-size: 0.8rem; padding: 4px 10px;">✍️ نص خطأ</button>
+                                    <button type="button" class="chip feedback-chip" data-reason="colors" style="font-size: 0.8rem; padding: 4px 10px;">🎨 ألوان سيئة</button>
+                                    <button type="button" class="chip feedback-chip" data-reason="style" style="font-size: 0.8rem; padding: 4px 10px;">🚫 تصميم غير مناسب</button>
+                                    <button type="button" class="chip feedback-chip" data-reason="layout" style="font-size: 0.8rem; padding: 4px 10px;">📏 الاسم في مكان خاطئ</button>
+                                </div>
+                            </div>
+                            
+                            <textarea id="rating-feedback" rows="2" placeholder="اكتب رأيك أو اقتراحك للتحسين (اختياري)..." style="width:100%; border-radius:12px; margin-bottom:15px; padding: 10px; border: 1px solid var(--border); font-family: inherit; resize: none;"></textarea>
                             <button id="submit-rating-btn" class="btn-primary" style="width:100%;" disabled>إرسال التقييم</button>
                             <div id="rating-thanks" class="hidden" style="color:var(--primary); font-weight:bold; margin-top:10px;">شكرًا لمشاركتك! أرسلنا رأيك للتحسين.</div>
                         </div>

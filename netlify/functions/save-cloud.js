@@ -36,6 +36,8 @@ export default async (req, context) => {
         let ai_summary = "";
         let ai_adherence = false; 
         let ai_advice = [];
+        let ai_extracted_text = "";
+        let ai_text_position_analysis = "";
 
         try {
             const apiKey = (process.env.GEMINI_API_KEY || '').trim().replace(/["']/g, '');
@@ -47,12 +49,17 @@ export default async (req, context) => {
 ${JSON.stringify(stateParams, null, 2)}
 \`\`\`
 يرجى مطابقة الصورة مع المعطيات، وإعطاء التقييم بناءً على: مدى الالتزام بـ (المناسبة، الأسلوب، التشكيل، موقع الاسم، التعليمات).
+مهم جداً (التحليل البصري):
+1. قم باستخراج النص المكتوب في الصورة تماماً كما هو (OCR) لمعرفة ما إذا كان المولد قد أضاف حرفاً زائداً أو نسى التشكيل أو أضافه بالخطأ.
+2. حدد إحداثيات ومكان النص الفعلي في الصورة بدقة وقارنه مع المطلوب في المعطيات (namePosition أو instructions).
 يجب أن ترجع النتيجة كـ JSON صارم فقط، بهذا الشكل بالضبط:
 {
   "score": 8,
   "summary": "نص التلخيص",
   "adherence": true,
-  "advice": ["نصيحة 1", "نصيحة 2"]
+  "advice": ["نصيحة 1", "نصيحة 2"],
+  "extracted_text": "النص المستخرج من الصورة بالضبط",
+  "text_position_analysis": "تحليل موقع النص في الصورة مقارنة بالمطلوب"
 }`;
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
                 const evalResponse = await fetch(url, {
@@ -77,6 +84,8 @@ ${JSON.stringify(stateParams, null, 2)}
                     ai_summary = aiResult.summary || "لا يوجد تقييم";
                     ai_adherence = !!aiResult.adherence;
                     if (Array.isArray(aiResult.advice)) ai_advice = aiResult.advice;
+                    ai_extracted_text = aiResult.extracted_text || "";
+                    ai_text_position_analysis = aiResult.text_position_analysis || "";
                 }
             }
         } catch (evalErr) {
@@ -91,6 +100,8 @@ ${JSON.stringify(stateParams, null, 2)}
                 ai_summary,
                 ai_adherence,
                 ai_advice,
+                ai_extracted_text,
+                ai_text_position_analysis,
                 ...stateParams // save name, style, details, etc.
             }
         });

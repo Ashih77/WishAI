@@ -18,7 +18,7 @@ export default async (req, context) => {
         }
 
         const body = await req.json();
-        const { fileKey, rating, feedback } = body;
+        const { fileKey, rating, feedback, chips } = body;
         
         if (!fileKey || !rating) {
             return new Response(JSON.stringify({ error: 'Missing fileKey or rating' }), { status: 400, headers });
@@ -39,6 +39,9 @@ export default async (req, context) => {
         // Add the new rating data
         metadata.rating = rating;
         metadata.feedback = feedback || '';
+        if (chips && Array.isArray(chips)) {
+            metadata.chips = chips;
+        }
 
         // Update the blob's metadata
         const imageBlob = await store.get(fileKey, { type: 'text' });

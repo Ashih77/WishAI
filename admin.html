@@ -85,7 +85,10 @@
                         متوسط التقييم: <strong id="avg-rating" style="color:#fbbf24;">0.0</strong> ⭐
                     </p>
                 </div>
-                <button onclick="location.reload()" style="width: auto; padding: 10px 20px;">تحديث التقرير 🔄</button>
+                <div style="display: flex; gap: 10px;">
+                    <button id="export-btn" class="hidden" onclick="exportReport()" style="width: auto; padding: 10px 20px; background: #10b981;">استخراج تقرير التقييمات 📥</button>
+                    <button onclick="location.reload()" style="width: auto; padding: 10px 20px;">تحديث التقرير 🔄</button>
+                </div>
             </div>
             
             <div id="loading" class="loading">جاري جلب البيانات السحابية... ⏳</div>
@@ -102,6 +105,7 @@
     </div>
 
     <script>
+        let globalItems = [];
         const loginBtn = document.getElementById('login-btn');
         const passInput = document.getElementById('admin-pass');
         const errorMsg = document.getElementById('error-msg');
@@ -124,7 +128,9 @@
                     throw new Error(data.error);
                 }
 
-                renderDashboard(data.generations, pass);
+                globalItems = data.generations;
+                document.getElementById('export-btn').classList.remove('hidden');
+                renderDashboard(globalItems, pass);
             } catch (err) {
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('login-view').classList.remove('hidden');
@@ -218,6 +224,47 @@
             navigator.clipboard.writeText(JSON.stringify(meta, null, 2)).then(() => {
                 alert("تم نسخ وصف JSON بنجاح!");
             });
+        }
+
+        // Export Report Logic
+        function exportReport() {
+            if (!globalItems || globalItems.length === 0) return alert('لا يوجد بيانات لتصديرها');
+
+            const reportData = globalItems.map(item => {
+                const meta = item.metadata || {};
+                return {
+                    id: item.key,
+                    timestamp: new Date(meta.timestamp || Date.now()).toISOString(),
+                    userinfo: meta.name || 'مجهول',
+                    generation_parameters: {
+                        occasion: meta.occasion,
+                        style: meta.style,
+                        subStyle: meta.subStyle,
+                        details: meta.details,
+                        colorIntensity: meta.colorIntensity,
+                        greeting: meta.greeting,
+                        instructions: meta.instructions
+                    },
+                    user_evaluation: {
+                        rating: meta.rating || null,
+                        feedback: meta.feedback || ''
+                    },
+                    ai_evaluation: {
+                        score: meta.ai_score !== undefined ? meta.ai_score : null,
+                        adherence: meta.ai_adherence !== undefined ? meta.ai_adherence : null,
+                        summary: meta.ai_summary || '',
+                        advice: meta.ai_advice || []
+                    }
+                };
+            });
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(reportData, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "wishai_evaluations_report.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
         }
 
         // AI Evaluation Logic

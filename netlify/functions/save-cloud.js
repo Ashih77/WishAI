@@ -31,7 +31,7 @@ export default async (req, context) => {
         const timestamp = Date.now();
         const fileKey = clientFileKey || `WishAI-${safeOccasion}-${timestamp}`;
 
-        // Save image IMMEDIATELY so frontend can submit ratings right away without 404
+        // 1. SAVE IMMEDIATELY SO RATING UI DOES NOT 404 ON FAST SUBMISSIONS
         await store.set(fileKey, image, {
             metadata: {
                 timestamp,
@@ -39,7 +39,78 @@ export default async (req, context) => {
             }
         });
 
-        console.log(`[WishAI-Cloud] Successfully saved tracking image: ${fileKey}`);
+        // --------- AUTOMATIC FAST AI EVALUATION (3:00 AM Working Logic) ---------
+        let ai_score = 0;
+        let ai_summary = "";
+        let ai_adherence = false; 
+        let ai_advice = [];
+
+        try {
+            const apiKey = (process.env.GEMINI_API_KEY || '').trim().replace(/["']/g, '');
+            if (apiKey) {
+                // Image is passed as inlineData, needs raw base64
+                let base64data = image.includes(',') ? image.split(',')[1] : image;
+                
+                const prompt = `أنت خبير ذكاء اصطناعي يقوم بتقييم بطاقة تهنئة تم توليدها.
+المعطيات (JSON) التي طلبها المستخدم:
+\`\`\`json
+${JSON.stringify(stateParams, null, 2)}
+\`\`\`
+يرجى مطابقة الصورة مع المعطيات، وإعطاء التقييم بناءً على: مدى الالتزام بـ (المناسبة، الأسلوب، التشكيل، موقع الاسم، التعليمات).
+يجب أن ترجع النتيجة كـ JSON صارم فقط، بهذا الشكل بالضبط:
+{
+  "score": 8,
+  "summary": "نص التلخيص",
+  "adherence": true,
+  "advice": ["نصيحة 1", "نصيحة 2"]
+}`;
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+                const evalResponse = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            role: 'user',
+                            parts: [
+                                { text: prompt },
+                                { inlineData: { mimeType: 'image/jpeg', data: base64data } }
+                            ]
+                        }],
+                        generationConfig: { temperature: 0.1, responseMimeType: "application/json" }
+                    })
+                });
+
+                const data = await evalResponse.json();
+                if (evalResponse.ok && data.candidates && data.candidates[0].content.parts[0].text) {
+                    let aiText = data.candidates[0].content.parts[0].text;
+                    aiText = aiText.replace(/```json/gi, '').replace(/```/g, '').trim();
+                    const aiResult = JSON.parse(aiText);
+                    ai_score = aiResult.score || 0;
+                    ai_summary = aiResult.summary || "لا يوجد ملخص";
+                    ai_adherence = !!aiResult.adherence;
+                    if (Array.isArray(aiResult.advice)) ai_advice = aiResult.advice;
+                }
+            }
+        } catch (evalErr) {
+            console.error('[WishAI-Cloud] Automatic AI eval failed:', evalErr);
+        }
+
+        // 2. Fetch fresh metadata (in case user submitted a rating during the 4s eval window)
+        const updatedMetaResponse = await store.getMetadata(fileKey);
+        const currentMeta = updatedMetaResponse ? updatedMetaResponse.metadata : { timestamp, ...stateParams };
+
+        // 3. Save AI results safely merged
+        await store.set(fileKey, image, {
+            metadata: {
+                ...currentMeta,
+                ai_score,
+                ai_summary,
+                ai_adherence,
+                ai_advice
+            }
+        });
+
+        console.log(`[WishAI-Cloud] Successfully evaluated image: ${fileKey} with AI Score: ${ai_score}`);
 
         return new Response(JSON.stringify({ ok: true, fileKey }), { status: 200, headers });
 

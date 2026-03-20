@@ -1280,10 +1280,6 @@ function saveCard(src, occId, name, isFallback = false) {
                 if (data.ok && data.fileKey) {
                     state.currentFileKey = data.fileKey;
                 }
-                // Automatically run client-side AI evaluation to avoid Netlify Serverless timeouts
-                if (state.currentFileKey) {
-                    runAutoEvaluation(src, state, state.currentFileKey);
-                }
             })
             .catch(err => console.error('Failed to save to cloud:', err));
         }
@@ -1423,85 +1419,3 @@ function deleteCard(id) {
 }
 
 document.addEventListener('DOMContentLoaded', init);
-
-// Client-side AI Evaluation to avoid Netlify strict timeouts
-async function runAutoEvaluation(imageSrc, stateParams, fileKey) {
-   try {
-       console.log("[WishAI-Eval] Starting background AI evaluation...");
-       let base64data = imageSrc.includes(',') ? imageSrc.split(',')[1] : imageSrc;
-       
-       // Resize image aggressively for Gemini to avoid 6MB payload limits and speed up eval
-       base64data = await new Promise((resolve) => {
-           const img = new Image();
-           img.src = 'data:image/jpeg;base64,' + base64data;
-           img.onload = () => {
-               const canvas = document.createElement('canvas');
-               const MAX_WIDTH = 800;
-               const ratio = MAX_WIDTH / img.width;
-               if (ratio >= 1) return resolve(base64data);
-               canvas.width = MAX_WIDTH;
-               canvas.height = img.height * ratio;
-               const ctx = canvas.getContext('2d');
-               ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-               resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
-           };
-           img.onerror = () => resolve(base64data);
-       });
-
-       const prompt = `أنت خبير ذكاء اصطناعي يقوم بتقييم بطاقة تهنئة تم توليدها.
-المعطيات (JSON) التي طلبها المستخدم:
-\`\`\`json
-${JSON.stringify(stateParams, null, 2)}
-\`\`\`
-يرجى مطابقة الصورة مع المعطيات، وإعطاء التقييم بناءً على: مدى الالتزام بـ (المناسبة، الأسلوب، التشكيل، موقع الاسم، التعليمات).
-مهم جداً (التحليل البصري):
-1. قم باستخراج النص المكتوب في الصورة تماماً كما هو (OCR) لمعرفة ما إذا كان المولد قد أضاف حرفاً زائداً أو نسى التشكيل أو أضافه بالخطأ.
-2. حدد إحداثيات ومكان النص الفعلي في الصورة بدقة وقارنه مع المطلوب في المعطيات (namePosition أو instructions).
-يجب أن ترجع النتيجة كـ JSON صارم فقط، بهذا الشكل بالضبط:
-{
-  "score": 8,
-  "summary": "نص التلخيص",
-  "adherence": true,
-  "advice": ["نصيحة 1", "نصيحة 2"],
-  "extracted_text": "النص المستخرج من الصورة بالضبط",
-  "text_position_analysis": "تحليل موقع النص في الصورة مقارنة بالمطلوب"
-}`;
-
-       const payload = {
-            action: 'evaluate',
-            contents: [{
-                role: 'user',
-                parts: [
-                    { text: prompt },
-                    { inlineData: { mimeType: 'image/jpeg', data: base64data } }
-                ]
-            }]
-       };
-
-       const evalRes = await fetch('/api/gemini', {
-           method: 'POST',
-           headers: { 'Content-Type': 'application/json' },
-           body: JSON.stringify(payload)
-       });
-       
-       const evalData = await evalRes.json();
-       if (evalData.ok && evalData.data && evalData.data.candidates) {
-           let aiText = evalData.data.candidates[0].content.parts[0].text;
-           // Remove potential markdown json wrappers
-           aiText = aiText.replace(/```json/gi, '').replace(/```/g, '').trim();
-           const aiResult = JSON.parse(aiText);
-           
-           // Forward to save-evaluation
-           await fetch('/api/save-evaluation', {
-               method: 'POST',
-               headers: { 'Content-Type': 'application/json' },
-               body: JSON.stringify({ fileKey, aiResult })
-           });
-           console.log("[WishAI-Eval] Background AI evaluation finished and saved successfully.");
-       } else {
-           console.warn("[WishAI-Eval] Evaluation response issue:", evalData.error || "Unknown error");
-       }
-   } catch (e) {
-       console.error("[WishAI-Eval] Auto Evaluation Failed in background:", e);
-   }
-}

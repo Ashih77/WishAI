@@ -18,7 +18,7 @@ export default async (req, context) => {
         }
 
         const body = await req.json();
-        const { fileKey: clientFileKey, image, stateParams } = body;
+        const { image, stateParams } = body;
         
         if (!image) {
             return new Response(JSON.stringify({ error: 'Missing image data' }), { status: 400, headers });
@@ -29,17 +29,9 @@ export default async (req, context) => {
 
         const safeOccasion = (stateParams?.occasion || 'card').replace(/[^a-z0-9]/gi, '_');
         const timestamp = Date.now();
-        const fileKey = clientFileKey || `WishAI-${safeOccasion}-${timestamp}`;
+        const fileKey = `WishAI-${safeOccasion}-${timestamp}`;
 
-        // 1. SAVE IMMEDIATELY SO RATING UI DOES NOT 404 ON FAST SUBMISSIONS
-        await store.set(fileKey, image, {
-            metadata: {
-                timestamp,
-                ...stateParams // save name, style, details, etc.
-            }
-        });
-
-        // --------- AUTOMATIC FAST AI EVALUATION (3:00 AM Working Logic) ---------
+        // --------- AUTOMATIC FAST AI EVALUATION ---------
         let ai_score = 0;
         let ai_summary = "";
         let ai_adherence = false; 
@@ -48,7 +40,6 @@ export default async (req, context) => {
         try {
             const apiKey = (process.env.GEMINI_API_KEY || '').trim().replace(/["']/g, '');
             if (apiKey) {
-                // Image is passed as inlineData, needs raw base64
                 let base64data = image.includes(',') ? image.split(',')[1] : image;
                 
                 const prompt = `أنت خبير ذكاء اصطناعي يقوم بتقييم بطاقة تهنئة تم توليدها.
@@ -95,18 +86,15 @@ ${JSON.stringify(stateParams, null, 2)}
             console.error('[WishAI-Cloud] Automatic AI eval failed:', evalErr);
         }
 
-        // 2. Fetch fresh metadata (in case user submitted a rating during the 4s eval window)
-        const updatedMetaResponse = await store.getMetadata(fileKey);
-        const currentMeta = updatedMetaResponse ? updatedMetaResponse.metadata : { timestamp, ...stateParams };
-
-        // 3. Save AI results safely merged
+        // ONE SINGLE SAVE TO AVOID NETLIFY 10s TIMEOUT
         await store.set(fileKey, image, {
             metadata: {
-                ...currentMeta,
+                timestamp,
                 ai_score,
                 ai_summary,
                 ai_adherence,
-                ai_advice
+                ai_advice,
+                ...stateParams
             }
         });
 

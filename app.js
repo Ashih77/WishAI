@@ -1256,8 +1256,11 @@ function fallback() {
 
 function saveCard(src, occId, name, isFallback = false) {
     try {
-        // Show the rating container immediately!
-        document.getElementById('rating-container').classList.remove('hidden');
+        // Hide the rating container initially while loading
+        document.getElementById('rating-container').classList.add('hidden');
+        if (document.getElementById('eval-loading')) {
+            document.getElementById('eval-loading').classList.remove('hidden');
+        }
 
         // Generate file key locally if possible to avoid waiting for backend
         const localFileKey = `WishAI-${occId}-${Date.now()}`;
@@ -1276,12 +1279,23 @@ function saveCard(src, occId, name, isFallback = false) {
             })
             .then(res => res.json())
             .then(data => {
+                // Remove loading message and present the rating UI now that the backend evaluated it safely
+                if (document.getElementById('eval-loading')) {
+                    document.getElementById('eval-loading').classList.add('hidden');
+                }
+                
                 // If backend generated a different fileKey, update it
                 if (data.ok && data.fileKey) {
                     state.currentFileKey = data.fileKey;
+                    document.getElementById('rating-container').classList.remove('hidden');
                 }
             })
-            .catch(err => console.error('Failed to save to cloud:', err));
+            .catch(err => {
+                console.error('Failed to save to cloud:', err);
+                if (document.getElementById('eval-loading')) {
+                    document.getElementById('eval-loading').classList.add('hidden');
+                }
+            });
         }
 
         let cards = JSON.parse(localStorage.getItem('wishai_cards') || '[]');

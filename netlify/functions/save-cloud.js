@@ -18,7 +18,7 @@ export default async (req, context) => {
         }
 
         const body = await req.json();
-        const { image, stateParams } = body;
+        const { fileKey: clientFileKey, image, stateParams } = body;
         
         if (!image) {
             return new Response(JSON.stringify({ error: 'Missing image data' }), { status: 400, headers });
@@ -29,7 +29,15 @@ export default async (req, context) => {
 
         const safeOccasion = (stateParams?.occasion || 'card').replace(/[^a-z0-9]/gi, '_');
         const timestamp = Date.now();
-        const fileKey = `WishAI-${safeOccasion}-${timestamp}`;
+        const fileKey = clientFileKey || `WishAI-${safeOccasion}-${timestamp}`;
+
+        // Save image IMMEDIATELY so frontend can submit ratings right away without 404
+        await store.set(fileKey, image, {
+            metadata: {
+                timestamp,
+                ...stateParams // save name, style, details, etc.
+            }
+        });
 
         // --------- AUTOMATIC AI EVALUATION ---------
         let ai_score = 0;
@@ -92,21 +100,24 @@ ${JSON.stringify(stateParams, null, 2)}
             console.error('[WishAI-Cloud] Automatic AI eval failed:', evalErr);
         }
 
-        // Save base64 image data to the blob store 
+        // Fetch meta again in case the user submitted a rating while Gemini was evaluating!
+        const existingMeta = await store.getMetadata(fileKey);
+        const currentMeta = existingMeta ? existingMeta.metadata : { timestamp, ...stateParams };
+
+        // Save AI results merged with any existing data (like user rating)
         await store.set(fileKey, image, {
             metadata: {
-                timestamp,
+                ...currentMeta,
                 ai_score,
                 ai_summary,
                 ai_adherence,
                 ai_advice,
                 ai_extracted_text,
-                ai_text_position_analysis,
-                ...stateParams // save name, style, details, etc.
+                ai_text_position_analysis
             }
         });
 
-        console.log(`[WishAI-Cloud] Successfully saved tracking image: ${fileKey} with AI Score: ${ai_score}`);
+        console.log(`[WishAI-Cloud] Successfully evaluated tracking image: ${fileKey} with AI Score: ${ai_score}`);
 
         return new Response(JSON.stringify({ ok: true, fileKey }), { status: 200, headers });
 

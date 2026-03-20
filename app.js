@@ -1253,21 +1253,29 @@ function fallback() {
 
 function saveCard(src, occId, name, isFallback = false) {
     try {
+        // Show the rating container immediately!
+        document.getElementById('rating-container').classList.remove('hidden');
+
+        // Generate file key locally if possible to avoid waiting for backend
+        const localFileKey = `WishAI-${occId}-${Date.now()}`;
+        state.currentFileKey = localFileKey;
+
         // Save to cloud for admin/monitoring
         if (!isFallback && src) {
             fetch('/api/save-cloud', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
+                    fileKey: localFileKey,
                     image: src, 
                     stateParams: state // full generation parameters
                 })
             })
             .then(res => res.json())
             .then(data => {
-                if (data.ok) {
+                // If backend generated a different fileKey, update it
+                if (data.ok && data.fileKey) {
                     state.currentFileKey = data.fileKey;
-                    document.getElementById('rating-container').classList.remove('hidden');
                 }
             })
             .catch(err => console.error('Failed to save to cloud:', err));

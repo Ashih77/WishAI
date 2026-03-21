@@ -77,6 +77,12 @@
         </div>
 
         <div id="dashboard-view" class="hidden">
+            <div id="tabs" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button id="tab-images" onclick="switchTab('images')" style="flex: 1; padding: 12px; background: var(--primary);">الصور والتقييمات 🖼️</button>
+                <button id="tab-feedback" onclick="switchTab('feedback')" style="flex: 1; padding: 12px; background: #334155;">المقترحات والملاحظات 💡</button>
+            </div>
+
+            <div id="view-images">
             <div style="display: flex; justify-content: space-between; align-items: center; background:var(--surface); padding:1.2rem; border-radius:12px; margin-bottom:1.5rem; border: 1px solid #334155;">
                 <div>
                     <h2 style="margin:0 0 8px 0; color:var(--primary); font-size:1.3rem;">تقرير الأداء والتقييمات 📊</h2>
@@ -105,6 +111,20 @@
 
             <div id="loading" class="loading">جاري جلب البيانات السحابية... ⏳</div>
             <div id="cloud-grid" class="grid"></div>
+            </div> <!-- End view-images -->
+
+            <div id="view-feedback" class="hidden">
+                <div style="display: flex; justify-content: space-between; align-items: center; background:var(--surface); padding:1.2rem; border-radius:12px; margin-bottom:1.5rem; border: 1px solid #334155;">
+                    <div>
+                        <h2 style="margin:0 0 8px 0; color:var(--primary); font-size:1.3rem;">صندوق المقترحات والملاحظات 💡</h2>
+                        <p style="margin:0; font-size:0.95rem; color:#cbd5e1;">هنا يتم تجميع كافة المقترحات والمشاكل التي أرسلها المستخدمون.</p>
+                    </div>
+                    <button onclick="copyFeedbackForAI()" style="width: auto; padding: 10px 20px; background: #8b5cf6;">نسخ وتجهيز للذكاء الاصطناعي 🤖</button>
+                </div>
+                <div id="feedback-list">
+                    <p style="text-align:center; color:#cbd5e1; padding: 2rem;">جاري جلب المقترحات... ⏳</p>
+                </div>
+            </div>
         </div>
 
         <!-- AI Modal -->
@@ -118,6 +138,7 @@
 
     <script>
         let globalItems = [];
+        let globalFeedback = [];
         const loginBtn = document.getElementById('login-btn');
         const passInput = document.getElementById('admin-pass');
         const errorMsg = document.getElementById('error-msg');
@@ -143,6 +164,9 @@
                 globalItems = data.generations;
                 document.getElementById('export-btn').classList.remove('hidden');
                 renderDashboard(globalItems, pass);
+                
+                // Fetch feedback concurrently
+                fetchFeedback(pass);
             } catch (err) {
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('login-view').classList.remove('hidden');
@@ -488,6 +512,57 @@ ${JSON.stringify(meta, null, 2)}
                 console.error(err);
                 resultsDiv.innerHTML = `<div style="color:#ef4444;text-align:center; padding: 20px;">حدث خطأ أثناء التقييم: ${err.message}</div>`;
             }
+        }
+
+        async function fetchFeedback(pass) {
+            try {
+                const res = await fetch(`/api/list-feedback?pass=${encodeURIComponent(pass)}`);
+                const data = await res.json();
+                if(data.ok) {
+                    globalFeedback = data.feedbacks;
+                    renderFeedback();
+                }
+            } catch(e) { console.error('Error fetching feedback', e); }
+        }
+
+        function switchTab(tab) {
+            if(tab === 'images') {
+                document.getElementById('view-images').classList.remove('hidden');
+                document.getElementById('view-feedback').classList.add('hidden');
+                document.getElementById('tab-images').style.background = 'var(--primary)';
+                document.getElementById('tab-feedback').style.background = '#334155';
+            } else {
+                document.getElementById('view-images').classList.add('hidden');
+                document.getElementById('view-feedback').classList.remove('hidden');
+                document.getElementById('tab-images').style.background = '#334155';
+                document.getElementById('tab-feedback').style.background = 'var(--primary)';
+            }
+        }
+        
+        function renderFeedback() {
+            const list = document.getElementById('feedback-list');
+            if(!globalFeedback || globalFeedback.length === 0) {
+                list.innerHTML = '<p style="text-align:center; color:#cbd5e1; padding: 2rem;">لا توجد مقترحات حتى الآن.</p>';
+                return;
+            }
+            list.innerHTML = globalFeedback.map(item => {
+                const date = new Date(item.metadata.timestamp || Date.now()).toLocaleString('ar-EG');
+                return `<div style="background:var(--surface); padding: 1.5rem; border-radius:12px; border: 1px solid #334155; margin-bottom: 1rem;">
+                    <div style="color:#94a3b8; font-size: 0.85rem; margin-bottom: 10px;">🕒 ${date}</div>
+                    <div style="font-size: 1.1rem; line-height: 1.6; white-space: pre-wrap;">${item.text}</div>
+                </div>`;
+            }).join('');
+        }
+        
+        function copyFeedbackForAI() {
+            if(!globalFeedback || globalFeedback.length === 0) return alert('لا يوجد مقترحات لنسخها!');
+            let prompt = "مرحباً أيها الذكاء الاصطناعي، هذه قائمة بالمقترحات والملاحظات التي قدمها المستخدمون. يرجى قراءة هذه المقترحات وفهمها جيداً وتزويدي بخطة عمل لتنفيذ التحسينات المطلوبة وإصلاح الأخطاء المذكورة وتطوير المنصة لتلبية الاحتياجات:\\n\\n";
+            globalFeedback.forEach((f, i) => {
+                prompt += `--- مقترح ${i+1} ---\\n${f.text}\\n\\n`;
+            });
+            navigator.clipboard.writeText(prompt).then(() => {
+                alert("تم النسخ بنجاح! اذهب الآن والصقها في المحادثة مع الذكاء الاصطناعي.");
+            }).catch(console.error);
         }
     </script>
 </body>

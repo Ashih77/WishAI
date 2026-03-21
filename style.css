@@ -1788,3 +1788,106 @@ input[type="range"]::-webkit-slider-thumb:hover {
     color: var(--text);
     box-shadow: 0 0 12px rgba(139, 92, 246, 0.2);
 }
+
+/* ============================================
+   FEEDBACK WIDGET
+   ============================================ */
+
+.feedback-floating-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 8px 32px rgba(139, 92, 246, 0.4);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 1000;
+}
+
+[dir="ltr"] .feedback-floating-btn {
+    right: auto;
+    left: 24px;
+}
+
+.feedback-floating-btn:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 12px 40px rgba(139, 92, 246, 0.6);
+}
+
+.feedback-floating-btn:active {
+    transform: scale(0.95);
+}
+
+.feedback-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(10px);
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.4s var(--ease);
+}
+
+.feedback-modal:not(.hidden) {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.feedback-modal-content {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 32px;
+    width: 100%;
+    max-width: 440px;
+    position: relative;
+    transform: translateY(20px) scale(0.95);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+}
+
+.feedback-modal:not(.hidden) .feedback-modal-content {
+    transform: translateY(0) scale(1);
+}
+
+.feedback-close-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    color: white;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+[dir="ltr"] .feedback-close-btn {
+    right: auto;
+    left: 20px;
+}
+
+.feedback-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(90deg);
+}

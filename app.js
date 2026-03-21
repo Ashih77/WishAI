@@ -1432,4 +1432,70 @@ function deleteCard(id) {
     renderGallery();
 }
 
-document.addEventListener('DOMContentLoaded', init);
+// ==========================================
+// FEEDBACK SYSTEM
+// ==========================================
+function initFeedback() {
+    const btn = document.getElementById('feedback-floating-btn');
+    const modal = document.getElementById('feedback-modal');
+    const closeBtn = document.getElementById('feedback-close-btn');
+    const submitBtn = document.getElementById('submit-feedback-btn');
+    const textInput = document.getElementById('feedback-text');
+    const thanksMsg = document.getElementById('feedback-thanks');
+
+    if (!btn || !modal) return;
+
+    btn.addEventListener('click', () => {
+        modal.classList.remove('hidden');
+        thanksMsg.classList.add('hidden');
+        submitBtn.style.display = 'block';
+        textInput.style.display = 'block';
+        textInput.value = '';
+        textInput.focus();
+    });
+
+    closeBtn.addEventListener('click', () => {
+        modal.classList.add('hidden');
+    });
+
+    modal.addEventListener('click', (e) => {
+        if(e.target === modal) modal.classList.add('hidden');
+    });
+
+    submitBtn.addEventListener('click', async () => {
+        const text = textInput.value.trim();
+        if (!text) return;
+
+        submitBtn.disabled = true;
+        const originalText = submitBtn.innerText;
+        submitBtn.innerText = state.lang === 'ar' ? 'جاري الإرسال...' : 'Sending...';
+
+        try {
+            await fetch('/.netlify/functions/save-feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text,
+                    deviceInfo: navigator.userAgent
+                })
+            });
+            submitBtn.style.display = 'none';
+            textInput.style.display = 'none';
+            thanksMsg.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 3000);
+        } catch (e) {
+            console.error('Feedback error:', e);
+            alert(state.lang === 'ar' ? 'حدث خطأ. حاول مرة أخرى.' : 'Error sending feedback.');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = originalText;
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    init();
+    initFeedback();
+});

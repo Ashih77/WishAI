@@ -509,6 +509,23 @@
         </div>
     </div>
 
+    <!-- Feedback Floating Button -->
+    <button id="feedback-floating-btn" class="feedback-floating-btn" title="المقترحات والملاحظات">
+        💡
+    </button>
+
+    <!-- Feedback Modal -->
+    <div id="feedback-modal" class="feedback-modal hidden">
+        <div class="feedback-modal-content">
+            <button class="feedback-close-btn" id="feedback-close-btn">&times;</button>
+            <h3 data-i18n="feedback-title" style="margin-bottom: 5px;">المقترحات والملاحظات</h3>
+            <p data-i18n="feedback-desc" style="font-size: 0.85rem; margin-bottom: 15px; color: var(--dim);">شاركونا أفكاركم ومقترحاتكم لنقوم بتطوير المنصة معاً.</p>
+            <textarea id="feedback-text" rows="4" placeholder="اكتب مقترحك أو ملاحظاتك هنا..." style="width: 100%; border-radius: 12px; padding: 12px; border: 1px solid var(--border); font-family: inherit; resize: none; margin-bottom: 15px; background: rgba(255,255,255,0.05); color: var(--text-color); box-sizing: border-box;"></textarea>
+            <button id="submit-feedback-btn" class="btn-primary" style="width: 100%;">إرسال الإقتراح</button>
+            <div id="feedback-thanks" class="hidden" style="color: var(--primary); font-weight: bold; margin-top: 10px; text-align: center; font-size: 0.9rem;">شكرًا لك! تم استلام مقترحك بنجاح.</div>
+        </div>
+    </div>
+
     <script src="app.js?v=4"></script>
 </body>
 

@@ -1471,7 +1471,7 @@ function initFeedback() {
         submitBtn.innerText = state.lang === 'ar' ? 'جاري الإرسال...' : 'Sending...';
 
         try {
-            await fetch('/.netlify/functions/save-feedback', {
+            await fetch('/api/save-feedback', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

@@ -1,9 +1,9 @@
 const translations = {
     ar: {
-        'welcome-title': 'اصنع سحر التهنئة بالذكاء الاصطناعي',
-        'step1-desc': 'أدخل تفاصيلك لنبدأ في تصميم كارت مذهل وفريد من نوعه.',
-        'login-title': 'أهلاً بك في WishAI ✦',
-        'login-desc': 'سجل دخولك لتتمكن من حفظ بطاقاتك والوصول إليها من أي مكان.',
+        'welcome-title': 'صمّم بطاقة تهنئة خلال دقيقة',
+        'step1-desc': 'أدخل الاسم والمناسبة، ثم خصّص التفاصيل عند الحاجة.',
+        'login-title': 'مرحبًا بك في WishAI',
+        'login-desc': 'ادخل بحسابك أو جرّب كزائر وابدأ مباشرة.',
         'btn-google': 'المتابعة باستخدام Google',
         'enter-name': 'الاسم:',
         'select-occasion': 'اختر المناسبة:',
@@ -13,11 +13,24 @@ const translations = {
         'loading-suggestions': 'جاري التفكير...',
         'custom-instructions': 'إضافات خاصة (اختياري):',
         'optional-placeholder': 'مثال: أضف زهور الياسمين، اجعل اللون الفيروزي هو الغالب...',
-        'customize-design': 'تخصيص التصميم',
+        'customize-design': 'تخصيص متقدم اختياري',
         'art-style': 'نمط الفن:',
+        'style': 'نمط الفن:',
         'detail-level': 'مستوى التفاصيل:',
+        'details': 'مستوى التفاصيل:',
+        'simple': 'خفيف',
+        'detailed': 'غني',
         'color-intensity': 'كثافة الألوان:',
+        'muted-colors': 'هادئة',
+        'rich-colors': 'غنية',
         'color-palette': 'لوحة الألوان:',
+        'palette-auto': 'تلقائي',
+        'palette-warm': 'دافئ',
+        'palette-cool': 'بارد',
+        'palette-gold': 'ذهبي',
+        'palette-pastel': 'باستيل',
+        'palette-mono': 'أحادي',
+        'generate': 'توليد البطاقة',
         'generate-btn': 'توليد البطاقة ✨',
         'my-cards': 'بطاقاتي 🖼️',
         'gallery-title': 'معرض البطاقات',
@@ -29,8 +42,8 @@ const translations = {
         'download': 'تحميل البطاقة',
         'create-new': 'تصميم جديد',
         'logout': 'تسجيل الخروج',
-        'generating': 'جاري التوليد...',
-        'ramadan': 'رمضان', 'eid': 'العيد', 'birthday': 'ميلاد', 'wedding': 'زواج',
+        'generating': 'جاري توليد البطاقة...',
+        'ramadan': 'رمضان', 'eid_fitr': 'عيد الفطر', 'eid_adha': 'عيد الأضحى', 'birthday': 'ميلاد', 'wedding': 'زواج',
         'graduation': 'تخرج', 'success': 'نجاح', 'newborn': 'مولود جديد', 'love': 'حب',
         'friendship': 'صداقة', 'daily': 'تحية يومية', 'newyear': 'سنة جديدة', 'thankyou': 'شكر',
         'btn-guest': 'المتابعة كزائر',
@@ -52,14 +65,22 @@ const translations = {
         'style-cinematic': 'تصوير سينمائي',
         'style-illustration': 'رسم توضيحي',
         'style-papercraft': 'فن ورقي',
+        'image-model': 'موديل توليد الصورة:',
+        'model-nano-banana-2': 'نانو بنانا ٢',
+        'model-openai-image-2': 'OpenAI Image 2',
         'content-elements': 'عناصر البطاقة:',
-        'share': 'مشاركة 🔗'
+        'share': 'مشاركة 🔗',
+        'result-title': 'بطاقتك جاهزة',
+        'feedback-title': 'ملاحظاتك',
+        'feedback-desc': 'اكتب ملاحظة قصيرة تساعدنا على تحسين التجربة.',
+        'theme-dark': 'داكن',
+        'theme-light': 'فاتح'
     },
     en: {
-        'welcome-title': 'Create AI Greeting Magic',
-        'step1-desc': 'Enter your details to start designing a stunning and unique card.',
-        'login-title': 'Welcome to WishAI ✦',
-        'login-desc': 'Log in to save your cards and access them from anywhere.',
+        'welcome-title': 'Design a greeting card in a minute',
+        'step1-desc': 'Add the name and occasion, then fine-tune only if you want.',
+        'login-title': 'Welcome to WishAI',
+        'login-desc': 'Sign in or continue as a guest and start right away.',
         'btn-google': 'Continue with Google',
         'enter-name': 'Name:',
         'select-occasion': 'Select Occasion:',
@@ -69,11 +90,24 @@ const translations = {
         'loading-suggestions': 'Thinking...',
         'custom-instructions': 'Special Instructions (Optional):',
         'optional-placeholder': 'e.g., add jasmine flowers, dominant turquoise color...',
-        'customize-design': 'Customize Design',
+        'customize-design': 'Optional Advanced Options',
         'art-style': 'Art Style:',
+        'style': 'Art Style:',
         'detail-level': 'Detail Level:',
+        'details': 'Detail Level:',
+        'simple': 'Light',
+        'detailed': 'Rich',
         'color-intensity': 'Color Intensity:',
+        'muted-colors': 'Muted',
+        'rich-colors': 'Rich',
         'color-palette': 'Color Palette:',
+        'palette-auto': 'Auto',
+        'palette-warm': 'Warm',
+        'palette-cool': 'Cool',
+        'palette-gold': 'Gold',
+        'palette-pastel': 'Pastel',
+        'palette-mono': 'Mono',
+        'generate': 'Generate Card',
         'generate-btn': 'Generate Card ✨',
         'my-cards': 'My Cards 🖼️',
         'gallery-title': 'Card Gallery',
@@ -85,8 +119,8 @@ const translations = {
         'download': 'Download Card',
         'create-new': 'New Design',
         'logout': 'Logout',
-        'generating': 'Generating...',
-        'ramadan': 'Ramadan', 'eid': 'Eid', 'birthday': 'Birthday', 'wedding': 'Wedding',
+        'generating': 'Generating your card...',
+        'ramadan': 'Ramadan', 'eid_fitr': 'Eid Al-Fitr', 'eid_adha': 'Eid Al-Adha', 'birthday': 'Birthday', 'wedding': 'Wedding',
         'graduation': 'Graduation', 'success': 'Success', 'newborn': 'Newborn', 'love': 'Love',
         'friendship': 'Friendship', 'daily': 'Daily Greeting', 'newyear': 'New Year', 'thankyou': 'Thank You',
         'btn-guest': 'Continue as Guest',
@@ -108,8 +142,16 @@ const translations = {
         'style-cinematic': 'Cinematic',
         'style-illustration': 'Illustration',
         'style-papercraft': 'Papercraft',
+        'image-model': 'Image generation model:',
+        'model-nano-banana-2': 'Nano Banana 2',
+        'model-openai-image-2': 'OpenAI Image 2',
         'content-elements': 'Card Elements:',
-        'share': 'Share 🔗'
+        'share': 'Share 🔗',
+        'result-title': 'Your card is ready',
+        'feedback-title': 'Feedback',
+        'feedback-desc': 'Write a short note to help improve the experience.',
+        'theme-dark': 'Dark',
+        'theme-light': 'Light'
     }
 };
 
@@ -120,9 +162,14 @@ const occasions = [
         descEn: 'Spiritual Ramadan atmosphere, lanterns, crescent moon in the sky, and elegant Islamic geometric patterns.'
     },
     {
-        id: 'eid', icon: '🕌', nameAr: 'العيد', nameEn: 'Eid',
-        descAr: 'مظاهر احتفال بعيد الفطر أو الأضحى، مساجد مزينة، عيدية، وحلويات العيد المبهجة.',
-        descEn: 'Celebration of Eid Al-Fitr or Eid Al-Adha, decorated mosques, Eid gifts, and joyful holiday sweets.'
+        id: 'eid_fitr', icon: '🕌', nameAr: 'عيد الفطر', nameEn: 'Eid Al-Fitr',
+        descAr: 'أجواء عيد الفطر بعد رمضان، صلاة العيد، هلال رقيق، عيدية، كعك وحلويات العيد، وفرحة عائلية مشرقة.',
+        descEn: 'Eid Al-Fitr atmosphere after Ramadan, Eid prayer, a delicate crescent, Eid gifts, festive sweets, and bright family joy.'
+    },
+    {
+        id: 'eid_adha', icon: '🕋', nameAr: 'عيد الأضحى', nameEn: 'Eid Al-Adha',
+        descAr: 'أجواء عيد الأضحى المبارك، تكبيرات العيد، رموز الحج والكعبة، ضيافة عربية، تمر وقهوة، وفرحة اجتماع العائلة.',
+        descEn: 'Eid Al-Adha atmosphere, Eid takbeer, Hajj and Kaaba-inspired symbols, Arabic hospitality, dates and coffee, and family gathering joy.'
     },
     {
         id: 'birthday', icon: '🎂', nameAr: 'ميلاد', nameEn: 'Birthday',
@@ -176,21 +223,63 @@ const occasions = [
     }
 ];
 
+function normalizeOccasionId(id) {
+    return id === 'eid' ? 'eid_fitr' : id;
+}
+
+function getOccasionById(id) {
+    const normalizedId = normalizeOccasionId(id);
+    return occasions.find(o => o.id === normalizedId);
+}
+
 
 const greetings = {
     ar: {
-        ramadan: 'رمضان كريم', eid: 'عيد مبارك', birthday: 'عيد ميلاد سعيد',
+        ramadan: 'رمضان كريم', eid_fitr: 'عيد فطر مبارك', eid_adha: 'عيد أضحى مبارك', birthday: 'عيد ميلاد سعيد',
         wedding: 'زواج مبارك', graduation: 'مبارك التخرج', success: 'مبارك النجاح',
         newborn: 'مبارك المولود', love: 'أحبك', friendship: 'صديقي الغالي',
         daily: 'يوم سعيد', newyear: 'سنة سعيدة', thankyou: 'شكراً لك'
     },
     en: {
-        ramadan: 'Ramadan Kareem', eid: 'Eid Mubarak', birthday: 'Happy Birthday',
+        ramadan: 'Ramadan Kareem', eid_fitr: 'Eid Al-Fitr Mubarak', eid_adha: 'Eid Al-Adha Mubarak', birthday: 'Happy Birthday',
         wedding: 'Happy Wedding', graduation: 'Happy Graduation', success: 'Congratulations',
         newborn: 'Welcome Baby', love: 'I Love You', friendship: 'Best Friends Forever',
         daily: 'Have a Great Day', newyear: 'Happy New Year', thankyou: 'Thank You'
     }
 };
+
+const IMAGE_MODELS = {
+    'nano-banana-2': {
+        labelAr: 'نانو بنانا ٢',
+        labelEn: 'Nano Banana 2'
+    },
+    'openai-image-2': {
+        labelAr: 'OpenAI Image 2',
+        labelEn: 'OpenAI Image 2'
+    }
+};
+
+function normalizeImageModel(model) {
+    return Object.prototype.hasOwnProperty.call(IMAGE_MODELS, model) ? model : 'nano-banana-2';
+}
+
+function getImageModelLabel(model) {
+    return getImageModelLabelForLang(model, state.lang);
+}
+
+function getImageModelLabelForLang(model, lang = 'ar') {
+    const normalized = normalizeImageModel(model);
+    return lang === 'ar' ? IMAGE_MODELS[normalized].labelAr : IMAGE_MODELS[normalized].labelEn;
+}
+
+function getGenerationSettingsSnapshot() {
+    const imageModel = normalizeImageModel(state.imageModel);
+    return {
+        imageModel,
+        imageModelLabelAr: getImageModelLabelForLang(imageModel, 'ar'),
+        imageModelLabelEn: getImageModelLabelForLang(imageModel, 'en')
+    };
+}
 
 let state = {
     lang: 'ar',
@@ -208,18 +297,142 @@ let state = {
     details: 7,
     colorIntensity: 5,
     palette: 'auto',
+    imageModel: 'nano-banana-2',
     contentElements: [],
-    currentFileKey: null
+    currentFileKey: null,
+    shareImageUrl: '',
+    sharePageUrl: '',
+    theme: 'light'
 };
 
+let currentShareSavePromise = null;
+
 // 🔒 Security Update: API Key moved to Netlify environment variables
-const API_BASE = '/.netlify/functions/gemini'; 
+const API_BASE = '/api/gemini'; 
 console.log(`[WishAI] Initializing with API_BASE: ${API_BASE}`);
 const AI_MODEL = 'gemini-1.5-flash'; 
 const NB2_MODEL = 'gemini-1.5-flash'; 
 const NB2_IMAGE_MODEL = 'gemini-1.5-flash'; 
 const NB2_BACKUP = 'gemini-1.5-pro';
 const REQUEST_TIMEOUT = 35000; 
+
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+async function readApiJson(response) {
+    const text = await response.text();
+    try {
+        return JSON.parse(text);
+    } catch {
+        const message = state.lang === 'ar'
+            ? `رد الخادم ليس JSON. غالباً التطبيق يعمل عبر خادم ثابت لا يشغل Netlify Functions. استخدم Netlify Dev أو رابط Netlify الحقيقي. HTTP ${response.status}.`
+            : `The server did not return JSON. The app is probably running on a static server that does not run Netlify Functions. Use Netlify Dev or the real Netlify URL. HTTP ${response.status}.`;
+        throw new Error(message);
+    }
+}
+
+function getSharedCardTitle() {
+    return state.lang === 'ar' ? 'بطاقة تهنئة من WishAI' : 'WishAI Greeting Card';
+}
+
+function getSharedCardText() {
+    const credit = state.lang === 'ar' ? 'صممت بواسطة WishAI' : 'Designed by WishAI';
+    return state.greeting ? `${state.greeting} — ${credit}` : credit;
+}
+
+function getShareUrl() {
+    if (state.sharePageUrl) return state.sharePageUrl;
+    if (state.shareImageUrl) return state.shareImageUrl;
+    return window.location.href;
+}
+
+async function waitForShareImageUrl(timeoutMs = 8000) {
+    if ((state.sharePageUrl && state.shareImageUrl) || !currentShareSavePromise) return;
+    await Promise.race([
+        currentShareSavePromise.catch(() => null),
+        new Promise(resolve => setTimeout(resolve, timeoutMs))
+    ]);
+}
+
+function dataUrlToBlob(dataUrl) {
+    const [meta, base64] = dataUrl.split(',');
+    const mimeType = meta.match(/data:(.*?);base64/)?.[1] || 'image/png';
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new Blob([bytes], { type: mimeType });
+}
+
+function extensionFromMime(mimeType) {
+    if (mimeType.includes('jpeg') || mimeType.includes('jpg')) return 'jpg';
+    if (mimeType.includes('webp')) return 'webp';
+    return 'png';
+}
+
+async function imageSrcToFile(src) {
+    let blob;
+    if (src.startsWith('data:')) {
+        blob = dataUrlToBlob(src);
+    } else {
+        const response = await fetch(src);
+        blob = await response.blob();
+    }
+    const ext = extensionFromMime(blob.type || 'image/png');
+    return new File([blob], `WishAI-${state.occasion || 'card'}-${Date.now()}.${ext}`, {
+        type: blob.type || 'image/png'
+    });
+}
+
+function createJobId() {
+    if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+    return `job-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function generateOpenAiImageWithJob(prompt) {
+    const jobId = createJobId();
+
+    const startResponse = await fetch('/api/openai-image-background', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId, prompt })
+    });
+
+    if (!startResponse.ok && startResponse.status !== 202) {
+        throw new Error(`OPENAI_IMAGE_JOB_START_FAILED_HTTP_${startResponse.status}`);
+    }
+
+    for (let attempt = 0; attempt < 60; attempt++) {
+        await sleep(3000);
+        const statusResponse = await fetch(`/api/openai-image-job?id=${encodeURIComponent(jobId)}`);
+        const job = await readApiJson(statusResponse);
+
+        if (job.status === 'ready' && job.image) {
+            return {
+                ok: true,
+                used: job.used || 'gpt-image-2',
+                data: {
+                    data: [{ b64_json: job.image }]
+                }
+            };
+        }
+
+        if (job.status === 'error') {
+            throw new Error(job.message || job.error || 'OPENAI_IMAGE_2_FAILED');
+        }
+    }
+
+    throw new Error('OPENAI_IMAGE_2_TIMEOUT_WAITING_FOR_JOB');
+}
 
 // Top 1% Engineering: Persistent Connectivity Monitor
 async function checkConnectivity() {
@@ -228,7 +441,7 @@ async function checkConnectivity() {
             method: 'POST',
             body: JSON.stringify({ action: 'heartbeat' })
         });
-        const data = await res.json();
+        const data = await readApiJson(res);
         console.log(`[WishAI] System Heartbeat: ${data.status} (KeyLen: ${data.keyLen || data.keyLength || 0})`);
         return data.status === 'OK';
     } catch {
@@ -239,7 +452,9 @@ async function checkConnectivity() {
 
 const FALLBACK_GREETINGS = {
     'ramadan': ['رمضان كريم وكل عام وأنتم بخير', 'مبارك عليكم الشهر الفضيل', 'نسأل الله لكم قبول الطاعات في رمضان', 'رمضان مبارك، أعاده الله عليكم باليمن والبركات', 'أجمل التهاني بمناسبة حلول شهر رمضان'],
-    'eid': ['عيدكم مبارك وكل عام وأنتم بخير', 'تقبل الله منا ومنكم صالح الأعمال', 'عساكم من عواده، عيد سعيد', 'أجمل الأماني بمناسبة العيد السعيد', 'عيد مبارك، أعاده الله علينا وعليكم بالخير'],
+    'eid_fitr': ['عيد فطر مبارك وكل عام وأنتم بخير', 'تقبل الله منا ومنكم صالح الأعمال', 'عساكم من عواده، عيد فطر سعيد', 'فرحة الفطر تعود عليكم بالخير', 'عيد فطر سعيد أعاده الله عليكم بالبركات'],
+    'eid_adha': ['عيد أضحى مبارك وكل عام وأنتم بخير', 'تقبل الله طاعاتكم وأضحاكم', 'عساكم من عواده، عيد أضحى سعيد', 'أجمل التهاني بعيد الأضحى المبارك', 'أضحى مبارك أعاده الله عليكم بالخير'],
+    'eid': ['عيد فطر مبارك وكل عام وأنتم بخير', 'تقبل الله منا ومنكم صالح الأعمال', 'عساكم من عواده، عيد فطر سعيد', 'فرحة الفطر تعود عليكم بالخير', 'عيد فطر سعيد أعاده الله عليكم بالبركات'],
     'birthday': ['عيد ميلاد سعيد وكل عام وأنت بخير', 'أتمنى لك عاماً مليئاً بالأفراح والنجاح', 'في يوم ميلادك، أتمنى لك كل السعادة', 'كل سنة وأنت طيب وعقبال مائة عام', 'أجمل التهاني بمناسبة يوم ميلادك'],
     'graduation': ['مبارك التخرج وإلى مزيد من النجاح', 'ألف مبروك التخرج، فخورون بك', 'تهانينا القلبية بهذا الإنجاز الرائع', 'نجاحك يسعدنا، مبارك التخرج', 'من نجاح إلى نجاح، ألف مبروك'],
     'success': ['ألف مبروك النجاح والتفوق', 'مبارك هذا الإنجاز المستحق', 'تهانينا بالنجاح، وإلى الأمام دائماً', 'فرحتنا بنجاحك لا توصف، مبروك', 'نبارك لكم هذا التميز والنجاح'],
@@ -253,11 +468,41 @@ const FALLBACK_GREETINGS = {
 };
 
 function init() {
+    initTheme();
     checkConnectivity();
     renderOccasions();
     bindEvents();
     updateText();
     checkAuth();
+}
+
+function initTheme() {
+    const savedTheme = localStorage.getItem('wishai_theme');
+    state.theme = savedTheme === 'dark' ? 'dark' : 'light';
+    applyTheme();
+}
+
+function applyTheme() {
+    document.documentElement.dataset.theme = state.theme;
+    localStorage.setItem('wishai_theme', state.theme);
+    updateThemeToggleText();
+}
+
+function toggleTheme() {
+    state.theme = state.theme === 'dark' ? 'light' : 'dark';
+    applyTheme();
+}
+
+function updateThemeToggleText() {
+    const text = document.getElementById('theme-toggle-text');
+    const icon = document.getElementById('theme-toggle-icon');
+    const btn = document.getElementById('theme-toggle');
+    if (!text || !icon || !btn) return;
+
+    const isDark = state.theme === 'dark';
+    text.textContent = isDark ? translations[state.lang]['theme-light'] : translations[state.lang]['theme-dark'];
+    icon.textContent = isDark ? '☀' : '☾';
+    btn.setAttribute('aria-label', text.textContent);
 }
 
 function checkAuth() {
@@ -463,6 +708,7 @@ window.addEventListener('message', (event) => {
 
 function bindEvents() {
     document.getElementById('logout-btn').onclick = logout;
+    document.getElementById('theme-toggle').onclick = toggleTheme;
     // social login buttons managed via onclick in HTML
 
     // Logo Click -> Go Home & Reset
@@ -621,6 +867,14 @@ function bindEvents() {
     // Default initialization for style selection
     document.querySelector('.style-card[data-value="modern"]')?.click();
 
+    document.querySelectorAll('.model-choice[data-model]').forEach(c => {
+        c.onclick = () => {
+            state.imageModel = normalizeImageModel(c.dataset.model);
+            renderImageModelChoices();
+        };
+    });
+    renderImageModelChoices();
+
     // Color Palette Chips (HTML uses class palette-chip + data-palette)
     document.querySelectorAll('.palette-chip[data-palette]').forEach(c => {
         c.onclick = () => {
@@ -677,7 +931,10 @@ function bindEvents() {
         state.occasion = null;
         state.name = '';
         state.greeting = '';
+        state.imageModel = 'nano-banana-2';
         state.currentFileKey = null;
+        state.shareImageUrl = '';
+        state.sharePageUrl = '';
         document.getElementById('user-name').value = '';
         document.getElementById('greeting-text').value = '';
         document.getElementById('custom-instructions').value = '';
@@ -690,6 +947,7 @@ function bindEvents() {
         resetStars();
         go(1);
         renderOccasions();
+        renderImageModelChoices();
     };
 
     document.getElementById('remix-btn').onclick = () => {
@@ -768,21 +1026,63 @@ function bindEvents() {
         const src = document.getElementById('generated-image').src;
         if (!src) return;
 
-        if (navigator.share) {
-            try {
-                // If it's a data URL, we might need to convert to file for some platforms,
-                // but usually Sharing text + URL is better.
-                // For this demo, we'll share the text and prompt.
-                await navigator.share({
-                    title: 'WishAI Greeting Card',
-                    text: `${state.greeting} — ${state.lang === 'ar' ? 'صممت بواسطة WishAI' : 'Designed by WishAI'}`,
-                    url: window.location.href
-                });
-            } catch (err) {
-                console.log('Share failed:', err);
+        const shareBtn = document.getElementById('share-btn');
+        const originalLabel = shareBtn.textContent;
+
+        try {
+            shareBtn.disabled = true;
+            shareBtn.textContent = state.lang === 'ar' ? 'تجهيز المشاركة...' : 'Preparing share...';
+            await waitForShareImageUrl();
+
+            const shareUrl = getShareUrl();
+            const shareTextWithLink = `${getSharedCardText()}\n${shareUrl}`;
+            const shareData = {
+                title: getSharedCardTitle(),
+                text: getSharedCardText(),
+                url: shareUrl
+            };
+
+            if (navigator.share) {
+                const imageFile = await imageSrcToFile(src);
+                const fileShareData = {
+                    title: getSharedCardTitle(),
+                    text: shareTextWithLink,
+                    files: [imageFile]
+                };
+
+                if (!navigator.canShare || navigator.canShare(fileShareData)) {
+                    await navigator.share(fileShareData);
+                    return;
+                }
+
+                await navigator.share(shareData);
+                return;
             }
-        } else {
-            alert(state.lang === 'ar' ? 'المشاركة غير مدعومة في هذا المتصفح' : 'Sharing not supported in this browser');
+
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(shareUrl);
+                alert(state.lang === 'ar' ? 'تم نسخ رابط الصورة للمشاركة' : 'Image link copied for sharing');
+                return;
+            }
+
+            prompt(state.lang === 'ar' ? 'انسخ رابط الصورة:' : 'Copy image link:', shareUrl);
+        } catch (err) {
+            if (err.name === 'AbortError') return;
+            console.error('Share failed:', err);
+            try {
+                if (navigator.clipboard?.writeText) {
+                    const shareUrl = getShareUrl();
+                    await navigator.clipboard.writeText(shareUrl);
+                    alert(state.lang === 'ar' ? 'تعذرت المشاركة المباشرة، وتم نسخ رابط الصورة' : 'Direct sharing failed, image link copied');
+                    return;
+                }
+            } catch (clipboardErr) {
+                console.error('Clipboard fallback failed:', clipboardErr);
+            }
+            alert(state.lang === 'ar' ? 'تعذرت المشاركة من هذا المتصفح' : 'Sharing failed in this browser');
+        } finally {
+            shareBtn.disabled = false;
+            shareBtn.textContent = originalLabel;
         }
     };
 
@@ -897,9 +1197,10 @@ function bindEvents() {
 function renderOccasions() {
     const grid = document.getElementById('occasion-grid');
     grid.innerHTML = '';
+    const selectedOccasion = normalizeOccasionId(state.occasion);
     occasions.forEach(o => {
         const el = document.createElement('div');
-        el.className = `occ${state.occasion === o.id ? ' selected' : ''}`;
+        el.className = `occ${selectedOccasion === o.id ? ' selected' : ''}`;
         el.innerHTML = `<span class="occ-icon">${o.icon}</span><span class="occ-name">${state.lang === 'ar' ? o.nameAr : o.nameEn}</span>`;
         el.onclick = () => {
             state.occasion = o.id;
@@ -916,12 +1217,21 @@ function renderOccasions() {
     });
 }
 
+function renderImageModelChoices() {
+    state.imageModel = normalizeImageModel(state.imageModel);
+    document.querySelectorAll('.model-choice[data-model]').forEach(c => {
+        c.classList.toggle('selected', c.dataset.model === state.imageModel);
+    });
+}
+
 function updateText() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.dataset.i18n;
         if (translations[state.lang][key]) el.textContent = translations[state.lang][key];
     });
     document.getElementById('user-name').placeholder = state.lang === 'ar' ? 'ما هو اسمك؟' : 'What is your name?';
+    updateThemeToggleText();
+    renderImageModelChoices();
     updatePreview();
 }
 
@@ -947,6 +1257,7 @@ async function generateSuggestions() {
     const headerEl = document.querySelector('.suggestions-header');
 
     if (!state.occasion) return;
+    state.occasion = normalizeOccasionId(state.occasion);
 
     // Reset counter if occasion changed
     if (lastSuggestionOccasion !== state.occasion) {
@@ -972,7 +1283,7 @@ async function generateSuggestions() {
         headerEl.innerHTML = `<span class="suggestions-sparkle">${isCreativeMode ? '💡' : '⭐'}</span><span>${modeLabel}</span>`;
     }
 
-    const occ = occasions.find(o => o.id === state.occasion);
+    const occ = getOccasionById(state.occasion);
     const occName = state.lang === 'ar' ? occ.nameAr : occ.nameEn;
     const occDesc = state.lang === 'ar' ? occ.descAr : occ.descEn;
 
@@ -1086,10 +1397,12 @@ async function generate() {
     // 1. Prepare UI
     img.style.opacity = '0.3';
     loading.classList.remove('hidden');
+    loading.querySelectorAll('.generation-error').forEach(el => el.remove());
     result.classList.add('hidden');
 
     // 2. Build Sophisticated Prompt
-    const occ = occasions.find(o => o.id === state.occasion);
+    state.occasion = normalizeOccasionId(state.occasion);
+    const occ = getOccasionById(state.occasion);
     const occDesc = state.lang === 'ar' ? occ.descAr : occ.descEn;
     const langLabel = state.lang === 'ar' ? 'Arabic' : 'English';
 
@@ -1190,24 +1503,33 @@ ${textStyleInstruction}${autoCorrections}`;
         loader.src = url;
     }
 
+    state.imageModel = normalizeImageModel(state.imageModel);
+    const selectedModelLabel = getImageModelLabel(state.imageModel);
+
     try {
-        console.log("🚀 Calling Nano Banana 2 (Imagen 3)...");
-        
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT); 
+        console.log(`🚀 Calling ${selectedModelLabel}...`);
+        let result;
 
-        const res = await fetch(API_BASE, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            signal: controller.signal,
-            body: JSON.stringify({
-                action: 'generate',
-                contents: [{ parts: [{ text: prompt }] }]
-            })
-        });
-        clearTimeout(timeout);
+        if (state.imageModel === 'openai-image-2') {
+            result = await generateOpenAiImageWithJob(prompt);
+        } else {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT); 
 
-        const result = await res.json();
+            const res = await fetch(API_BASE, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                signal: controller.signal,
+                body: JSON.stringify({
+                    action: 'generate',
+                    imageModel: state.imageModel,
+                    contents: [{ parts: [{ text: prompt }] }]
+                })
+            });
+            clearTimeout(timeout);
+
+            result = await readApiJson(res);
+        }
         
         if (result.ok) {
             console.log(`[WishAI] Success using route: ${result.used || 'Direct'}`);
@@ -1223,6 +1545,12 @@ ${textStyleInstruction}${autoCorrections}`;
                 showImage(imgPart.inlineData.data, imgPart.inlineData.mimeType || 'image/png');
                 return;
             }
+
+            const openAiImage = result.data.data?.[0]?.b64_json;
+            if (openAiImage) {
+                showImage(openAiImage, 'image/png');
+                return;
+            }
         }
         
         throw new Error(result.message || result.error || "GEN_FAILED");
@@ -1230,8 +1558,9 @@ ${textStyleInstruction}${autoCorrections}`;
     } catch (e) {
         console.warn("Generation Issue:", e.message);
         const errorMsg = document.createElement('div');
+        errorMsg.className = 'generation-error';
         errorMsg.style.cssText = "color:var(--important);background:rgba(0,0,0,0.8);padding:15px;border-radius:10px;text-align:center;margin-top:10px;font-size:0.85rem;";
-        errorMsg.innerHTML = `⚠️ <b>عذراً، لم نتمكن من الوصول لنانو بنانا</b><br>تأكد من صلاحية المفتاح والمنطقة الجغرافية.<br><small>السبب: ${e.message}</small>`;
+        errorMsg.innerHTML = `⚠️ <b>عذراً، لم نتمكن من الوصول إلى ${escapeHtml(selectedModelLabel)}</b><br>تأكد من صلاحية المفتاح وتشغيل دوال Netlify محلياً.<br><small>السبب: ${escapeHtml(e.message)}</small>`;
         loading.appendChild(errorMsg);
     }
 }
@@ -1265,16 +1594,25 @@ function saveCard(src, occId, name, isFallback = false) {
         // Generate file key locally if possible to avoid waiting for backend
         const localFileKey = `WishAI-${occId}-${Date.now()}`;
         state.currentFileKey = localFileKey;
+        state.shareImageUrl = '';
+        state.sharePageUrl = '';
+        currentShareSavePromise = null;
+        const generationSettings = getGenerationSettingsSnapshot();
+        const stateParams = {
+            ...JSON.parse(JSON.stringify(state)),
+            settings: generationSettings,
+            imageModel: generationSettings.imageModel
+        };
 
         // Save to cloud for admin/monitoring
         if (!isFallback && src) {
-            fetch('/api/save-cloud', {
+            currentShareSavePromise = fetch('/api/save-cloud', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     fileKey: localFileKey,
                     image: src, 
-                    stateParams: state // full generation parameters
+                    stateParams
                 })
             })
             .then(res => res.json())
@@ -1287,6 +1625,8 @@ function saveCard(src, occId, name, isFallback = false) {
                 // If backend generated a different fileKey, update it
                 if (data.ok && data.fileKey) {
                     state.currentFileKey = data.fileKey;
+                    state.shareImageUrl = data.imageUrl || `${window.location.origin}/api/get-cloud-image?key=${encodeURIComponent(data.fileKey)}`;
+                    state.sharePageUrl = data.shareUrl || `${window.location.origin}/share?id=${encodeURIComponent(data.fileKey)}`;
                     document.getElementById('rating-container').classList.remove('hidden');
                 }
             })
@@ -1296,11 +1636,21 @@ function saveCard(src, occId, name, isFallback = false) {
                     document.getElementById('eval-loading').classList.add('hidden');
                 }
             });
+        } else {
+            currentShareSavePromise = null;
         }
 
         let cards = JSON.parse(localStorage.getItem('wishai_cards') || '[]');
-        const cardState = JSON.parse(JSON.stringify(state)); // Clone current state 
-        cards.unshift({ id: Date.now(), src, occId, name, date: new Date().toISOString(), isFallback, state: cardState });
+        cards.unshift({
+            id: Date.now(),
+            src,
+            occId,
+            name,
+            date: new Date().toISOString(),
+            isFallback,
+            settings: generationSettings,
+            state: stateParams
+        });
         if (cards.length > 15) cards.pop();
 
         // Try to save. If it fails due to quota, keep popping until it fits, or abandon.
@@ -1331,9 +1681,12 @@ function renderGallery() {
         grid.classList.remove('hidden');
         grid.innerHTML = cards.map(c => {
             const safeName = c.name ? c.name.replace(/'/g, "\\'") : '';
+            const savedModel = normalizeImageModel(c.settings?.imageModel || c.state?.settings?.imageModel || c.state?.imageModel);
+            const modelLabel = getImageModelLabel(savedModel);
             return `
             <div class="gallery-item">
                 <img src="${c.src}">
+                <div class="gallery-model-badge">${escapeHtml(modelLabel)}</div>
                 <div class="gallery-overlay">
                     <div class="gallery-actions">
                         <button onclick="remixCard(${c.id})" title="${state.lang === 'ar' ? 'تعديل وإعادة توليد' : 'Remix'}">✏️</button>
@@ -1354,10 +1707,12 @@ function remixCard(id) {
     
     // Restore generation parameters only (protect auth and lang)
     const savedState = card.state;
-    const params = ['name', 'occasion', 'greeting', 'instructions', 'style', 'subStyle', 'details', 'colorIntensity', 'palette', 'contentElements', 'tashkeel', 'zakhrafa', 'namePosition'];
+    const params = ['name', 'occasion', 'greeting', 'instructions', 'style', 'subStyle', 'details', 'colorIntensity', 'palette', 'imageModel', 'contentElements', 'tashkeel', 'zakhrafa', 'namePosition'];
     params.forEach(p => {
         if (savedState[p] !== undefined) state[p] = JSON.parse(JSON.stringify(savedState[p]));
     });
+    state.occasion = normalizeOccasionId(state.occasion);
+    state.imageModel = normalizeImageModel(state.imageModel);
 
     // Update Text Inputs
     document.getElementById('user-name').value = state.name || '';
@@ -1389,6 +1744,8 @@ function remixCard(id) {
     document.querySelectorAll('.palette-chip').forEach(c => c.classList.remove('active', 'selected'));
     const pChip = document.querySelector(`.palette-chip[data-palette="${state.palette}"]`);
     if (pChip) pChip.classList.add('active', 'selected');
+
+    renderImageModelChoices();
 
     // Content Elements
     document.querySelectorAll('.element-chip').forEach(c => {

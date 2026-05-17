@@ -7,61 +7,99 @@
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #8a2be2;
-            --bg-dark: #0f172a;
-            --surface: #1e293b;
-            --text: #f8fafc;
+            --primary: #0f766e;
+            --secondary: #ef6f61;
+            --accent: #c6933d;
+            --bg-dark: #f6f7f4;
+            --surface: rgba(255, 255, 255, 0.92);
+            --text: #17201d;
+            --muted: #5f6b66;
+            --border: rgba(17, 24, 39, 0.1);
+            --radius-lg: 22px;
+            --radius-md: 16px;
+            --shadow: 0 18px 44px rgba(28, 42, 38, 0.12);
         }
         body {
             font-family: 'Tajawal', sans-serif;
             margin: 0; padding: 0;
-            background: var(--bg-dark);
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(246, 247, 244, 0.94)),
+                linear-gradient(135deg, #f6f7f4 0%, #eef6f3 52%, #fff4ed 100%);
             color: var(--text);
         }
-        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
-        h1 { text-align: center; color: var(--primary); }
+        .container { max-width: 1280px; margin: 0 auto; padding: 2rem; }
+        h1 { text-align: center; color: var(--text); margin: 0 0 1.5rem; }
         .login-box {
-            background: var(--surface); padding: 2rem; border-radius: 12px;
+            background: var(--surface); padding: 2.5rem; border-radius: var(--radius-lg);
             max-width: 400px; margin: 4rem auto; text-align: center;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
         }
         input {
-            width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px;
-            border: 1px solid #334155; background: #0f172a; color: #fff;
-            box-sizing: border-box;
+            width: 100%; padding: 14px; margin: 12px 0; border-radius: var(--radius-md);
+            border: 1px solid var(--border); background: #fff; color: var(--text);
+            box-sizing: border-box; font-family: inherit; font-size: 1rem;
         }
+        input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(15,118,110,0.11); }
         button {
-            width: 100%; padding: 12px; border-radius: 8px; border: none;
-            background: var(--primary); color: #fff; font-weight: bold;
-            cursor: pointer; font-family: inherit;
+            width: 100%; padding: 14px; border-radius: var(--radius-md); border: none;
+            background: var(--primary); color: #fff; font-weight: bold; font-size: 1rem;
+            cursor: pointer; font-family: inherit; transition: 0.2s ease;
         }
+        button:hover { transform: translateY(-1px); filter: brightness(1.02); }
         .grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1.5rem; margin-top: 2rem;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.25rem; margin-top: 1.5rem;
         }
         .card {
-            background: var(--surface); border-radius: 12px; overflow: hidden;
-            display: flex; flex-direction: column;
+            background: var(--surface); border-radius: var(--radius-lg); overflow: hidden;
+            display: flex; flex-direction: column; border: 1px solid var(--border);
+            box-shadow: 0 10px 30px rgba(28, 42, 38, 0.08);
         }
         .card img { width: 100%; height: auto; display: block; }
-        .card-info { padding: 1rem; font-size: 0.9rem; line-height: 1.5; }
+        .card-info { padding: 1rem; font-size: 0.9rem; line-height: 1.6; color: var(--text); }
         .badge {
             display: inline-block; padding: 2px 8px; border-radius: 12px;
-            background: #334155; font-size: 0.8rem; margin: 2px;
+            background: rgba(15, 118, 110, 0.1); color: var(--primary); font-size: 0.8rem; margin: 2px;
         }
         .loading { text-align: center; margin-top: 2rem; display: none; }
         .hidden { display: none !important; }
+        #tabs { background: rgba(255,255,255,0.72); border: 1px solid var(--border); border-radius: 18px; padding: 6px; box-shadow: 0 8px 24px rgba(28,42,38,0.08); }
+        .admin-tab { background: transparent !important; color: var(--muted) !important; border-radius: 14px; }
+        .admin-tab.active { background: #fff !important; color: var(--text) !important; box-shadow: 0 6px 18px rgba(28,42,38,0.1); }
+        #view-images > div[style],
+        #view-feedback > div[style],
+        #analytics-section > div[style] {
+            background: var(--surface) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: var(--radius-lg) !important;
+            box-shadow: 0 10px 30px rgba(28,42,38,0.08);
+        }
+        #view-images h2,
+        #view-feedback h2,
+        #analytics-section h3 { color: var(--text) !important; }
+        #view-images p,
+        #view-feedback p { color: var(--muted) !important; }
+        #export-btn { background: var(--secondary) !important; }
 
         /* AI Analysis Modal & Buttons */
-        .btn-sm { padding: 8px 12px; font-size: 0.85rem; border-radius: 6px; border: none; cursor: pointer; color: #fff; width: auto; font-family: inherit; font-weight: bold; flex: 1; }
-        .btn-json { background: #3b82f6; }
-        .btn-json:hover { background: #2563eb; }
-        .btn-ai { background: #10b981; }
-        .btn-ai:hover { background: #059669; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 50; align-items: center; justify-content: center; }
-        .modal-content { background: var(--surface); padding: 2rem; border-radius: 12px; max-width: 600px; width: 90%; position: relative; max-height: 85vh; overflow-y: auto;}
-        .close-modal { position: absolute; top: 1rem; left: 1rem; background: none; border: none; color: #cbd5e1; font-size: 1.5rem; cursor: pointer; width: auto; padding: 0; }
-        .close-modal:hover { color: #fff; }
-        .ai-results h3 { margin-top: 0; color: var(--primary); border-bottom: 1px solid #334155; padding-bottom: 10px; }
+        .btn-sm { padding: 10px 16px; font-size: 0.9rem; border-radius: var(--radius-md); border: none; cursor: pointer; color: #fff; width: auto; font-family: inherit; font-weight: bold; flex: 1; transition: 0.2s; }
+        .btn-json { background: #fff; border: 1px solid var(--border); color: var(--text); }
+        .btn-json:hover { background: rgba(15,118,110,0.08); }
+        .btn-ai { background: var(--primary); }
+        .btn-ai:hover { opacity: 0.9; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(23,32,29,0.42); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); z-index: 50; align-items: center; justify-content: center; }
+        .modal-content { background: #fff; border: 1px solid var(--border); padding: 2.5rem; border-radius: var(--radius-lg); max-width: 600px; width: 90%; position: relative; max-height: 85vh; overflow-y: auto; box-shadow: var(--shadow);}
+        .close-modal { position: absolute; top: 1.5rem; left: 1.5rem; background: rgba(17,24,39,0.08); border-radius: 50%; border: none; color: var(--text); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; transition: 0.2s; }
+        .close-modal:hover { background: rgba(17,24,39,0.14); }
+        .ai-results h3 { margin-top: 0; color: var(--primary); border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+        @media (max-width: 760px) {
+            .container { padding: 1rem; }
+            #tabs { flex-direction: column; }
+            #view-images > div[style],
+            #view-feedback > div[style] { flex-direction: column !important; align-items: stretch !important; gap: 1rem; }
+            .grid { grid-template-columns: 1fr; }
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -78,8 +116,8 @@
 
         <div id="dashboard-view" class="hidden">
             <div id="tabs" style="display: flex; gap: 10px; margin-bottom: 20px;">
-                <button id="tab-images" onclick="switchTab('images')" style="flex: 1; padding: 12px; background: var(--primary);">الصور والتقييمات 🖼️</button>
-                <button id="tab-feedback" onclick="switchTab('feedback')" style="flex: 1; padding: 12px; background: #334155;">المقترحات والملاحظات 💡</button>
+                <button id="tab-images" class="admin-tab active" onclick="switchTab('images')" style="flex: 1; padding: 12px;">الصور والتقييمات 🖼️</button>
+                <button id="tab-feedback" class="admin-tab" onclick="switchTab('feedback')" style="flex: 1; padding: 12px;">المقترحات والملاحظات 💡</button>
             </div>
 
             <div id="view-images">
@@ -181,6 +219,15 @@
             return '<span style="color:#fbbf24; letter-spacing: 2px;">' + '★'.repeat(rating) + '☆'.repeat(5 - rating) + '</span>';
         }
 
+        function getImageModelLabel(meta) {
+            const model = meta.settings?.imageModel || meta.imageModel || 'nano-banana-2';
+            const labels = {
+                'nano-banana-2': 'نانو بنانا ٢',
+                'openai-image-2': 'OpenAI Image 2'
+            };
+            return labels[model] || model;
+        }
+
         function renderDashboard(items, pass) {
             document.getElementById('total-count').textContent = items.length;
             
@@ -191,6 +238,7 @@
             const htmlContent = items.map(item => {
                 const meta = item.metadata || {};
                 const date = new Date(meta.timestamp || Date.now()).toLocaleString('ar-EG');
+                const imageModelLabel = getImageModelLabel(meta);
                 
                 if (meta.rating) {
                     totalRatingSum += parseInt(meta.rating);
@@ -236,6 +284,7 @@
                             <strong>التاريخ:</strong> ${date}<br>
                             <strong>المستخدم:</strong> ${meta.name || 'مجهول'}<br>
                             <strong>المناسبة:</strong> <span class="badge">${meta.occasion || 'غير محدد'}</span><br>
+                            <strong>موديل الصورة:</strong> <span class="badge">${imageModelLabel}</span><br>
                             <strong>النمط:</strong> <span class="badge">${meta.style || 'modern'}</span>
                             ${meta.subStyle ? `<span class="badge">${meta.subStyle}</span>` : ''}<br>
                             <strong>التفاصيل:</strong> ${meta.details || '-'} | <strong>الألوان:</strong> ${meta.colorIntensity || '-'}<br>
@@ -526,16 +575,18 @@ ${JSON.stringify(meta, null, 2)}
         }
 
         function switchTab(tab) {
+            const imagesTab = document.getElementById('tab-images');
+            const feedbackTab = document.getElementById('tab-feedback');
             if(tab === 'images') {
                 document.getElementById('view-images').classList.remove('hidden');
                 document.getElementById('view-feedback').classList.add('hidden');
-                document.getElementById('tab-images').style.background = 'var(--primary)';
-                document.getElementById('tab-feedback').style.background = '#334155';
+                imagesTab.classList.add('active');
+                feedbackTab.classList.remove('active');
             } else {
                 document.getElementById('view-images').classList.add('hidden');
                 document.getElementById('view-feedback').classList.remove('hidden');
-                document.getElementById('tab-images').style.background = '#334155';
-                document.getElementById('tab-feedback').style.background = 'var(--primary)';
+                imagesTab.classList.remove('active');
+                feedbackTab.classList.add('active');
             }
         }
         

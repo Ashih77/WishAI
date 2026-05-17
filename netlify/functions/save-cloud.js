@@ -100,7 +100,11 @@ ${JSON.stringify(stateParams, null, 2)}
 
         console.log(`[WishAI-Cloud] Successfully evaluated image: ${fileKey} with AI Score: ${ai_score}`);
 
-        return new Response(JSON.stringify({ ok: true, fileKey }), { status: 200, headers });
+        const origin = new URL(req.url).origin;
+        const imageUrl = `${origin}/api/get-cloud-image?key=${encodeURIComponent(fileKey)}`;
+        const shareUrl = `${origin}/share?id=${encodeURIComponent(fileKey)}`;
+
+        return new Response(JSON.stringify({ ok: true, fileKey, imageUrl, shareUrl }), { status: 200, headers });
 
     } catch (err) {
         console.error('Error saving to cloud:', err);

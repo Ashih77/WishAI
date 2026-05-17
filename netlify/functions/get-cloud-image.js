@@ -3,17 +3,11 @@ import { getStore } from "@netlify/blobs";
 export default async (req, context) => {
     const url = new URL(req.url);
     const key = url.searchParams.get('key');
-    // Basic password check to prevent public scraping of images
-    const ADMIN_PASS = 'wishai-admin-2026';
-    const pass = url.searchParams.get('pass');
 
     const headers = new Headers({
-        'Access-Control-Allow-Origin': '*'
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'public, max-age=31536000'
     });
-
-    if (pass !== ADMIN_PASS) {
-        return new Response('Unauthorized', { status: 401, headers });
-    }
 
     if (!key) {
         return new Response('Missing key', { status: 400 });

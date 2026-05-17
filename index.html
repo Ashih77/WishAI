@@ -13,7 +13,7 @@
         href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <link rel="stylesheet" href="style.css?v=20260302c">
+    <link rel="stylesheet" href="style.css?v=20260517b">
 </head>
 
 
@@ -38,6 +38,10 @@
                 </div>
                 <button type="button" class="btn-ghost my-cards-btn" id="my-cards-btn" data-i18n="my-cards">بطاقاتي
                     🖼️</button>
+                <button type="button" class="btn-ghost theme-toggle" id="theme-toggle" aria-label="تبديل الوضع الداكن">
+                    <span class="theme-toggle-icon" id="theme-toggle-icon">☾</span>
+                    <span class="theme-toggle-text" id="theme-toggle-text">داكن</span>
+                </button>
                 <div class="lang-toggle" id="lang-toggle">
                     <span class="active" data-lang="ar">عربي</span>
                     <span data-lang="en">EN</span>
@@ -49,8 +53,8 @@
         <section id="step-0" class="step active">
             <div class="card login-card">
                 <div class="card-header">
-                    <h2 data-i18n="login-title">أهلاً بك في WishAI ✦</h2>
-                    <p class="subtitle" data-i18n="login-desc">سجل دخولك لتتمكن من حفظ بطاقاتك والوصول إليها من أي مكان.
+                    <h2 data-i18n="login-title">عالم WishAI ✦</h2>
+                    <p class="subtitle" data-i18n="login-desc">ابدأ رحلة الإبداع ونسج أمنياتك كلوحات فنية تسحر القلوب.
                     </p>
                 </div>
                 <div class="login-body">
@@ -66,15 +70,15 @@
                                 <path fill="#EA4335"
                                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                             </svg>
-                            <span data-i18n="btn-google">المتابعة باستخدام Google</span>
-                        </button>
-                    </div>
-                    <div class="login-divider">
-                        <span>أو</span>
-                    </div>
-                    <button class="social-btn guest-btn" id="guest-login-btn" type="button" onclick="login('guest')">
-                        <span class="btn-icon">👤</span>
-                        <span data-i18n="btn-guest">المتابعة كزائر</span>
+                        <span data-i18n="btn-google">الدخول السريع عبر Google</span>
+                    </button>
+                </div>
+                <div class="login-divider">
+                    <span>أو</span>
+                </div>
+                <button class="social-btn guest-btn" id="guest-login-btn" type="button" onclick="login('guest')">
+                    <span class="btn-icon">✨</span>
+                    <span data-i18n="btn-guest">استكشاف التجربة (زائر)</span>
                     </button>
                 </div>
             </div>
@@ -84,21 +88,100 @@
         <section id="step-1" class="step">
             <div class="card">
                 <div class="card-header">
-                    <h2 data-i18n="welcome-title">اصنع سحر التهنئة بالذكاء الاصطناعي</h2>
-                    <p class="subtitle" data-i18n="step1-desc">أدخل تفاصيلك لنبدأ في تصميم كارت مذهل وفريد من نوعه.</p>
+                    <h2 data-i18n="welcome-title">صمّم بطاقة تهنئة خلال دقيقة</h2>
+                    <p class="subtitle" data-i18n="step1-desc">أدخل الاسم والمناسبة، ثم خصّص التفاصيل عند الحاجة.</p>
                 </div>
 
                 <div class="form-body">
                     <!-- Name -->
                     <div class="field">
                         <label for="user-name" data-i18n="enter-name">الاسم:</label>
-                        <input type="text" id="user-name" placeholder="ما هو اسمك؟" autocomplete="off">
+                        <input type="text" id="user-name" placeholder="أدخل اسم الشخص المهدى إليه..." autocomplete="off">
                     </div>
 
                     <!-- Occasion -->
                     <div class="field">
                         <label data-i18n="select-occasion">اختر المناسبة:</label>
                         <div class="occasions" id="occasion-grid"></div>
+                    </div>
+
+                    <!-- Art Style Visual Selector -->
+                    <div class="field primary-style-field">
+                        <label data-i18n="style">نمط الفن:</label>
+                        <div class="style-cards-grid" id="style-chips">
+                            <button type="button" class="style-card selected" data-value="modern">
+                                <div class="style-img-wrapper"><img
+                                        src="https://plus.unsplash.com/premium_photo-1661962960694-0b4ed303744f?ixid=M3wxMjA3fDB8MXxzZWFyY2h8MXx8bW9kZXJuJTIwYWJzdHJhY3QlMjAzZHxlbnwwfHx8fDE3NzI3NjgxNzN8MA&ixlib=rb-4.1.0&w=400&q=80"
+                                        alt="عصري وحديث"></div>
+                                <div class="style-info">
+                                    <span class="style-title" data-i18n="style-modern">عصري وحديث</span>
+                                </div>
+                            </button>
+                            <button type="button" class="style-card" data-value="traditional">
+                                <div class="style-img-wrapper"><img
+                                        src="https://plus.unsplash.com/premium_photo-1677621879474-9cc74b5d3e57?ixid=M3wxMjA3fDB8MXxzZWFyY2h8MXx8dHJhZGl0aW9uYWwlMjBpc2xhbWljJTIwY2FsbGlncmFwaHl8ZW58MHx8fHwxNzcyNzY4MTc1fDA&ixlib=rb-4.1.0&w=400&q=80"
+                                        alt="تراثي كلاسيكي"></div>
+                                <div class="style-info">
+                                    <span class="style-title" data-i18n="style-traditional">تراثي كلاسيكي</span>
+                                </div>
+                            </button>
+                            <button type="button" class="style-card" data-value="minimalist">
+                                <div class="style-img-wrapper"><img
+                                        src="https://plus.unsplash.com/premium_photo-1756142083617-eb4450c83308?ixid=M3wxMjA3fDB8MXxzZWFyY2h8MXx8bWluaW1hbGlzdCUyMGdlb21ldHJpYyUyMGFydHxlbnwwfHx8fDE3NzI3NjgxNzR8MA&ixlib=rb-4.1.0&w=400&q=80"
+                                        alt="بسيط وأنيق"></div>
+                                <div class="style-info">
+                                    <span class="style-title" data-i18n="style-minimalist">بسيط وأنيق</span>
+                                </div>
+                            </button>
+                            <button type="button" class="style-card" data-value="vibrant">
+                                <div class="style-img-wrapper"><img
+                                        src="https://images.unsplash.com/photo-1525909002-1b05e0c869d8?w=400&q=80"
+                                        alt="ملون ومبهج"></div>
+                                <div class="style-info">
+                                    <span class="style-title" data-i18n="style-vibrant">ملون ومبهج</span>
+                                </div>
+                            </button>
+                            <button type="button" class="style-card" data-value="watercolor">
+                                <div class="style-img-wrapper"><img
+                                        src="https://plus.unsplash.com/premium_photo-1752429309190-1d6c5ea1c77b?ixid=M3wxMjA3fDB8MXxzZWFyY2h8MXx8d2F0ZXJjb2xvciUyMHBhaW50aW5nJTIwbGFuZHNjYXBlfGVufDB8fHx8MTc3Mjc2ODE3N3ww&ixlib=rb-4.1.0&w=400&q=80"
+                                        alt="ألوان مائية"></div>
+                                <div class="style-info">
+                                    <span class="style-title" data-i18n="style-watercolor">ألوان مائية</span>
+                                </div>
+                            </button>
+                            <button type="button" class="style-card" data-value="3d-render">
+                                <div class="style-img-wrapper"><img
+                                        src="https://images.unsplash.com/photo-1614850715649-1d0106293bd1?w=400&q=80"
+                                        alt="ثلاثي الأبعاد"></div>
+                                <div class="style-info">
+                                    <span class="style-title" data-i18n="style-3d">ثلاثي الأبعاد</span>
+                                </div>
+                            </button>
+                            <button type="button" class="style-card" data-value="cinematic">
+                                <div class="style-img-wrapper"><img
+                                        src="https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=400&q=80"
+                                        alt="تصوير سينمائي"></div>
+                                <div class="style-info">
+                                    <span class="style-title" data-i18n="style-cinematic">تصوير سينمائي</span>
+                                </div>
+                            </button>
+                            <button type="button" class="style-card" data-value="illustration">
+                                <div class="style-img-wrapper"><img
+                                        src="https://plus.unsplash.com/premium_photo-1661881429258-d370c3f95276?ixid=M3wxMjA3fDB8MXxzZWFyY2h8MXx8Y29sb3JmdWwlMjBkaWdpdGFsJTIwaWxsdXN0cmF0aW9uJTIwYXJ0fGVufDB8fHx8MTc3Mjc2ODQ4Mnww&ixlib=rb-4.1.0&w=400&q=80"
+                                        alt="رسم توضيحي"></div>
+                                <div class="style-info">
+                                    <span class="style-title" data-i18n="style-illustration">رسم توضيحي</span>
+                                </div>
+                            </button>
+                            <button type="button" class="style-card" data-value="papercraft">
+                                <div class="style-img-wrapper"><img
+                                        src="https://plus.unsplash.com/premium_photo-1739535055910-9cdb7a46e57a?ixid=M3wxMjA3fDB8MXxzZWFyY2h8MXx8cGFwZXJjcmFmdCUyMG9yaWdhbWklMjBhcnR8ZW58MHx8fHwxNzcyNzY4MTc4fDA&ixlib=rb-4.1.0&w=400&q=80"
+                                        alt="فن ورقي"></div>
+                                <div class="style-info">
+                                    <span class="style-title" data-i18n="style-papercraft">فن ورقي</span>
+                                </div>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Greeting Text (appears on occasion select) -->
@@ -157,7 +240,7 @@
                                     <circle cx="12" cy="12" r="3" />
                                 </svg>
                             </span>
-                            <span data-i18n="customize-design">تخصيص التصميم</span>
+                            <span data-i18n="customize-design">تخصيص متقدم اختياري</span>
                             <span class="chevron" id="toggle-chevron">▾</span>
                         </button>
                         <div class="toggle-line"></div>
@@ -166,81 +249,17 @@
                     <!-- Advanced Controls Panel -->
                     <div class="advanced-panel" id="advanced-panel">
 
-                        <!-- Art Style Visual Selector -->
+                        <!-- Image Generation Model -->
                         <div class="field">
-                            <label data-i18n="style">الأسلوب الفني:</label>
-                            <div class="style-cards-grid" id="style-chips">
-                                <button type="button" class="style-card selected" data-value="modern">
-                                    <div class="style-img-wrapper"><img
-                                            src="https://plus.unsplash.com/premium_photo-1661962960694-0b4ed303744f?ixid=M3wxMjA3fDB8MXxzZWFyY2h8MXx8bW9kZXJuJTIwYWJzdHJhY3QlMjAzZHxlbnwwfHx8fDE3NzI3NjgxNzN8MA&ixlib=rb-4.1.0&w=400&q=80"
-                                            alt="عصري وحديث"></div>
-                                    <div class="style-info">
-                                        <span class="style-title" data-i18n="style-modern">عصري وحديث</span>
-                                    </div>
+                            <label data-i18n="image-model">موديل توليد الصورة:</label>
+                            <div class="model-choice-group" id="image-model-group">
+                                <button type="button" class="model-choice selected" data-model="nano-banana-2">
+                                    <span class="model-choice-icon">🍌</span>
+                                    <span data-i18n="model-nano-banana-2">نانو بنانا ٢</span>
                                 </button>
-                                <button type="button" class="style-card" data-value="traditional">
-                                    <div class="style-img-wrapper"><img
-                                            src="https://plus.unsplash.com/premium_photo-1677621879474-9cc74b5d3e57?ixid=M3wxMjA3fDB8MXxzZWFyY2h8MXx8dHJhZGl0aW9uYWwlMjBpc2xhbWljJTIwY2FsbGlncmFwaHl8ZW58MHx8fHwxNzcyNzY4MTc1fDA&ixlib=rb-4.1.0&w=400&q=80"
-                                            alt="تراثي كلاسيكي"></div>
-                                    <div class="style-info">
-                                        <span class="style-title" data-i18n="style-traditional">تراثي كلاسيكي</span>
-                                    </div>
-                                </button>
-                                <button type="button" class="style-card" data-value="minimalist">
-                                    <div class="style-img-wrapper"><img
-                                            src="https://plus.unsplash.com/premium_photo-1756142083617-eb4450c83308?ixid=M3wxMjA3fDB8MXxzZWFyY2h8MXx8bWluaW1hbGlzdCUyMGdlb21ldHJpYyUyMGFydHxlbnwwfHx8fDE3NzI3NjgxNzR8MA&ixlib=rb-4.1.0&w=400&q=80"
-                                            alt="بسيط وأنيق"></div>
-                                    <div class="style-info">
-                                        <span class="style-title" data-i18n="style-minimalist">بسيط وأنيق</span>
-                                    </div>
-                                </button>
-                                <button type="button" class="style-card" data-value="vibrant">
-                                    <div class="style-img-wrapper"><img
-                                            src="https://images.unsplash.com/photo-1525909002-1b05e0c869d8?w=400&q=80"
-                                            alt="ملون ومبهج"></div>
-                                    <div class="style-info">
-                                        <span class="style-title" data-i18n="style-vibrant">ملون ومبهج</span>
-                                    </div>
-                                </button>
-                                <button type="button" class="style-card" data-value="watercolor">
-                                    <div class="style-img-wrapper"><img
-                                            src="https://plus.unsplash.com/premium_photo-1752429309190-1d6c5ea1c77b?ixid=M3wxMjA3fDB8MXxzZWFyY2h8MXx8d2F0ZXJjb2xvciUyMHBhaW50aW5nJTIwbGFuZHNjYXBlfGVufDB8fHx8MTc3Mjc2ODE3N3ww&ixlib=rb-4.1.0&w=400&q=80"
-                                            alt="ألوان مائية"></div>
-                                    <div class="style-info">
-                                        <span class="style-title" data-i18n="style-watercolor">ألوان مائية</span>
-                                    </div>
-                                </button>
-                                <button type="button" class="style-card" data-value="3d-render">
-                                    <div class="style-img-wrapper"><img
-                                            src="https://images.unsplash.com/photo-1614850715649-1d0106293bd1?w=400&q=80"
-                                            alt="ثلاثي الأبعاد"></div>
-                                    <div class="style-info">
-                                        <span class="style-title" data-i18n="style-3d">ثلاثي الأبعاد</span>
-                                    </div>
-                                </button>
-                                <button type="button" class="style-card" data-value="cinematic">
-                                    <div class="style-img-wrapper"><img
-                                            src="https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=400&q=80"
-                                            alt="تصوير سينمائي"></div>
-                                    <div class="style-info">
-                                        <span class="style-title" data-i18n="style-cinematic">تصوير سينمائي</span>
-                                    </div>
-                                </button>
-                                <button type="button" class="style-card" data-value="illustration">
-                                    <div class="style-img-wrapper"><img
-                                            src="https://plus.unsplash.com/premium_photo-1661881429258-d370c3f95276?ixid=M3wxMjA3fDB8MXxzZWFyY2h8MXx8Y29sb3JmdWwlMjBkaWdpdGFsJTIwaWxsdXN0cmF0aW9uJTIwYXJ0fGVufDB8fHx8MTc3Mjc2ODQ4Mnww&ixlib=rb-4.1.0&w=400&q=80"
-                                            alt="رسم توضيحي"></div>
-                                    <div class="style-info">
-                                        <span class="style-title" data-i18n="style-illustration">رسم توضيحي</span>
-                                    </div>
-                                </button>
-                                <button type="button" class="style-card" data-value="papercraft">
-                                    <div class="style-img-wrapper"><img
-                                            src="https://plus.unsplash.com/premium_photo-1739535055910-9cdb7a46e57a?ixid=M3wxMjA3fDB8MXxzZWFyY2h8MXx8cGFwZXJjcmFmdCUyMG9yaWdhbWklMjBhcnR8ZW58MHx8fHwxNzcyNzY4MTc4fDA&ixlib=rb-4.1.0&w=400&q=80"
-                                            alt="فن ورقي"></div>
-                                    <div class="style-info">
-                                        <span class="style-title" data-i18n="style-papercraft">فن ورقي</span>
-                                    </div>
+                                <button type="button" class="model-choice" data-model="openai-image-2">
+                                    <span class="model-choice-icon">◎</span>
+                                    <span data-i18n="model-openai-image-2">OpenAI Image 2</span>
                                 </button>
                             </div>
                         </div>
@@ -356,49 +375,47 @@
                             </div>
                         </div>
 
-                    </div>
-
-                    <!-- Custom Instructions -->
-                    <div class="field">
-                        <label for="custom-instructions" data-i18n="custom-instructions">إضافات خاصة (اختياري):</label>
-                        <textarea id="custom-instructions" rows="3"
-                            placeholder="مثال: أضف زهور الياسمين، اجعل اللون الفيروزي هو الغالب..."></textarea>
-                    </div>
-
-
-                    <!-- Card Content Elements Control -->
-                    <div class="field">
-                        <label data-i18n="content-elements">عناصر البطاقة:</label>
-                        <div class="content-elements-grid" id="content-elements">
-                            <button type="button" class="element-chip" data-element="people" data-label-ar="أشخاص" data-label-en="People">
-                                <span class="element-icon">👤</span>
-                                <span class="element-name">أشخاص</span>
-                            </button>
-                            <button type="button" class="element-chip" data-element="landmarks" data-label-ar="معالم ومساجد" data-label-en="Landmarks & Mosques">
-                                <span class="element-icon">🕌</span>
-                                <span class="element-name">معالم ومساجد</span>
-                            </button>
-                            <button type="button" class="element-chip" data-element="food" data-label-ar="طعام وحلوى" data-label-en="Food & Sweets">
-                                <span class="element-icon">🍰</span>
-                                <span class="element-name">طعام وحلوى</span>
-                            </button>
-                            <button type="button" class="element-chip" data-element="decorations" data-label-ar="زخارف وفوانيس" data-label-en="Decorations & Lanterns">
-                                <span class="element-icon">🏮</span>
-                                <span class="element-name">زخارف وفوانيس</span>
-                            </button>
-                            <button type="button" class="element-chip" data-element="nature" data-label-ar="طبيعة وورود" data-label-en="Nature & Flowers">
-                                <span class="element-icon">🌸</span>
-                                <span class="element-name">طبيعة وورود</span>
-                            </button>
-                            <button type="button" class="element-chip" data-element="candles" data-label-ar="شموع وإضاءة" data-label-en="Candles & Lights">
-                                <span class="element-icon">🕯️</span>
-                                <span class="element-name">شموع وإضاءة</span>
-                            </button>
+                        <!-- Custom Instructions -->
+                        <div class="field">
+                            <label for="custom-instructions" data-i18n="custom-instructions">إضافات خاصة (اختياري):</label>
+                            <textarea id="custom-instructions" rows="3"
+                                placeholder="مثال: أضف زهور الياسمين، اجعل اللون الفيروزي هو الغالب..."></textarea>
                         </div>
+
+                        <!-- Card Content Elements Control -->
+                        <div class="field">
+                            <label data-i18n="content-elements">عناصر البطاقة:</label>
+                            <div class="content-elements-grid" id="content-elements">
+                                <button type="button" class="element-chip" data-element="people" data-label-ar="أشخاص" data-label-en="People">
+                                    <span class="element-icon">👤</span>
+                                    <span class="element-name">أشخاص</span>
+                                </button>
+                                <button type="button" class="element-chip" data-element="landmarks" data-label-ar="معالم ومساجد" data-label-en="Landmarks & Mosques">
+                                    <span class="element-icon">🕌</span>
+                                    <span class="element-name">معالم ومساجد</span>
+                                </button>
+                                <button type="button" class="element-chip" data-element="food" data-label-ar="طعام وحلوى" data-label-en="Food & Sweets">
+                                    <span class="element-icon">🍰</span>
+                                    <span class="element-name">طعام وحلوى</span>
+                                </button>
+                                <button type="button" class="element-chip" data-element="decorations" data-label-ar="زخارف وفوانيس" data-label-en="Decorations & Lanterns">
+                                    <span class="element-icon">🏮</span>
+                                    <span class="element-name">زخارف وفوانيس</span>
+                                </button>
+                                <button type="button" class="element-chip" data-element="nature" data-label-ar="طبيعة وورود" data-label-en="Nature & Flowers">
+                                    <span class="element-icon">🌸</span>
+                                    <span class="element-name">طبيعة وورود</span>
+                                </button>
+                                <button type="button" class="element-chip" data-element="candles" data-label-ar="شموع وإضاءة" data-label-en="Candles & Lights">
+                                    <span class="element-icon">🕯️</span>
+                                    <span class="element-name">شموع وإضاءة</span>
+                                </button>
+                            </div>
+                        </div>
+
                     </div>
 
-                    <button id="generate-btn" class="btn-primary btn-generate" data-i18n="generate">توليد
-                        البطاقة</button>
+                    <button id="generate-btn" class="btn-primary btn-generate" data-i18n="generate">توليد البطاقة</button>
                 </div>
             </div>
         </section>
@@ -407,12 +424,12 @@
         <section id="step-2" class="step">
             <div class="card result-card">
                 <div class="card-header">
-                    <h2 data-i18n="result-title">بطاقتك الحصرية جاهزة!</h2>
+                    <h2 data-i18n="result-title">بطاقتك جاهزة</h2>
                 </div>
 
                 <div id="loading-area" class="loader">
                     <div class="loader-ring"></div>
-                    <p data-i18n="generating">يقوم الذكاء الاصطناعي الآن برسم تحفتك الفنية...</p>
+                    <p data-i18n="generating">جاري توليد البطاقة...</p>
                 </div>
 
                 <div id="result-area" class="result hidden">
@@ -424,22 +441,22 @@
                         </div>
                     </div>
                     <div class="btn-row">
-                        <button id="remix-btn" class="btn-outline" data-i18n="remix" title="تعديل وإعادة توليد">✏️ تعديل</button>
+                        <button id="remix-btn" class="btn-outline" data-i18n="remix" title="تعديل وإعادة توليد">تعديل</button>
                         <button id="download-btn" class="btn-outline" data-i18n="download">تحميل</button>
                         <button id="share-btn" class="btn-outline" data-i18n="share">مشاركة 🔗</button>
                         <button id="restart-btn" class="btn-primary" data-i18n="create-new">تصميم جديد</button>
                     </div>
 
                         <!-- AI Evaluation Loading State -->
-                        <div id="eval-loading" class="hidden" style="color: #cbd5e1; font-size: 0.95rem; text-align: center; margin-top: 20px;">
-                            جاري حفظ البطاقة وتقييمها بالذكاء الاصطناعي... ⏳
+                        <div id="eval-loading" class="status-note hidden">
+                            جاري حفظ البطاقة وتقييمها...
                         </div>
                         
                         <!-- Rating System -->
                         <div id="rating-container" class="rating-container hidden">
-                        <div style="margin-top:24px; padding-top:24px; border-top:1px solid var(--border); text-align:center;">
-                            <h3 style="font-size:1.1rem; margin-bottom:10px;" data-i18n="rate-experience">كيف تقيم النتيجة؟</h3>
-                            <div class="stars" id="rating-stars" style="display:inline-flex; flex-direction:row-reverse; justify-content:center; gap:8px; font-size:2.2rem; cursor:pointer; margin-bottom:15px; color:#475569;">
+                        <div class="rating-section">
+                            <h3 data-i18n="rate-experience">كيف تقيم النتيجة؟</h3>
+                            <div class="stars" id="rating-stars">
                                 <span data-value="5">★</span>
                                 <span data-value="4">★</span>
                                 <span data-value="3">★</span>
@@ -458,9 +475,9 @@
                                 </div>
                             </div>
                             
-                            <textarea id="rating-feedback" rows="2" placeholder="اكتب رأيك أو اقتراحك للتحسين (اختياري)..." style="width:100%; border-radius:12px; margin-bottom:15px; padding: 10px; border: 1px solid var(--border); font-family: inherit; resize: none;"></textarea>
-                            <button id="submit-rating-btn" class="btn-primary" style="width:100%;" disabled>إرسال التقييم</button>
-                            <div id="rating-thanks" class="hidden" style="color:var(--primary); font-weight:bold; margin-top:10px;">شكرًا لمشاركتك! أرسلنا رأيك للتحسين.</div>
+                            <textarea id="rating-feedback" rows="2" placeholder="اكتب رأيك أو اقتراحك للتحسين (اختياري)..."></textarea>
+                            <button id="submit-rating-btn" class="btn-primary" disabled>إرسال التقييم</button>
+                            <div id="rating-thanks" class="rating-thanks hidden">شكرًا لمشاركتك! أرسلنا رأيك للتحسين.</div>
                         </div>
                     </div>
                 </div>
@@ -475,9 +492,8 @@
                 </div>
 
                 <div class="gallery-body">
-                    <div id="gallery-empty" class="hidden"
-                        style="text-align:center; padding: 40px 0; color: var(--dim);">
-                        <div style="font-size: 3rem; margin-bottom: 10px;">📭</div>
+                    <div id="gallery-empty" class="gallery-empty hidden">
+                        <div class="gallery-empty-icon">📭</div>
                         <p data-i18n="no-cards-saved">لم تقم بتوليد أي بطاقات حتى الآن.</p>
                     </div>
 
@@ -493,9 +509,9 @@
         </section>
 
         <!-- Site Footer -->
-        <footer class="site-footer" style="text-align:center; padding-top:30px; opacity:0.8; font-size:0.8rem;">
-            <p class="designer" style="margin-bottom:5px;">Designed with ❤️ by <a href="https://github.com/Ashih77" target="_blank" style="color:var(--primary);text-decoration:none;font-weight:bold;">Hossam Ashi</a></p>
-            <p class="notice" style="font-size:0.7rem; color:var(--dim);">تنويه: سيتم استخدام الصور والتقييمات لأغراض التطوير وتحسين جودة الخدمة.</p>
+        <footer class="site-footer">
+            <p class="designer">Designed with ❤️ by <a href="https://github.com/Ashih77" target="_blank">Hossam Ashi</a></p>
+            <p class="notice">تنويه: سيتم استخدام الصور والتقييمات لأغراض التطوير وتحسين جودة الخدمة.</p>
         </footer>
 
     </div>
@@ -518,15 +534,15 @@
     <div id="feedback-modal" class="feedback-modal hidden">
         <div class="feedback-modal-content">
             <button class="feedback-close-btn" id="feedback-close-btn">&times;</button>
-            <h3 data-i18n="feedback-title" style="margin-bottom: 5px;">المقترحات والملاحظات</h3>
-            <p data-i18n="feedback-desc" style="font-size: 0.85rem; margin-bottom: 15px; color: var(--dim);">شاركونا أفكاركم ومقترحاتكم لنقوم بتطوير المنصة معاً.</p>
-            <textarea id="feedback-text" rows="4" placeholder="اكتب مقترحك أو ملاحظاتك هنا..." style="width: 100%; border-radius: 12px; padding: 12px; border: 1px solid var(--border); font-family: inherit; resize: none; margin-bottom: 15px; background: rgba(255,255,255,0.05); color: var(--text-color); box-sizing: border-box;"></textarea>
-            <button id="submit-feedback-btn" class="btn-primary" style="width: 100%;">إرسال الإقتراح</button>
-            <div id="feedback-thanks" class="hidden" style="color: var(--primary); font-weight: bold; margin-top: 10px; text-align: center; font-size: 0.9rem;">شكرًا لك! تم استلام مقترحك بنجاح.</div>
+            <h3 data-i18n="feedback-title">المقترحات والملاحظات</h3>
+            <p data-i18n="feedback-desc">شاركونا أفكاركم ومقترحاتكم لنقوم بتطوير المنصة معاً.</p>
+            <textarea id="feedback-text" rows="4" placeholder="اكتب مقترحك أو ملاحظاتك هنا..."></textarea>
+            <button id="submit-feedback-btn" class="btn-primary">إرسال الإقتراح</button>
+            <div id="feedback-thanks" class="feedback-thanks hidden">شكرًا لك! تم استلام مقترحك بنجاح.</div>
         </div>
     </div>
 
-    <script src="app.js?v=4"></script>
+    <script src="app.js?v=9"></script>
 </body>
 
 

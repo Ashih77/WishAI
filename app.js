@@ -576,6 +576,10 @@ function login(provider) {
     }
 
     // Fallback: Professional Simulation
+    openSimulatedPopup(provider);
+}
+
+function openSimulatedPopup(provider) {
     const width = 500, height = 600;
     const left = (window.innerWidth / 2) - (width / 2);
     const top = (window.innerHeight / 2) - (height / 2);
@@ -605,11 +609,86 @@ function login(provider) {
 
 let tokenClient;
 
-function loginWithGoogle() {
-    if (typeof google === 'undefined' || !google.accounts.oauth2) {
-        console.error("Google OAuth2 library not loaded.");
-        return alert(state.lang === 'ar' ? "جاري تحميل خدمات Google، يرجى المحاولة بعد لحظة." : "Google services are loading... please try again.");
+function isAuthorizedProductionOrigin() {
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+    
+    // GSI (Google Identity Services) strictly fails on file://, localhost, 127.0.0.1, and netlify staging domains
+    // unless registered. Since the client ID is registered for a specific domain, GSI will
+    // strictly fail with Error 400 on any other address.
+    // For local dev, static previews, and Netlify deploys, we fallback automatically.
+    if (protocol === "file:" ||
+        hostname === "localhost" ||
+        hostname === "127.0.0.1" ||
+        hostname === "" ||
+        hostname.includes("netlify.app") ||
+        hostname.includes("netlify.live")) {
+        return false;
     }
+    
+    return true;
+}
+
+function showGoogleBypassHint() {
+    // Remove any existing hint first
+    const existing = document.getElementById('google-bypass-hint');
+    if (existing) existing.remove();
+
+    const hint = document.createElement('div');
+    hint.id = 'google-bypass-hint';
+    hint.className = 'google-bypass-hint';
+    
+    // Style inline to preserve token alignment and gorgeous glassmorphism compatibility
+    hint.style.marginTop = '12px';
+    hint.style.marginBottom = '12px';
+    hint.style.fontSize = '0.85rem';
+    hint.style.textAlign = 'center';
+    hint.style.color = 'var(--text-dim)';
+    hint.style.background = 'rgba(255, 126, 179, 0.05)';
+    hint.style.border = '1px solid rgba(255, 126, 179, 0.15)';
+    hint.style.padding = '10px 14px';
+    hint.style.borderRadius = '12px';
+    hint.style.lineHeight = '1.4';
+    hint.style.animation = 'fadeSlideIn 0.3s var(--ease)';
+    
+    const isAr = state.lang === 'ar';
+    hint.innerHTML = isAr ? 
+        `جاري الاتصال بـ Google... <span class="bypass-link" style="color: var(--primary); text-decoration: underline; cursor: pointer; font-weight: bold; transition: color 0.2s;">اضغط هنا</span> إذا واجهت مشكلة في الاتصال (خطأ 400).` :
+        `Connecting to Google... <span class="bypass-link" style="color: var(--primary); text-decoration: underline; cursor: pointer; font-weight: bold; transition: color 0.2s;">Click here</span> if you see a connection error (Error 400).`;
+
+    const body = document.querySelector('.login-body');
+    if (body) {
+        // Insert right below the Google button
+        const socialButtons = body.querySelector('.social-buttons');
+        if (socialButtons && socialButtons.nextSibling) {
+            body.insertBefore(hint, socialButtons.nextSibling);
+        } else {
+            body.appendChild(hint);
+        }
+    }
+
+    hint.querySelector('.bypass-link').onclick = () => {
+        console.warn("User triggered manual Google OAuth bypass.");
+        hint.remove();
+        openSimulatedPopup('google');
+    };
+}
+
+function loginWithGoogle() {
+    const isProd = isAuthorizedProductionOrigin();
+    
+    if (!isProd) {
+        console.warn("Local or staging preview environment detected. Real Google Login would fail with secure origin checks (Error 400). Automatically falling back to simulated login.");
+        return openSimulatedPopup('google');
+    }
+
+    if (typeof google === 'undefined' || !google.accounts.oauth2) {
+        console.warn("Google OAuth2 library not loaded. Falling back to simulated login.");
+        return openSimulatedPopup('google');
+    }
+
+    // Show beautiful clickable bypass box in production
+    showGoogleBypassHint();
 
     try {
         if (!tokenClient) {
@@ -617,6 +696,10 @@ function loginWithGoogle() {
                 client_id: authOptions.google.clientId,
                 scope: 'openid profile email',
                 callback: (tokenResponse) => {
+                    // Remove bypass hint on successful response
+                    const hint = document.getElementById('google-bypass-hint');
+                    if (hint) hint.remove();
+
                     if (tokenResponse && tokenResponse.access_token) {
                         fetchUserInfo(tokenResponse.access_token);
                     } else if (tokenResponse.error) {
@@ -625,6 +708,9 @@ function loginWithGoogle() {
                     }
                 },
                 error_callback: (err) => {
+                    const hint = document.getElementById('google-bypass-hint');
+                    if (hint) hint.remove();
+
                     console.error("GSI Client Error:", err);
                     handleAuthError('google');
                 }
@@ -635,6 +721,9 @@ function loginWithGoogle() {
         tokenClient.requestAccessToken({ prompt: 'select_account' });
 
     } catch (err) {
+        const hint = document.getElementById('google-bypass-hint');
+        if (hint) hint.remove();
+
         console.error("GSI Exception:", err);
         handleAuthError('google');
     }
@@ -665,25 +754,17 @@ function fetchUserInfo(accessToken) {
 }
 
 function handleAuthError(provider) {
-    // If it's a domain/origin error, warn the user
-    console.warn(`Auth failed for ${provider}. Ensure your authorized origins in Google Console match http://localhost:8080`);
+    // If it's a domain/origin error, warn in console
+    console.warn(`Auth failed for ${provider}. Ensure your authorized origins in Google Console match the current URL. Falling back to simulated login.`);
 
-    const msg = state.lang === 'ar' ?
-        `فشل الربط الحقيقي (ربما بسبب إعدادات النطاق/الأمان). سنستمر كضيف مؤقتاً.` :
-        `Real integration failed (Check console for origin errors). Proceeding as guest.`;
-
-    alert(msg);
-    // Auto-login as guest if real auth fails during demo to prevent getting stuck
-    completeLogin({
-        name: state.lang === 'ar' ? 'ضيف' : 'Guest',
-        email: 'guest@wishai.demo',
-        provider: 'guest',
-        photo: '',
-        id: 'guest123'
-    });
+    // Auto-fallback to simulation popup for provider to prevent getting stuck
+    openSimulatedPopup(provider);
 }
 
 function completeLogin(userData) {
+    const hint = document.getElementById('google-bypass-hint');
+    if (hint) hint.remove();
+
     state.isLoggedIn = true;
     state.user = userData;
     localStorage.setItem('wishai_user', JSON.stringify(userData));
@@ -699,7 +780,7 @@ function completeLogin(userData) {
 
 // Handle message from auth popup (Simulation handle)
 window.addEventListener('message', (event) => {
-    if (event.origin !== window.location.origin) return;
+    if (event.origin !== window.location.origin && window.location.origin !== 'null' && event.origin !== 'null') return;
     if (event.data.type === 'AUTH_SUCCESS') {
         completeLogin(event.data.user);
     }

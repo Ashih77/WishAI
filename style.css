@@ -1038,6 +1038,22 @@ textarea {
     line-height: 1;
 }
 
+.model-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 12px 14px;
+    background: rgba(255, 126, 179, 0.12);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-size: 0.9rem;
+    font-weight: 800;
+    text-align: center;
+}
+
 .chip-icon {
     font-size: 0.95rem;
 }

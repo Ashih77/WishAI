@@ -251,15 +251,9 @@
                         <!-- Image Generation Model -->
                         <div class="field">
                             <label data-i18n="image-model">موديل توليد الصورة:</label>
-                            <div class="model-choice-group" id="image-model-group">
-                                <button type="button" class="model-choice selected" data-model="nano-banana-2">
-                                    <span class="model-choice-icon">🍌</span>
-                                    <span data-i18n="model-nano-banana-2">نانو بنانا ٢</span>
-                                </button>
-                                <button type="button" class="model-choice" data-model="openai-image-2">
-                                    <span class="model-choice-icon">◎</span>
-                                    <span data-i18n="model-openai-image-2">OpenAI Image 2</span>
-                                </button>
+                            <div class="model-display" id="image-model-display">
+                                <span class="model-choice-icon" id="current-image-model-icon">🍌</span>
+                                <span id="current-image-model-label">نانو بنانا ٢</span>
                             </div>
                         </div>
 

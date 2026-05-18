@@ -306,6 +306,7 @@ let state = {
 };
 
 let currentShareSavePromise = null;
+let appSettingsPromise = null;
 const ANALYTICS_KEY = 'wishai_analytics';
 const PENDING_SAVES_KEY = 'wishai_pending_cloud_saves';
 
@@ -471,6 +472,7 @@ const FALLBACK_GREETINGS = {
 
 function init() {
     initTheme();
+    appSettingsPromise = loadAppSettings();
     checkConnectivity();
     renderOccasions();
     bindEvents();
@@ -529,6 +531,33 @@ async function saveUserAnalytics(eventType) {
     } catch (err) {
         console.warn('Could not save user analytics:', err);
     }
+}
+
+async function loadAppSettings(options = {}) {
+    const { force = false } = options;
+    const cached = readJsonStorage('wishai_app_settings', null);
+    if (!force && cached?.imageModel) {
+        state.imageModel = normalizeImageModel(cached.imageModel);
+        renderImageModelChoices();
+    }
+
+    try {
+        const res = await fetch(`/api/app-settings?t=${Date.now()}`, { cache: 'no-store' });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'APP_SETTINGS_FAILED');
+
+        state.imageModel = normalizeImageModel(data.settings?.imageModel);
+        localStorage.setItem('wishai_app_settings', JSON.stringify({
+            imageModel: state.imageModel,
+            updatedAt: data.settings?.updatedAt || null
+        }));
+    } catch (err) {
+        console.warn('Could not load app settings:', err);
+        state.imageModel = normalizeImageModel(cached?.imageModel || state.imageModel);
+    }
+
+    renderImageModelChoices();
+    return state.imageModel;
 }
 
 async function flushPendingCloudSaves() {
@@ -1036,12 +1065,6 @@ function bindEvents() {
     // Default initialization for style selection
     document.querySelector('.style-card[data-value="modern"]')?.click();
 
-    document.querySelectorAll('.model-choice[data-model]').forEach(c => {
-        c.onclick = () => {
-            state.imageModel = normalizeImageModel(c.dataset.model);
-            renderImageModelChoices();
-        };
-    });
     renderImageModelChoices();
 
     // Color Palette Chips (HTML uses class palette-chip + data-palette)
@@ -1100,7 +1123,6 @@ function bindEvents() {
         state.occasion = null;
         state.name = '';
         state.greeting = '';
-        state.imageModel = 'nano-banana-2';
         state.currentFileKey = null;
         state.shareImageUrl = '';
         state.sharePageUrl = '';
@@ -1391,6 +1413,10 @@ function renderImageModelChoices() {
     document.querySelectorAll('.model-choice[data-model]').forEach(c => {
         c.classList.toggle('selected', c.dataset.model === state.imageModel);
     });
+    const label = document.getElementById('current-image-model-label');
+    const icon = document.getElementById('current-image-model-icon');
+    if (label) label.textContent = getImageModelLabel(state.imageModel);
+    if (icon) icon.textContent = state.imageModel === 'openai-image-2' ? '◎' : '🍌';
 }
 
 function updateText() {
@@ -1556,6 +1582,8 @@ async function generateSuggestions() {
 
 async function generate() {
     console.log("🚀 WishAI Radical Engine — Status: IGNITION");
+    if (appSettingsPromise) await appSettingsPromise;
+    await loadAppSettings({ force: true });
 
     const img = document.getElementById('generated-image');
     const loading = document.getElementById('loading-area');
@@ -1880,7 +1908,7 @@ function remixCard(id) {
     
     // Restore generation parameters only (protect auth and lang)
     const savedState = card.state;
-    const params = ['name', 'occasion', 'greeting', 'instructions', 'style', 'subStyle', 'details', 'colorIntensity', 'palette', 'imageModel', 'contentElements', 'tashkeel', 'zakhrafa', 'namePosition'];
+    const params = ['name', 'occasion', 'greeting', 'instructions', 'style', 'subStyle', 'details', 'colorIntensity', 'palette', 'contentElements', 'tashkeel', 'zakhrafa', 'namePosition'];
     params.forEach(p => {
         if (savedState[p] !== undefined) state[p] = JSON.parse(JSON.stringify(savedState[p]));
     });

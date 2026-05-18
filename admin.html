@@ -105,6 +105,11 @@
         .admin-table th, .admin-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); text-align: start; color: var(--text); }
         .admin-table th { color: var(--muted); font-size: 0.9rem; background: var(--bg-panel); }
         .empty-state { text-align:center; color:var(--muted); padding: 2rem; }
+        .settings-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; box-shadow: 0 10px 30px rgba(28,42,38,0.08); }
+        .admin-model-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin: 1rem 0; }
+        .admin-model-choice { background: var(--surface-solid); color: var(--text); border: 1px solid var(--border); text-align: center; }
+        .admin-model-choice.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .settings-status { color: var(--muted); min-height: 24px; margin: 0.75rem 0 0; }
         #view-images > div[style],
         #view-feedback > div[style],
         #analytics-section > div[style] {
@@ -135,6 +140,7 @@
             .container { padding: 1rem; }
             .admin-header { align-items: flex-start; flex-direction: column; }
             #tabs { flex-direction: column; }
+            .admin-model-grid { grid-template-columns: 1fr; }
             #view-images > div[style],
             #view-feedback > div[style] { flex-direction: column !important; align-items: stretch !important; gap: 1rem; }
             .grid { grid-template-columns: 1fr; }
@@ -161,6 +167,7 @@
                 <button id="tab-images" class="admin-tab active" onclick="switchTab('images')" style="flex: 1; padding: 12px;">الصور والتقييمات 🖼️</button>
                 <button id="tab-feedback" class="admin-tab" onclick="switchTab('feedback')" style="flex: 1; padding: 12px;">المقترحات والملاحظات 💡</button>
                 <button id="tab-users" class="admin-tab" onclick="switchTab('users')" style="flex: 1; padding: 12px;">المستخدمون والإيميلات 👥</button>
+                <button id="tab-settings" class="admin-tab" onclick="switchTab('settings')" style="flex: 1; padding: 12px;">إعدادات التوليد ⚙️</button>
             </div>
 
             <div class="summary-grid">
@@ -232,6 +239,19 @@
                     </table>
                 </div>
             </div>
+
+            <div id="view-settings" class="hidden">
+                <div class="settings-panel">
+                    <h2 style="margin:0 0 8px 0; color:var(--primary); font-size:1.3rem;">إعدادات توليد الصور</h2>
+                    <p style="margin:0; color:var(--muted);">اختيار الموديل هنا يطبق على صفحة المستخدمين. المستخدم يرى الموديل المستخدم فقط ولا يستطيع تغييره.</p>
+                    <div class="admin-model-grid">
+                        <button type="button" class="admin-model-choice" data-admin-model="nano-banana-2">🍌 نانو بنانا ٢</button>
+                        <button type="button" class="admin-model-choice" data-admin-model="openai-image-2">◎ OpenAI Image 2</button>
+                    </div>
+                    <button type="button" id="save-model-settings-btn">حفظ موديل التوليد</button>
+                    <p class="settings-status" id="settings-status"></p>
+                </div>
+            </div>
         </div>
 
         <!-- AI Modal -->
@@ -247,6 +267,8 @@
         let globalItems = [];
         let globalFeedback = [];
         let globalUsers = [];
+        let currentAdminPass = '';
+        let currentImageModel = 'nano-banana-2';
         const loginBtn = document.getElementById('login-btn');
         const passInput = document.getElementById('admin-pass');
         const errorMsg = document.getElementById('error-msg');
@@ -272,10 +294,19 @@
             const current = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
             applyAdminTheme(current === 'dark' ? 'light' : 'dark');
         };
+
+        document.querySelectorAll('.admin-model-choice[data-admin-model]').forEach(btn => {
+            btn.onclick = () => {
+                currentImageModel = btn.dataset.adminModel;
+                renderModelSettings({ imageModel: currentImageModel });
+            };
+        });
+        document.getElementById('save-model-settings-btn').onclick = saveAppSettings;
         
         loginBtn.onclick = async () => {
             const pass = passInput.value.trim();
             if (!pass) return;
+            currentAdminPass = pass;
 
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('dashboard-view').classList.remove('hidden');
@@ -298,6 +329,7 @@
                 // Fetch secondary dashboard data concurrently
                 fetchFeedback(pass);
                 fetchUsers(pass);
+                fetchAppSettings();
             } catch (err) {
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('login-view').classList.remove('hidden');
@@ -314,11 +346,54 @@
 
         function getImageModelLabel(meta) {
             const model = meta.settings?.imageModel || meta.imageModel || 'nano-banana-2';
+            return getModelLabel(model);
+        }
+
+        function getModelLabel(model) {
             const labels = {
                 'nano-banana-2': 'نانو بنانا ٢',
                 'openai-image-2': 'OpenAI Image 2'
             };
             return labels[model] || model;
+        }
+
+        function renderModelSettings(settings = {}) {
+            currentImageModel = settings.imageModel === 'openai-image-2' ? 'openai-image-2' : 'nano-banana-2';
+            document.querySelectorAll('.admin-model-choice[data-admin-model]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.adminModel === currentImageModel);
+            });
+            document.getElementById('settings-status').textContent = `الموديل الحالي: ${getModelLabel(currentImageModel)}`;
+        }
+
+        async function fetchAppSettings() {
+            try {
+                const res = await fetch(`/api/app-settings?t=${Date.now()}`, { cache: 'no-store' });
+                const data = await res.json();
+                if (!data.ok) throw new Error(data.error || 'فشل جلب الإعدادات');
+                renderModelSettings(data.settings);
+            } catch (err) {
+                console.error('Error fetching app settings', err);
+                document.getElementById('settings-status').textContent = 'تعذر جلب إعدادات التوليد.';
+            }
+        }
+
+        async function saveAppSettings() {
+            const status = document.getElementById('settings-status');
+            status.textContent = 'جاري الحفظ...';
+            try {
+                const res = await fetch('/api/app-settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pass: currentAdminPass, imageModel: currentImageModel })
+                });
+                const data = await res.json();
+                if (!data.ok) throw new Error(data.error || 'فشل حفظ الإعدادات');
+                renderModelSettings(data.settings);
+                status.textContent = `تم الحفظ. الموديل الحالي: ${getModelLabel(currentImageModel)}`;
+            } catch (err) {
+                console.error('Error saving app settings', err);
+                status.textContent = `تعذر حفظ الإعدادات: ${err.message}`;
+            }
         }
 
         function renderAiReport(aiResult, title = '🤖 تقرير التقييم الذكي') {
@@ -620,12 +695,15 @@
             const imagesTab = document.getElementById('tab-images');
             const feedbackTab = document.getElementById('tab-feedback');
             const usersTab = document.getElementById('tab-users');
+            const settingsTab = document.getElementById('tab-settings');
             document.getElementById('view-images').classList.toggle('hidden', tab !== 'images');
             document.getElementById('view-feedback').classList.toggle('hidden', tab !== 'feedback');
             document.getElementById('view-users').classList.toggle('hidden', tab !== 'users');
+            document.getElementById('view-settings').classList.toggle('hidden', tab !== 'settings');
             imagesTab.classList.toggle('active', tab === 'images');
             feedbackTab.classList.toggle('active', tab === 'feedback');
             usersTab.classList.toggle('active', tab === 'users');
+            settingsTab.classList.toggle('active', tab === 'settings');
         }
 
         async function fetchUsers(pass) {

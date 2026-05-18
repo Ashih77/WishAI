@@ -6,6 +6,7 @@ const translations = {
         'login-desc': 'ادخل بحسابك أو جرّب كزائر وابدأ مباشرة.',
         'btn-google': 'المتابعة باستخدام Google',
         'enter-name': 'الاسم:',
+        'name-subtitle': 'نص اختياري تحت الاسم:',
         'select-occasion': 'اختر المناسبة:',
         'greeting-label': 'نص التهنئة:',
         'ai-suggest': 'اقتراحات ذكية',
@@ -83,6 +84,7 @@ const translations = {
         'login-desc': 'Sign in or continue as a guest and start right away.',
         'btn-google': 'Continue with Google',
         'enter-name': 'Name:',
+        'name-subtitle': 'Optional text under the name:',
         'select-occasion': 'Select Occasion:',
         'greeting-label': 'Greeting Text:',
         'ai-suggest': 'AI Suggestions',
@@ -275,6 +277,45 @@ const OCCASION_RECOMMENDED_STYLES = {
     thankyou: 'minimalist'
 };
 
+const SUB_STYLES_CONFIG = {
+    modern: {
+        ar: ['مستقبلي', 'نيون', 'سايبر بانك', 'إضاءات نيون', 'زجاجي', 'تجريدي', 'ثلاثي الأبعاد حديث', 'إضاءة سينمائية'],
+        en: ['Futuristic', 'Neon', 'Cyberpunk', 'Neon Lights', 'Glassmorphism', 'Abstract', 'Modern 3D', 'Cinematic Lighting']
+    },
+    traditional: {
+        ar: ['عتيق', 'فن كلاسيكي', 'تخطيط', 'فيكتوري', 'زخرفة إسلامية', 'عصر النهضة', 'رسم زيتي تقليدي', 'فن استشراقي'],
+        en: ['Vintage', 'Classic Art', 'Calligraphy', 'Victorian', 'Islamic Geometry', 'Renaissance', 'Traditional Oil Painting', 'Orientalist Art']
+    },
+    minimalist: {
+        ar: ['تصميم مسطح', 'فن خطي', 'أحادية اللون', 'هندسي', 'مساحات سلبية', 'بسيط ولطيف', 'فن البوب المينيمالي', 'إسكندنافي'],
+        en: ['Flat Design', 'Line Art', 'Monochrome', 'Geometric', 'Negative Space', 'Simple & Cute', 'Minimal Pop Art', 'Scandinavian']
+    },
+    vibrant: {
+        ar: ['بوب آرت', 'مزاجي', 'تدرج لوني', 'سائل', 'مضيء', 'ألوان نيون', 'سريالي ملون', 'كاريكاتير'],
+        en: ['Pop Art', 'Psychedelic', 'Gradient', 'Fluid', 'Luminous', 'Neon Colors', 'Colorful Surrealism', 'Caricature']
+    },
+    watercolor: {
+        ar: ['ألوان باستيل', 'رسم زيتي', 'حبر', 'فحم', 'ألوان مائية ناعمة', 'رسم قلم رصاص', 'ألوان جواش', 'لطخات ألوان'],
+        en: ['Pastel', 'Oil Painting', 'Ink Wash', 'Charcoal', 'Soft Watercolor', 'Pencil Sketch', 'Gouache', 'Color Splashes']
+    },
+    '3d-render': {
+        ar: ['صلصال', 'واقعي', 'رسوم منخفضة', 'فيزيائي', 'تصيير أوكتان', 'ألياف ناعمة', 'تكوين فوكسل', 'إضاءة استوديو'],
+        en: ['Claymation', 'Photorealistic', 'Low Poly', 'Isometric', 'Octane Render', 'Soft Fluff', 'Voxel Art', 'Studio Lighting']
+    },
+    cinematic: {
+        ar: ['إضاءة درامية', 'تصوير فيلم', 'عدسة ماكرو', 'أبيض وأسود سينمائي', 'خيال علمي', 'فانتازيا', 'مشهد ملحمي', 'إضاءة خلفية'],
+        en: ['Dramatic Lighting', 'Film Photography', 'Macro Lens', 'Cinematic B&W', 'Sci-Fi', 'Fantasy', 'Epic Scene', 'Backlighting']
+    },
+    illustration: {
+        ar: ['رسم رقمي', 'أنمي', 'كتب أطفال', 'كوميكس', 'رسم قصصي', 'شخصيات كرتونية', 'رسم خطي', 'رسم خيالي'],
+        en: ['Digital Art', 'Anime', 'Childrens Book', 'Comics', 'Storybook Illustration', 'Cartoon Characters', 'Line Drawing', 'Fantasy Illustration']
+    },
+    papercraft: {
+        ar: ['أوريغامي', 'قصاصات ورق', 'طبقات ورقية', 'صندوق إضاءة', 'ورق مقوى ثلاثي الأبعاد', 'لف الورق كويلينج', 'نقش ورقي', 'ظل ورقي'],
+        en: ['Origami', 'Paper Cutout', 'Layered Paper', 'Lightbox Art', '3D Cardboard', 'Quilling Art', 'Paper Embossing', 'Paper Shadow']
+    }
+};
+
 function normalizeImageModel(model) {
     return Object.prototype.hasOwnProperty.call(IMAGE_MODELS, model) ? model : 'nano-banana-2';
 }
@@ -318,16 +359,29 @@ function applyRecommendedArtStyleForOccasion(occasionId) {
     selectArtStyle(getRecommendedArtStyleForOccasion(occasionId), { recommended: true });
 }
 
+function getRandomSubStyle(style) {
+    const options = SUB_STYLES_CONFIG[style]?.en || [];
+    if (!options.length) return '';
+    return options[Math.floor(Math.random() * options.length)];
+}
+
+function resolveEffectiveSubStyle() {
+    if (userOpenedAdvancedOptions && userSelectedSubStyle && state.subStyle) return state.subStyle;
+    return getRandomSubStyle(state.style);
+}
+
 let state = {
     lang: 'ar',
     isLoggedIn: false,
     user: null,
     name: '',
+    nameSubtitle: '',
     occasion: null,
     greeting: '',
     instructions: '',
     style: 'modern',
     subStyle: null,
+    effectiveSubStyle: '',
     tashkeel: false,
     zakhrafa: false,
     namePosition: 'bottom',
@@ -345,6 +399,8 @@ let state = {
 let currentShareSavePromise = null;
 let appSettingsPromise = null;
 let userSelectedArtStyle = false;
+let userSelectedSubStyle = false;
+let userOpenedAdvancedOptions = false;
 let applyingRecommendedArtStyle = false;
 const ANALYTICS_KEY = 'wishai_analytics';
 const PENDING_SAVES_KEY = 'wishai_pending_cloud_saves';
@@ -508,6 +564,28 @@ const FALLBACK_GREETINGS = {
     'thankyou': ['شكراً لك من القلب على كل شيء', 'ممتن جداً لوجودك ودعمك', 'كلمات الشكر لا تفي بحقك', 'تقديراً لجهودك الرائعة، شكراً لك', 'شكراً جزيلاً، أنت متميز دائماً'],
     'daily': ['صباح الخير والأمل والسعادة', 'يوم جميل يشبه نقاء قلبك', 'أتمنى لك يوماً مليئاً بالإنجازات', 'مساء الخير والسكينة', 'طابت أيامكم بكل خير']
 };
+
+const FALLBACK_GREETINGS_EN = {
+    ramadan: ['Ramadan Kareem to you and your family', 'Wishing you a blessed Ramadan', 'May Ramadan bring peace and joy', 'Warm wishes for the holy month', 'May your prayers be accepted'],
+    eid_fitr: ['Eid Al-Fitr Mubarak', 'Wishing you a joyful Eid', 'May Eid bring happiness and peace', 'Eid Mubarak to you and yours', 'Warm wishes for a blessed Eid'],
+    eid_adha: ['Eid Al-Adha Mubarak', 'Wishing you a blessed Eid', 'May your Eid be full of joy', 'Warm wishes for Eid Al-Adha', 'May this Eid bring peace and blessings'],
+    birthday: ['Happy Birthday and best wishes', 'Wishing you a year full of joy', 'May your day be bright and beautiful', 'Many happy returns', 'Warm birthday wishes to you'],
+    wedding: ['Wishing you a lifetime of love', 'Congratulations on your wedding', 'May your days be filled with joy', 'Best wishes to the happy couple', 'A beautiful beginning together'],
+    graduation: ['Congratulations on your graduation', 'Proud of your great achievement', 'Wishing you continued success', 'Your future is bright', 'Well done and best wishes'],
+    success: ['Congratulations on your success', 'Well deserved and beautifully earned', 'Wishing you continued excellence', 'Proud of your achievement', 'Onward to more success'],
+    newborn: ['Welcome to the little one', 'Congratulations on your new baby', 'Wishing your family joy and love', 'A precious blessing has arrived', 'Warm wishes for your newborn'],
+    love: ['You are my greatest joy', 'With love today and always', 'You make life beautiful', 'Forever grateful for you', 'My heart is with you'],
+    friendship: ['Thank you for being a true friend', 'Friends like you are a gift', 'Grateful for your friendship', 'To my dear friend with love', 'Our friendship means so much'],
+    daily: ['Wishing you a beautiful day', 'May your day be bright', 'Sending you peace and joy', 'Have a wonderful day', 'A little note of happiness'],
+    newyear: ['Happy New Year', 'Wishing you a bright new year', 'May this year bring joy', 'New year, new blessings', 'Cheers to a beautiful year'],
+    thankyou: ['Thank you from the heart', 'Grateful for everything you do', 'Your kindness means so much', 'With sincere appreciation', 'Thank you for being wonderful']
+};
+
+function getFallbackSuggestions(occasionId) {
+    const normalizedOccasion = normalizeOccasionId(occasionId);
+    const source = state.lang === 'en' ? FALLBACK_GREETINGS_EN : FALLBACK_GREETINGS;
+    return source[normalizedOccasion] || source.daily;
+}
 
 function init() {
     initTheme();
@@ -965,10 +1043,16 @@ function bindEvents() {
     };
 
     document.getElementById('user-name').oninput = (e) => {
+        state.name = e.target.value;
         updatePreview();
     };
 
-    ['user-name', 'greeting-text', 'custom-instructions'].forEach((id) => {
+    document.getElementById('name-subtitle').oninput = (e) => {
+        state.nameSubtitle = e.target.value;
+        updatePreview();
+    };
+
+    ['user-name', 'name-subtitle', 'greeting-text', 'custom-instructions'].forEach((id) => {
         const field = document.getElementById(id);
         if (!field) return;
         field.addEventListener('keydown', (e) => {
@@ -983,6 +1067,7 @@ function bindEvents() {
         const panel = document.getElementById('advanced-panel');
         const icon = document.querySelector('#advanced-toggle .toggle-icon');
         panel.classList.toggle('open');
+        if (panel.classList.contains('open')) userOpenedAdvancedOptions = true;
         icon.style.transform = panel.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0deg)';
     };
 
@@ -1015,47 +1100,6 @@ function bindEvents() {
     document.getElementById('color-minus').onclick = () => updateSlider(cSlider, -1);
     document.getElementById('color-plus').onclick = () => updateSlider(cSlider, 1);
 
-
-    // Sub-style configurations
-    const subStylesConfig = {
-        modern: {
-            ar: ['مستقبلي', 'نيون', 'سايبر بانك', 'إضاءات نيون', 'زجاجي', 'تجريدي', 'ثلاثي الأبعاد حديث', 'إضاءة سينمائية'],
-            en: ['Futuristic', 'Neon', 'Cyberpunk', 'Neon Lights', 'Glassmorphism', 'Abstract', 'Modern 3D', 'Cinematic Lighting']
-        },
-        traditional: {
-            ar: ['عتيق', 'فن كلاسيكي', 'تخطيط', 'فيكتوري', 'زخرفة إسلامية', 'عصر النهضة', 'رسم زيتي تقليدي', 'فن استشراقي'],
-            en: ['Vintage', 'Classic Art', 'Calligraphy', 'Victorian', 'Islamic Geometry', 'Renaissance', 'Traditional Oil Painting', 'Orientalist Art']
-        },
-        minimalist: {
-            ar: ['تصميم مسطح', 'فن خطي', 'أحادية اللون', 'هندسي', 'مساحات سلبية', 'بسيط ولطيف', 'فن البوب المينيمالي', 'إسكندنافي'],
-            en: ['Flat Design', 'Line Art', 'Monochrome', 'Geometric', 'Negative Space', 'Simple & Cute', 'Minimal Pop Art', 'Scandinavian']
-        },
-        vibrant: {
-            ar: ['بوب آرت', 'مزاجي', 'تدرج لوني', 'سائل', 'مضيء', 'ألوان نيون', 'سريالي ملون', 'كاريكاتير'],
-            en: ['Pop Art', 'Psychedelic', 'Gradient', 'Fluid', 'Luminous', 'Neon Colors', 'Colorful Surrealism', 'Caricature']
-        },
-        watercolor: {
-            ar: ['ألوان باستيل', 'رسم زيتي', 'حبر', 'فحم', 'ألوان مائية ناعمة', 'رسم قلم رصاص', 'ألوان جواش', 'لطخات ألوان'],
-            en: ['Pastel', 'Oil Painting', 'Ink Wash', 'Charcoal', 'Soft Watercolor', 'Pencil Sketch', 'Gouache', 'Color Splashes']
-        },
-        '3d-render': {
-            ar: ['صلصال', 'واقعي', 'رسوم منخفضة', 'فيزيائي', 'تصيير أوكتان', 'ألياف ناعمة', 'تكوين فوكسل', 'إضاءة استوديو'],
-            en: ['Claymation', 'Photorealistic', 'Low Poly', 'Isometric', 'Octane Render', 'Soft Fluff', 'Voxel Art', 'Studio Lighting']
-        },
-        cinematic: {
-            ar: ['إضاءة درامية', 'تصوير فيلم', 'عدسة ماكرو', 'أبيض وأسود سينمائي', 'خيال علمي', 'فانتازيا', 'مشهد ملحمي', 'إضاءة خلفية'],
-            en: ['Dramatic Lighting', 'Film Photography', 'Macro Lens', 'Cinematic B&W', 'Sci-Fi', 'Fantasy', 'Epic Scene', 'Backlighting']
-        },
-        illustration: {
-            ar: ['رسم رقمي', 'أنمي', 'كتب أطفال', 'كوميكس', 'رسم قصصي', 'شخصيات كرتونية', 'رسم خطي', 'رسم خيالي'],
-            en: ['Digital Art', 'Anime', 'Childrens Book', 'Comics', 'Storybook Illustration', 'Cartoon Characters', 'Line Drawing', 'Fantasy Illustration']
-        },
-        papercraft: {
-            ar: ['أوريغامي', 'قصاصات ورق', 'طبقات ورقية', 'صندوق إضاءة', 'ورق مقوى ثلاثي الأبعاد', 'لف الورق كويلينج', 'نقش ورقي', 'ظل ورقي'],
-            en: ['Origami', 'Paper Cutout', 'Layered Paper', 'Lightbox Art', '3D Cardboard', 'Quilling Art', 'Paper Embossing', 'Paper Shadow']
-        }
-    };
-
     // Art Style Cards (Image Selector)
     document.querySelectorAll('.style-card[data-value]').forEach(c => {
         c.onclick = () => {
@@ -1063,19 +1107,21 @@ function bindEvents() {
             document.querySelectorAll('.style-card[data-value]').forEach(x => x.classList.remove('active', 'selected'));
             c.classList.add('active', 'selected');
             state.style = c.dataset.value;
-            state.subStyle = null; // reset
+            state.subStyle = null;
+            state.effectiveSubStyle = '';
+            userSelectedSubStyle = false;
 
             // Populate Sub-Styles Panel
             const subPanel = document.getElementById('sub-styles-panel');
             const subContainer = document.getElementById('sub-style-chips');
             subContainer.innerHTML = '';
 
-            const options = subStylesConfig[state.style]?.[state.lang] || [];
+            const options = SUB_STYLES_CONFIG[state.style]?.[state.lang] || [];
             if (options && options.length > 0) {
                 subPanel.classList.remove('hidden');
                 options.forEach((opt, index) => {
                     const btn = document.createElement('button');
-                    const enVal = subStylesConfig[state.style].en[index];
+                    const enVal = SUB_STYLES_CONFIG[state.style].en[index];
                     btn.className = 'chip';
                     btn.type = 'button';
                     btn.dataset.en = enVal;
@@ -1084,18 +1130,11 @@ function bindEvents() {
                         document.querySelectorAll('#sub-style-chips .chip').forEach(x => x.classList.remove('active', 'selected'));
                         btn.classList.add('active', 'selected');
                         state.subStyle = enVal;
+                        state.effectiveSubStyle = enVal;
+                        userSelectedSubStyle = true;
                     };
                     subContainer.appendChild(btn);
                 });
-
-                // Select first option by default unless state already has one that matches
-                if (state.subStyle) {
-                    const existingBtn = subContainer.querySelector(`[data-en="${state.subStyle}"]`);
-                    if (existingBtn) existingBtn.click();
-                    else subContainer.firstChild.click();
-                } else {
-                    subContainer.firstChild.click();
-                }
             } else {
                 subPanel.classList.add('hidden');
             }
@@ -1148,6 +1187,7 @@ function bindEvents() {
 
     document.getElementById('generate-btn').onclick = () => {
         state.name = document.getElementById('user-name').value.trim();
+        state.nameSubtitle = document.getElementById('name-subtitle').value.trim();
         state.greeting = document.getElementById('greeting-text').value.trim();
         state.instructions = document.getElementById('custom-instructions').value.trim();
 
@@ -1162,14 +1202,19 @@ function bindEvents() {
     document.getElementById('restart-btn').onclick = () => {
         state.occasion = null;
         state.name = '';
+        state.nameSubtitle = '';
         state.greeting = '';
         state.style = 'modern';
         state.subStyle = null;
+        state.effectiveSubStyle = '';
         userSelectedArtStyle = false;
+        userSelectedSubStyle = false;
+        userOpenedAdvancedOptions = false;
         state.currentFileKey = null;
         state.shareImageUrl = '';
         state.sharePageUrl = '';
         document.getElementById('user-name').value = '';
+        document.getElementById('name-subtitle').value = '';
         document.getElementById('greeting-text').value = '';
         document.getElementById('custom-instructions').value = '';
         document.getElementById('greeting-field').classList.add('hidden');
@@ -1470,6 +1515,7 @@ function updateText() {
         if (translations[state.lang][key]) el.textContent = translations[state.lang][key];
     });
     document.getElementById('user-name').placeholder = state.lang === 'ar' ? 'ما هو اسمك؟' : 'What is your name?';
+    document.getElementById('name-subtitle').placeholder = state.lang === 'ar' ? 'مثال: من القلب، عائلتك، فريق العمل...' : 'Example: With love, your family, the team...';
     updateThemeToggleText();
     renderImageModelChoices();
     updatePreview();
@@ -1489,6 +1535,30 @@ function go(n) {
 let suggestionClickCount = 0;
 let lastSuggestionOccasion = null;
 
+function renderSuggestionItems(list, suggestions, nextMode = '') {
+    list.innerHTML = '';
+    suggestions.forEach((s, i) => {
+        const item = document.createElement('button');
+        item.className = 'suggestion-item';
+        item.style.animationDelay = `${i * 0.08}s`;
+        item.innerHTML = `<span class="suggestion-num">${i + 1}</span><span class="suggestion-text">${s}</span>`;
+        item.onclick = () => {
+            state.greeting = s;
+            document.getElementById('greeting-text').value = s;
+            list.querySelectorAll('.suggestion-item').forEach(x => x.classList.remove('selected-suggestion'));
+            item.classList.add('selected-suggestion');
+        };
+        list.appendChild(item);
+    });
+
+    if (nextMode) {
+        const hint = document.createElement('div');
+        hint.className = 'suggestion-mode-hint';
+        hint.textContent = nextMode;
+        list.appendChild(hint);
+    }
+}
+
 async function generateSuggestions() {
     const btn = document.getElementById('ai-suggest-btn');
     const container = document.getElementById('suggestions-container');
@@ -1505,14 +1575,13 @@ async function generateSuggestions() {
         lastSuggestionOccasion = state.occasion;
     }
 
+    const isFirstClick = suggestionClickCount === 0;
     // Determine mode: even clicks = popular, odd clicks = creative
     const isCreativeMode = suggestionClickCount % 2 !== 0;
     suggestionClickCount++;
 
-    btn.classList.add('loading');
     container.classList.remove('hidden');
     list.innerHTML = '';
-    loadingEl.classList.remove('hidden');
 
     // Update header to show current mode
     const modeLabel = isCreativeMode 
@@ -1522,6 +1591,17 @@ async function generateSuggestions() {
     if (headerEl) {
         headerEl.innerHTML = `<span class="suggestions-sparkle">${isCreativeMode ? '💡' : '⭐'}</span><span>${modeLabel}</span>`;
     }
+
+    if (isFirstClick) {
+        loadingEl.classList.add('hidden');
+        const fallbacks = getFallbackSuggestions(state.occasion);
+        const nextMode = state.lang === 'ar' ? 'اضغط مرة أخرى لتوليد اقتراحات مبتكرة 💡' : 'Click again to generate creative suggestions 💡';
+        renderSuggestionItems(list, fallbacks.slice(0, 5), nextMode);
+        return;
+    }
+
+    btn.classList.add('loading');
+    loadingEl.classList.remove('hidden');
 
     const occ = getOccasionById(state.occasion);
     const occName = state.lang === 'ar' ? occ.nameAr : occ.nameEn;
@@ -1577,50 +1657,21 @@ async function generateSuggestions() {
 
         loadingEl.classList.add('hidden');
         
-        suggestions.forEach((s, i) => {
-            const item = document.createElement('button');
-            item.className = 'suggestion-item';
-            item.style.animationDelay = `${i * 0.08}s`;
-            item.innerHTML = `<span class="suggestion-num">${i + 1}</span><span class="suggestion-text">${s}</span>`;
-            item.onclick = () => {
-                state.greeting = s;
-                document.getElementById('greeting-text').value = s;
-                list.querySelectorAll('.suggestion-item').forEach(x => x.classList.remove('selected-suggestion'));
-                item.classList.add('selected-suggestion');
-            };
-            list.appendChild(item);
-        });
-
         // Show next mode hint
         const nextMode = isCreativeMode 
             ? (state.lang === 'ar' ? 'اضغط مرة أخرى لاقتراحات مشهورة ⭐' : 'Click again for popular suggestions ⭐')
             : (state.lang === 'ar' ? 'اضغط مرة أخرى لاقتراحات مبتكرة 💡' : 'Click again for creative suggestions 💡');
-        
-        const hint = document.createElement('div');
-        hint.className = 'suggestion-mode-hint';
-        hint.textContent = nextMode;
-        list.appendChild(hint);
+        renderSuggestionItems(list, suggestions, nextMode);
 
     } catch (e) {
         console.error("AI Error:", e);
         loadingEl.classList.add('hidden');
         
-        const fallbacks = FALLBACK_GREETINGS[state.occasion] || FALLBACK_GREETINGS['daily'];
+        const fallbacks = getFallbackSuggestions(state.occasion);
         
         list.innerHTML = `<div style="color:var(--important);text-align:center;padding:5px;font-size:0.75rem;margin-bottom:10px;">${state.lang === 'ar' ? 'تم تفعيل الاقتراحات الذكية الاحتياطية' : 'Smart backup suggestions active'}</div>`;
         
-        fallbacks.forEach((s, i) => {
-            const item = document.createElement('button');
-            item.className = 'suggestion-item';
-            item.innerHTML = `<span class="suggestion-num">${i + 1}</span><span class="suggestion-text">${s}</span>`;
-            item.onclick = () => {
-                state.greeting = s;
-                document.getElementById('greeting-text').value = s;
-                list.querySelectorAll('.suggestion-item').forEach(x => x.classList.remove('selected-suggestion'));
-                item.classList.add('selected-suggestion');
-            };
-            list.appendChild(item);
-        });
+        renderSuggestionItems(list, fallbacks);
     }
     btn.classList.remove('loading');
 }
@@ -1635,6 +1686,7 @@ async function generate() {
     const result = document.getElementById('result-area');
     const greetingOverlay = document.getElementById('overlay-greeting');
     const nameOverlay = document.getElementById('overlay-name');
+    const nameSubtitleOverlay = document.getElementById('overlay-name-subtitle');
 
     // 1. Prepare UI
     img.style.opacity = '0.3';
@@ -1675,7 +1727,12 @@ async function generate() {
         middle: 'in the middle',
         bottom: 'at the bottom'
     };
-    const namePosInstruction = `Write the sender name "${state.name}" only once ${posMap[state.namePosition] || 'at the bottom'}.`;
+    const effectiveSubStyle = resolveEffectiveSubStyle();
+    state.effectiveSubStyle = effectiveSubStyle;
+    const subtitleInstruction = state.nameSubtitle
+        ? `Write the secondary line "${state.nameSubtitle}" directly under the name, smaller than the name, clear and readable.`
+        : '';
+    const namePosInstruction = `Write the name "${state.name}" only once ${posMap[state.namePosition] || 'at the bottom'}. ${subtitleInstruction}`;
     
     let textStyleInstruction = '';
     if (state.tashkeel || state.zakhrafa) {
@@ -1696,7 +1753,7 @@ async function generate() {
 
     const prompt = `Create a stunning, high-resolution vertical greeting card.
 Occasion Context: ${occDesc}
-Style: ${state.style} (${state.subStyle || 'Modern'}).
+Style: ${state.style} (${effectiveSubStyle || 'Modern'}).
 Quality: Cinematic lighting, 8k, professional.
 
 ${elemInstruction}
@@ -1731,6 +1788,7 @@ ${textStyleInstruction}${autoCorrections}`;
             // Show overlays for Fallback/Flux (it doesn't draw text)
             greetingOverlay.textContent = state.greeting;
             nameOverlay.textContent = state.name;
+            nameSubtitleOverlay.textContent = state.nameSubtitle || '';
             document.querySelector('.card-overlay').classList.remove('hidden');
             
             loading.classList.add('hidden');
@@ -1818,6 +1876,7 @@ function fallback() {
     img.style.opacity = '1';
     document.getElementById('overlay-greeting').textContent = state.greeting;
     document.getElementById('overlay-name').textContent = state.name;
+    document.getElementById('overlay-name-subtitle').textContent = state.nameSubtitle || '';
     document.getElementById('loading-area').classList.add('hidden');
     document.getElementById('result-area').classList.remove('hidden');
     saveCard(fbUrl, state.occasion, state.name, true);
@@ -1953,16 +2012,20 @@ function remixCard(id) {
     
     // Restore generation parameters only (protect auth and lang)
     const savedState = card.state;
-    const params = ['name', 'occasion', 'greeting', 'instructions', 'style', 'subStyle', 'details', 'colorIntensity', 'palette', 'contentElements', 'tashkeel', 'zakhrafa', 'namePosition'];
+    const params = ['name', 'nameSubtitle', 'occasion', 'greeting', 'instructions', 'style', 'subStyle', 'effectiveSubStyle', 'details', 'colorIntensity', 'palette', 'contentElements', 'tashkeel', 'zakhrafa', 'namePosition'];
     params.forEach(p => {
         if (savedState[p] !== undefined) state[p] = JSON.parse(JSON.stringify(savedState[p]));
     });
     state.occasion = normalizeOccasionId(state.occasion);
     state.imageModel = normalizeImageModel(state.imageModel);
     userSelectedArtStyle = true;
+    userSelectedSubStyle = !!state.subStyle;
+    userOpenedAdvancedOptions = !!state.subStyle;
+    const restoredSubStyle = state.subStyle;
 
     // Update Text Inputs
     document.getElementById('user-name').value = state.name || '';
+    document.getElementById('name-subtitle').value = state.nameSubtitle || '';
     document.getElementById('greeting-text').value = state.greeting || '';
     document.getElementById('custom-instructions').value = state.instructions || '';
     
@@ -1986,6 +2049,10 @@ function remixCard(id) {
     // Style Chips
     const styleCard = document.querySelector(`.style-card[data-value="${state.style}"]`);
     if (styleCard) styleCard.click(); 
+    if (restoredSubStyle) {
+        const restoredSubStyleChip = document.querySelector(`#sub-style-chips .chip[data-en="${restoredSubStyle}"]`);
+        if (restoredSubStyleChip) restoredSubStyleChip.click();
+    }
 
     // Palette Chips
     document.querySelectorAll('.palette-chip').forEach(c => c.classList.remove('active', 'selected'));

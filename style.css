@@ -1419,6 +1419,13 @@ input[type="range"]::-webkit-slider-thumb:hover {
     margin-top: 4px;
 }
 
+.overlay-name-subtitle {
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.92);
+    margin-top: 2px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+}
+
 .hidden {
     display: none !important;
 }

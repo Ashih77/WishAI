@@ -28,8 +28,9 @@ export default async (req) => {
         const metadata = blobInfo?.metadata || {};
         const greeting = metadata.greeting;
         const name = metadata.name;
+        const nameSubtitle = metadata.nameSubtitle;
         if (greeting) title = greeting;
-        if (name) description = `${greeting || 'بطاقة تهنئة'} — ${name}`;
+        if (name) description = `${greeting || 'بطاقة تهنئة'} — ${name}${nameSubtitle ? ` — ${nameSubtitle}` : ''}`;
     } catch {
         // Metadata is optional. The image itself is the share payload.
     }

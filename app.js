@@ -772,7 +772,7 @@ function logout() {
 /* 🔑 AUTH CONFIGURATION - REPLACE WITH YOUR KEYS TO GO LIVE */
 const authOptions = {
     google: {
-        clientId: '407778791327-ailt3nkhvj1hni90e6up27gg7rl46nut.apps.googleusercontent.com',
+        clientId: '223332117713-pcng91tmvpidr074otou6mgoncb06hpp.apps.googleusercontent.com',
         enabled: true
     },
     apple: {

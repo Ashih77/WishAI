@@ -321,6 +321,29 @@
             return labels[model] || model;
         }
 
+        function renderAiReport(aiResult, title = '🤖 تقرير التقييم الذكي') {
+            const adherenceColor = aiResult.adherence ? '#10b981' : '#ef4444';
+            const adherenceText = aiResult.adherence ? '✅ ملتزم بالضوابط' : '❌ لم يلتزم بالضوابط';
+            let adviceHTML = 'لا توجد مقترحات إضافية.';
+            if (Array.isArray(aiResult.advice) && aiResult.advice.length > 0) {
+                adviceHTML = aiResult.advice.map(adv => `• ${escapeHtml(adv)}`).join('<br>');
+            }
+
+            return `
+                <h3>${title}</h3>
+                <div style="line-height:1.7; font-size:1rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                        <strong>التقييم: <span style="font-size:1.3rem; color:var(--primary);">${Number(aiResult.score || 0)}/10</span></strong>
+                        <span style="font-size:0.9rem; background:${adherenceColor}20; color:${adherenceColor}; padding:4px 10px; border-radius:12px; font-weight:bold; border: 1px solid ${adherenceColor}50;">
+                            ${adherenceText}
+                        </span>
+                    </div>
+                    <br><strong>الملخص:</strong><br>${escapeHtml(aiResult.summary || "لا يوجد ملخص")}<br><br>
+                    <strong>الاقتراحات:</strong><br>${adviceHTML}
+                </div>
+            `;
+        }
+
         function renderDashboard(items, pass) {
             document.getElementById('total-count').textContent = items.length;
             document.getElementById('admin-total-generations').textContent = items.length;
@@ -539,119 +562,30 @@
             modal.style.display = 'flex';
 
             if (meta.ai_score !== undefined) {
-                const adherenceColor = meta.ai_adherence ? '#10b981' : '#ef4444';
-                const adherenceText = meta.ai_adherence ? '✅ ملتزم بالضوابط' : '❌ لم يلتزم بالضوابط';
-                
-                let adviceHTML = 'لا توجد مقترحات إضافية.';
-                if (Array.isArray(meta.ai_advice) && meta.ai_advice.length > 0) {
-                    adviceHTML = meta.ai_advice.map(adv => `• ${adv}`).join('<br>');
-                }
-
-                resultsDiv.innerHTML = `
-                    <h3>🤖 تقرير التقييم الذكي</h3>
-                    <div style="line-height:1.7; font-size:1rem;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
-                            <strong>التقييم: <span style="font-size:1.3rem; color:var(--primary);">${meta.ai_score}/10</span></strong>
-                            <span style="font-size:0.9rem; background:${adherenceColor}20; color:${adherenceColor}; padding:4px 10px; border-radius:12px; font-weight:bold; border: 1px solid ${adherenceColor}50;">
-                                ${adherenceText}
-                            </span>
-                        </div>
-                        <br><strong>الملخص:</strong><br>${meta.ai_summary || "لا يوجد ملخص"}<br><br>
-                        <strong>الاقتراحات:</strong><br>${adviceHTML}
-                    </div>
-                `;
+                resultsDiv.innerHTML = renderAiReport({
+                    score: meta.ai_score,
+                    adherence: meta.ai_adherence,
+                    summary: meta.ai_summary,
+                    advice: meta.ai_advice
+                });
                 return;
             }
 
             resultsDiv.innerHTML = '<div style="text-align:center; padding: 20px;">جاري دراسة الصورة وتقييم المعطيات بالذكاء الاصطناعي... ⏳<br><br><span style="font-size:0.85rem;color:#94a3b8;">قد يستغرق هذا بضع ثوانٍ</span></div>';
 
             try {
-                // Fetch image base64
-                const imgRes = await fetch(`/api/get-cloud-image?key=${key}&pass=${pass}`);
-                const blob = await imgRes.blob();
-                const base64data = await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result.split(',')[1]);
-                    reader.readAsDataURL(blob);
-                });
-
-                const prompt = `أنت خبير ذكاء اصطناعي يقوم بتقييم بطاقة تهنئة تم توليدها.
-المعطيات (JSON) التي طلبها المستخدم:
-\`\`\`json
-${JSON.stringify(meta, null, 2)}
-\`\`\`
-يرجى مطابقة الصورة المرفقة مع المعطيات، وإعطاء التقييم بناءً على: مدى الالتزام بـ (المناسبة، الأسلوب، التشكيل، موقع الاسم، التعليمات) والجودة الفنية للصورة.
-اكتب التقرير باللغة العربية حصراً بالضبط بالصيغة التالية (بدون زيادات):
-التقييم: [رقم من 10]
-الملخص: [جملتين تلخص نقاط القوة والضعف بشكل احترافي]
-الاقتراحات:
-- [نصيحة عملية 1 لتحسين معطيات JSON للحصول على نتيجة أفضل مستقبلا]
-- [نصيحة عملية 2]`;
-
-                const payload = {
-                    action: 'evaluate',
-                    contents: [
-                        {
-                            role: 'user',
-                            parts: [
-                                { text: prompt },
-                                { inlineData: { mimeType: 'image/jpeg', data: base64data } }
-                            ]
-                        }
-                    ]
-                };
-
-                const res = await fetch('/api/gemini', {
+                const res = await fetch('/api/evaluate-card', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ fileKey: key, metadata: meta })
                 });
                 
                 const data = await res.json();
                 
                 if (!data.ok) throw new Error(data.error || data.message || 'Failed to analyze');
-                
-                let aiText = data.data.candidates[0].content.parts[0].text;
-                // Remove potential markdown JSON wrappers
-                let cleanAiText = aiText.replace(/```json/gi, '').replace(/```/g, '').trim();
-                
-                let aiResult = {};
-                try {
-                    aiResult = JSON.parse(cleanAiText);
-                } catch(e) {
-                    console.warn("Failed to parse AI response as JSON", e);
-                    throw new Error("تنسيق تقييم غير صالح من الخادم.");
-                }
 
-                // Call save-evaluation API so it saves permanently!
-                await fetch('/api/save-evaluation', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fileKey: key, aiResult })
-                });
+                resultsDiv.innerHTML = renderAiReport(data.aiResult, '🤖 تقرير التقييم الذكي المستمر');
 
-                const adherenceColor = aiResult.adherence ? '#10b981' : '#ef4444';
-                const adherenceText = aiResult.adherence ? '✅ ملتزم بالضوابط' : '❌ لم يلتزم بالضوابط';
-                let adviceHTML = 'لا توجد مقترحات إضافية.';
-                if (Array.isArray(aiResult.advice) && aiResult.advice.length > 0) {
-                    adviceHTML = aiResult.advice.map(adv => `• ${adv}`).join('<br>');
-                }
-
-                resultsDiv.innerHTML = `
-                    <h3>🤖 تقرير التقييم الذكي المستمر</h3>
-                    <div style="line-height:1.7; font-size:1rem;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
-                            <strong>التقييم: <span style="font-size:1.3rem; color:var(--primary);">${aiResult.score}/10</span></strong>
-                            <span style="font-size:0.9rem; background:${adherenceColor}20; color:${adherenceColor}; padding:4px 10px; border-radius:12px; font-weight:bold; border: 1px solid ${adherenceColor}50;">
-                                ${adherenceText}
-                            </span>
-                        </div>
-                        <br><strong>الملخص:</strong><br>${aiResult.summary || "لا يوجد ملخص"}<br><br>
-                        <strong>الاقتراحات:</strong><br>${adviceHTML}
-                    </div>
-                `;
-
-                // Optionally reload the page to update graphs
                 setTimeout(() => location.reload(), 2000);
             } catch (err) {
                 console.error(err);

@@ -259,6 +259,22 @@ const IMAGE_MODELS = {
     }
 };
 
+const OCCASION_RECOMMENDED_STYLES = {
+    ramadan: 'traditional',
+    eid_fitr: 'traditional',
+    eid_adha: 'traditional',
+    birthday: 'vibrant',
+    wedding: 'watercolor',
+    graduation: 'cinematic',
+    success: 'modern',
+    newborn: 'illustration',
+    love: 'watercolor',
+    friendship: 'illustration',
+    daily: 'minimalist',
+    newyear: 'vibrant',
+    thankyou: 'minimalist'
+};
+
 function normalizeImageModel(model) {
     return Object.prototype.hasOwnProperty.call(IMAGE_MODELS, model) ? model : 'nano-banana-2';
 }
@@ -279,6 +295,27 @@ function getGenerationSettingsSnapshot() {
         imageModelLabelAr: getImageModelLabelForLang(imageModel, 'ar'),
         imageModelLabelEn: getImageModelLabelForLang(imageModel, 'en')
     };
+}
+
+function getRecommendedArtStyleForOccasion(occasionId) {
+    const normalizedOccasion = normalizeOccasionId(occasionId);
+    return OCCASION_RECOMMENDED_STYLES[normalizedOccasion] || 'modern';
+}
+
+function selectArtStyle(style, options = {}) {
+    const { recommended = false } = options;
+    const styleCard = document.querySelector(`.style-card[data-value="${style}"]`);
+    if (!styleCard) return false;
+
+    applyingRecommendedArtStyle = recommended;
+    styleCard.click();
+    applyingRecommendedArtStyle = false;
+    return true;
+}
+
+function applyRecommendedArtStyleForOccasion(occasionId) {
+    if (userSelectedArtStyle) return;
+    selectArtStyle(getRecommendedArtStyleForOccasion(occasionId), { recommended: true });
 }
 
 let state = {
@@ -307,6 +344,8 @@ let state = {
 
 let currentShareSavePromise = null;
 let appSettingsPromise = null;
+let userSelectedArtStyle = false;
+let applyingRecommendedArtStyle = false;
 const ANALYTICS_KEY = 'wishai_analytics';
 const PENDING_SAVES_KEY = 'wishai_pending_cloud_saves';
 
@@ -1020,6 +1059,7 @@ function bindEvents() {
     // Art Style Cards (Image Selector)
     document.querySelectorAll('.style-card[data-value]').forEach(c => {
         c.onclick = () => {
+            if (!applyingRecommendedArtStyle) userSelectedArtStyle = true;
             document.querySelectorAll('.style-card[data-value]').forEach(x => x.classList.remove('active', 'selected'));
             c.classList.add('active', 'selected');
             state.style = c.dataset.value;
@@ -1063,7 +1103,7 @@ function bindEvents() {
     });
 
     // Default initialization for style selection
-    document.querySelector('.style-card[data-value="modern"]')?.click();
+    selectArtStyle(state.style, { recommended: true });
 
     renderImageModelChoices();
 
@@ -1123,6 +1163,9 @@ function bindEvents() {
         state.occasion = null;
         state.name = '';
         state.greeting = '';
+        state.style = 'modern';
+        state.subStyle = null;
+        userSelectedArtStyle = false;
         state.currentFileKey = null;
         state.shareImageUrl = '';
         state.sharePageUrl = '';
@@ -1137,6 +1180,7 @@ function bindEvents() {
         document.getElementById('rating-feedback').value = '';
         resetStars();
         go(1);
+        selectArtStyle(state.style, { recommended: true });
         renderOccasions();
         renderImageModelChoices();
     };
@@ -1395,6 +1439,7 @@ function renderOccasions() {
         el.innerHTML = `<span class="occ-icon">${o.icon}</span><span class="occ-name">${state.lang === 'ar' ? o.nameAr : o.nameEn}</span>`;
         el.onclick = () => {
             state.occasion = o.id;
+            applyRecommendedArtStyleForOccasion(o.id);
             const defaultGreeting = greetings[state.lang][o.id] || '';
             state.greeting = defaultGreeting;
             document.getElementById('greeting-text').value = defaultGreeting;
@@ -1914,6 +1959,7 @@ function remixCard(id) {
     });
     state.occasion = normalizeOccasionId(state.occasion);
     state.imageModel = normalizeImageModel(state.imageModel);
+    userSelectedArtStyle = true;
 
     // Update Text Inputs
     document.getElementById('user-name').value = state.name || '';

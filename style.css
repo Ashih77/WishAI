@@ -190,6 +190,15 @@ body {
     box-shadow: var(--glow);
 }
 
+.admin-btn { font-size: 0.8rem; padding: 7px 12px; border-radius: 100px; }
+.admin-card { padding: 32px 28px; }
+.admin-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 10px; }
+.admin-stat { border: 1px solid var(--border); border-radius: 12px; padding: 12px; background: rgba(255,255,255,0.02); display:flex; flex-direction:column; gap:6px; }
+.admin-stat strong { font-size: 1.3rem; color: var(--primary); }
+.admin-table-wrap { margin-top: 14px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.admin-table { width: 100%; border-collapse: collapse; }
+.admin-table th, .admin-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: start; }
+
 /* LANG */
 .lang-toggle {
     display: flex;

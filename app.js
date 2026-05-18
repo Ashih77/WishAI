@@ -306,6 +306,8 @@ let state = {
 };
 
 let currentShareSavePromise = null;
+const ANALYTICS_KEY = 'wishai_analytics';
+const PENDING_SAVES_KEY = 'wishai_pending_cloud_saves';
 
 // 🔒 Security Update: API Key moved to Netlify environment variables
 const API_BASE = '/api/gemini'; 
@@ -474,6 +476,47 @@ function init() {
     bindEvents();
     updateText();
     checkAuth();
+    flushPendingCloudSaves();
+    window.addEventListener('online', flushPendingCloudSaves);
+}
+
+function readJsonStorage(key, fallback) {
+    try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
+    catch { return fallback; }
+}
+
+function trackAnalytics(eventType, payload = {}) {
+    const data = readJsonStorage(ANALYTICS_KEY, { events: [] });
+    data.events.push({ id: Date.now() + Math.random(), eventType, payload, ts: new Date().toISOString() });
+    if (data.events.length > 500) data.events = data.events.slice(-500);
+    localStorage.setItem(ANALYTICS_KEY, JSON.stringify(data));
+}
+
+function queuePendingCloudSave(payload) {
+    const queue = readJsonStorage(PENDING_SAVES_KEY, []);
+    queue.push({ ...payload, queuedAt: new Date().toISOString() });
+    localStorage.setItem(PENDING_SAVES_KEY, JSON.stringify(queue));
+}
+
+async function flushPendingCloudSaves() {
+    const queue = readJsonStorage(PENDING_SAVES_KEY, []);
+    if (!queue.length) return;
+    const remaining = [];
+    for (const item of queue) {
+        try {
+            const res = await fetch('/api/save-cloud', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(item)
+            });
+            const data = await res.json();
+            if (!data.ok) throw new Error('SAVE_NOT_OK');
+            trackAnalytics('cloud_save_retried_success', { fileKey: item.fileKey });
+        } catch {
+            remaining.push(item);
+        }
+    }
+    localStorage.setItem(PENDING_SAVES_KEY, JSON.stringify(remaining));
 }
 
 function initTheme() {
@@ -823,6 +866,17 @@ function bindEvents() {
         updatePreview();
     };
 
+    ['user-name', 'greeting-text', 'custom-instructions'].forEach((id) => {
+        const field = document.getElementById(id);
+        if (!field) return;
+        field.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('generate-btn').click();
+            }
+        });
+    });
+
     document.getElementById('advanced-toggle').onclick = () => {
         const panel = document.getElementById('advanced-panel');
         const icon = document.querySelector('#advanced-toggle .toggle-icon');
@@ -1038,6 +1092,15 @@ function bindEvents() {
     document.getElementById('my-cards-btn').onclick = () => {
         go(3);
         renderGallery();
+    };
+    document.getElementById('admin-btn').onclick = () => {
+        renderAdminDashboard();
+        go(4);
+    };
+    document.querySelector('.admin-back-home-btn').onclick = () => go(1);
+    document.getElementById('admin-retry-btn').onclick = async () => {
+        await flushPendingCloudSaves();
+        renderAdminDashboard();
     };
 
     document.querySelector('.back-home-btn').onclick = () => go(1);
@@ -1687,14 +1750,11 @@ function saveCard(src, occId, name, isFallback = false) {
 
         // Save to cloud for admin/monitoring
         if (!isFallback && src) {
+            const cloudPayload = { fileKey: localFileKey, image: src, stateParams };
             currentShareSavePromise = fetch('/api/save-cloud', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    fileKey: localFileKey,
-                    image: src, 
-                    stateParams
-                })
+                body: JSON.stringify(cloudPayload)
             })
             .then(res => res.json())
             .then(data => {
@@ -1709,10 +1769,13 @@ function saveCard(src, occId, name, isFallback = false) {
                     state.shareImageUrl = data.imageUrl || `${window.location.origin}/api/get-cloud-image?key=${encodeURIComponent(data.fileKey)}`;
                     state.sharePageUrl = data.shareUrl || `${window.location.origin}/share?id=${encodeURIComponent(data.fileKey)}`;
                     document.getElementById('rating-container').classList.remove('hidden');
+                    trackAnalytics('cloud_save_success', { occId, imageModel: generationSettings.imageModel, fileKey: data.fileKey });
                 }
             })
             .catch(err => {
                 console.error('Failed to save to cloud:', err);
+                queuePendingCloudSave(cloudPayload);
+                trackAnalytics('cloud_save_queued', { occId, imageModel: generationSettings.imageModel, fileKey: localFileKey });
                 if (document.getElementById('eval-loading')) {
                     document.getElementById('eval-loading').classList.add('hidden');
                 }
@@ -1744,9 +1807,27 @@ function saveCard(src, occId, name, isFallback = false) {
                 cards.pop(); // Remove oldest to free space
             }
         }
+        trackAnalytics('generation_saved_local', { occId, isFallback, imageModel: generationSettings.imageModel });
     } catch (err) {
         console.warn('Could not save card to history:', err);
     }
+}
+
+function renderAdminDashboard() {
+    const cards = readJsonStorage('wishai_cards', []);
+    const analytics = readJsonStorage(ANALYTICS_KEY, { events: [] });
+    const queue = readJsonStorage(PENDING_SAVES_KEY, []);
+    const occasionCounts = {};
+    cards.forEach(c => { occasionCounts[c.occId] = (occasionCounts[c.occId] || 0) + 1; });
+    const cloudSaved = analytics.events.filter(e => e.eventType === 'cloud_save_success').length;
+    document.getElementById('admin-total-generations').textContent = String(cards.length);
+    document.getElementById('admin-cloud-saved').textContent = String(cloudSaved);
+    document.getElementById('admin-pending-saves').textContent = String(queue.length);
+    document.getElementById('admin-fallbacks').textContent = String(cards.filter(c => c.isFallback).length);
+    document.getElementById('admin-occasion-breakdown').innerHTML = Object.entries(occasionCounts)
+        .sort((a, b) => b[1] - a[1])
+        .map(([occ, count]) => `<tr><td>${escapeHtml(occ)}</td><td>${count}</td></tr>`)
+        .join('') || '<tr><td colspan="2">No data yet</td></tr>';
 }
 
 function renderGallery() {

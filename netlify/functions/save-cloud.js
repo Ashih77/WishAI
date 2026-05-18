@@ -62,6 +62,7 @@ export default async (req, context) => {
 
         // Connect to the global store "wishai_generations"
         const store = getStore("wishai_generations", { consistency: "strong" });
+        const settingsStore = getStore("wishai_settings", { consistency: "strong" });
 
         const safeOccasion = (stateParams?.occasion || 'card').replace(/[^a-z0-9]/gi, '_');
         const timestamp = Date.now();
@@ -69,6 +70,12 @@ export default async (req, context) => {
         const fileKey = requestedFileKey || fallbackFileKey;
 
         const metadata = buildGenerationMetadata(stateParams, timestamp);
+        const settings = await settingsStore.get("app", { type: "json" }).catch(() => ({}));
+        if (settings?.activeCycle) {
+            metadata.cycleId = settings.activeCycle.id || '';
+            metadata.cycleLabel = settings.activeCycle.label || '';
+            metadata.cycleStartedAt = settings.activeCycle.startedAt || 0;
+        }
 
         // Save first and return quickly so the generated card appears in Admin
         // and the client can show the rating form without waiting on AI analysis.

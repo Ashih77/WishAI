@@ -18,6 +18,9 @@ function compactMetadata(metadata = {}) {
         colorIntensity: metadata.colorIntensity ?? '',
         palette: metadata.palette || '',
         imageModel: metadata.imageModel || settings.imageModel || 'nano-banana-2',
+        cycleId: metadata.cycleId || '',
+        cycleLabel: metadata.cycleLabel || '',
+        cycleStartedAt: metadata.cycleStartedAt || 0,
         settings: {
             imageModel: settings.imageModel || metadata.imageModel || 'nano-banana-2'
         },

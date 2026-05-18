@@ -18,6 +18,15 @@ export default async (req, context) => {
     try {
         // Connect to the global store "wishai_generations"
         const store = getStore("wishai_generations", { consistency: "strong" });
+        const settingsStore = getStore("wishai_settings", { consistency: "strong" });
+        const settings = await settingsStore.get("app", { type: "json" }).catch(() => ({}));
+        const activeCycle = settings?.activeCycle || {
+            id: "baseline",
+            label: "الدورة الحالية",
+            startedAt: 0,
+            createdAt: null,
+            notes: ""
+        };
 
         // List keys
         const { blobs } = await store.list();
@@ -29,14 +38,15 @@ export default async (req, context) => {
             generations.push({
                 key: blob.key,
                 etag: blob.etag,
-                metadata: metadata || {}
+                metadata: metadata || {},
+                cycleStatus: Number(metadata?.timestamp || 0) >= Number(activeCycle.startedAt || 0) ? "current" : "historical"
             });
         }
 
         // Sort by timestamp descending
         generations.sort((a, b) => (b.metadata.timestamp || 0) - (a.metadata.timestamp || 0));
 
-        return new Response(JSON.stringify({ ok: true, generations }), { status: 200, headers });
+        return new Response(JSON.stringify({ ok: true, generations, activeCycle }), { status: 200, headers });
 
     } catch (err) {
         console.error('Error fetching from cloud:', err);

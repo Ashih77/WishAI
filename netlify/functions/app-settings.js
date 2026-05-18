@@ -3,6 +3,13 @@ import { getStore } from "@netlify/blobs";
 const SETTINGS_KEY = "app";
 const DEFAULT_SETTINGS = {
     imageModel: "nano-banana-2",
+    activeCycle: {
+        id: "baseline",
+        label: "الدورة الحالية",
+        startedAt: 0,
+        createdAt: null,
+        notes: ""
+    },
     updatedAt: null
 };
 

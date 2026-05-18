@@ -136,9 +136,136 @@
         .close-modal { position: absolute; top: 1.5rem; left: 1.5rem; background: var(--bg-panel); border-radius: 50%; border: none; color: var(--text); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; transition: 0.2s; }
         .close-modal:hover { background: var(--soft); }
         .ai-results h3 { margin-top: 0; color: var(--primary); border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+        .admin-hero,
+        .section-toolbar,
+        .insights-panel,
+        .chart-card,
+        .history-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+        }
+        .admin-hero {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.25rem;
+            padding: 1.35rem;
+            margin-bottom: 1.2rem;
+            overflow: hidden;
+            position: relative;
+        }
+        .admin-hero::after {
+            content: "";
+            position: absolute;
+            inset-inline-start: -80px;
+            top: -80px;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--primary), transparent 68%);
+            opacity: 0.12;
+            animation: floatGlow 6s ease-in-out infinite alternate;
+        }
+        .cycle-kicker { color: var(--primary); font-weight: 800; font-size: 0.9rem; }
+        .admin-hero h2,
+        .section-toolbar h2,
+        .insights-panel h3,
+        .chart-card h3 { margin: 0 0 0.45rem; color: var(--text); }
+        .admin-hero p,
+        .section-toolbar p { margin: 0; color: var(--muted); }
+        .hero-actions,
+        .toolbar-actions { display: flex; gap: 0.7rem; flex-wrap: wrap; }
+        .hero-actions button,
+        .toolbar-actions button { width: auto; min-width: 160px; }
+        .metric-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.85rem;
+            margin-bottom: 1.2rem;
+        }
+        .metric-strip div {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            animation: riseIn 0.45s ease both;
+        }
+        .metric-strip span { display: block; color: var(--muted); font-size: 0.85rem; margin-bottom: 0.35rem; }
+        .metric-strip strong { color: var(--primary); font-size: 1.55rem; }
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.2rem;
+        }
+        .chart-card { padding: 1.2rem; min-height: 260px; }
+        .wide-chart { grid-column: 1 / -1; }
+        .insights-panel { padding: 1.2rem; margin-bottom: 1.2rem; }
+        .insights-list { display: grid; gap: 0.7rem; }
+        .insight-item {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 0.85rem 1rem;
+            color: var(--text);
+        }
+        .section-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.15rem;
+            margin-bottom: 1.2rem;
+        }
+        .gallery-grid-admin .card {
+            transform-origin: center;
+            animation: galleryIn 0.35s ease both;
+            transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+        }
+        .gallery-grid-admin .card:hover {
+            transform: translateY(-5px) scale(1.01);
+            border-color: var(--border-hover);
+            box-shadow: 0 20px 52px rgba(15, 118, 110, 0.16);
+        }
+        .history-list { display: grid; gap: 1rem; }
+        .history-card { padding: 1.15rem; animation: riseIn 0.35s ease both; }
+        .history-card header { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; margin-bottom: 0.8rem; }
+        .history-card h3 { margin: 0; color: var(--text); }
+        .history-card p { margin: 0.35rem 0 0; color: var(--muted); }
+        .history-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.65rem; }
+        .history-metrics span { background: var(--bg-panel); border-radius: 12px; padding: 0.65rem; color: var(--text); border: 1px solid var(--border); }
+        .cycle-modal textarea {
+            width: 100%;
+            min-height: 92px;
+            resize: vertical;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            padding: 12px;
+            box-sizing: border-box;
+            font-family: inherit;
+            margin: 8px 0 12px;
+        }
+        @keyframes riseIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes galleryIn {
+            from { opacity: 0; transform: scale(0.98) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes floatGlow {
+            from { transform: translate3d(0, 0, 0) scale(1); }
+            to { transform: translate3d(36px, 20px, 0) scale(1.12); }
+        }
         @media (max-width: 760px) {
             .container { padding: 1rem; }
-            .admin-header { align-items: flex-start; flex-direction: column; }
+            .admin-header,
+            .admin-hero,
+            .section-toolbar { align-items: flex-start; flex-direction: column; }
             #tabs { flex-direction: column; }
             .admin-model-grid { grid-template-columns: 1fr; }
             #view-images > div[style],
@@ -164,48 +291,77 @@
 
         <div id="dashboard-view" class="hidden">
             <div id="tabs" style="display: flex; gap: 10px; margin-bottom: 20px;">
-                <button id="tab-images" class="admin-tab active" onclick="switchTab('images')" style="flex: 1; padding: 12px;">الصور والتقييمات 🖼️</button>
+                <button id="tab-dashboard" class="admin-tab active" onclick="switchTab('dashboard')" style="flex: 1; padding: 12px;">Dashboard 📊</button>
+                <button id="tab-images" class="admin-tab" onclick="switchTab('images')" style="flex: 1; padding: 12px;">معرض الصور 🖼️</button>
                 <button id="tab-feedback" class="admin-tab" onclick="switchTab('feedback')" style="flex: 1; padding: 12px;">المقترحات والملاحظات 💡</button>
                 <button id="tab-users" class="admin-tab" onclick="switchTab('users')" style="flex: 1; padding: 12px;">المستخدمون والإيميلات 👥</button>
+                <button id="tab-history" class="admin-tab" onclick="switchTab('history')" style="flex: 1; padding: 12px;">التقارير التاريخية 🗂️</button>
                 <button id="tab-settings" class="admin-tab" onclick="switchTab('settings')" style="flex: 1; padding: 12px;">إعدادات التوليد ⚙️</button>
             </div>
 
             <div class="summary-grid">
-                <div class="summary-card"><span>إجمالي الصور المحفوظة</span><strong id="admin-total-generations">0</strong></div>
-                <div class="summary-card"><span>التقييمات المستلمة</span><strong id="admin-total-ratings">0</strong></div>
+                <div class="summary-card"><span>صور الدورة الحالية</span><strong id="admin-total-generations">0</strong></div>
+                <div class="summary-card"><span>تقييمات الدورة الحالية</span><strong id="admin-total-ratings">0</strong></div>
                 <div class="summary-card"><span>المستخدمون المسجلون</span><strong id="admin-registered-users">0</strong></div>
                 <div class="summary-card"><span>استخدموا التطبيق</span><strong id="admin-used-users">0</strong></div>
             </div>
 
-            <div id="view-images">
-            <div style="display: flex; justify-content: space-between; align-items: center; background:var(--surface); padding:1.2rem; border-radius:12px; margin-bottom:1.5rem; border: 1px solid #334155;">
-                <div>
-                    <h2 style="margin:0 0 8px 0; color:var(--primary); font-size:1.3rem;">تقرير الأداء والتقييمات 📊</h2>
-                    <p style="margin:0; font-size:0.95rem; color:#cbd5e1;">
-                        إجمالي البطاقات المتعقبة: <strong id="total-count" style="color:#fff;">0</strong> |
-                        المراجعات المستلمة: <strong id="total-ratings" style="color:#fff;">0</strong> |
-                        متوسط التقييم: <strong id="avg-rating" style="color:#fbbf24;">0.0</strong> ⭐
-                    </p>
+            <div id="view-dashboard">
+                <section class="admin-hero">
+                    <div>
+                        <span class="cycle-kicker">دورة القياس الحالية</span>
+                        <h2 id="cycle-title">الدورة الحالية</h2>
+                        <p id="cycle-range">يتم احتساب الأداء الحالي من بداية الدورة النشطة، مع حفظ السابق كتاريخ.</p>
+                    </div>
+                    <div class="hero-actions">
+                        <button id="export-btn" class="hidden" onclick="exportReport()">استخراج تقرير الدورة 📥</button>
+                        <button onclick="openCycleModal()">بدء دورة تطوير جديدة ✨</button>
+                    </div>
+                </section>
+
+                <section class="metric-strip">
+                    <div><span>إجمالي تاريخي</span><strong id="total-history-count">0</strong></div>
+                    <div><span>صور الدورة</span><strong id="total-count">0</strong></div>
+                    <div><span>مراجعات الدورة</span><strong id="total-ratings">0</strong></div>
+                    <div><span>متوسط رضا المستخدم</span><strong id="avg-rating">0.0</strong></div>
+                    <div><span>متوسط تقييم AI</span><strong id="avg-ai-score">0.0</strong></div>
+                    <div><span>الالتزام بالتعليمات</span><strong id="adherence-rate">0%</strong></div>
+                </section>
+
+                <div id="analytics-section" class="analytics-grid">
+                    <div class="chart-card">
+                        <h3>جودة التوليد عبر الزمن 📈</h3>
+                        <canvas id="scoreChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>الالتزام بالتعليمات 🎯</h3>
+                        <canvas id="adherenceChart"></canvas>
+                    </div>
+                    <div class="chart-card wide-chart">
+                        <h3>أثر دورات التطوير على الأداء 🚀</h3>
+                        <canvas id="cycleChart"></canvas>
+                    </div>
                 </div>
-                <div style="display: flex; gap: 10px;">
-                    <button id="export-btn" class="hidden" onclick="exportReport()" style="width: auto; padding: 10px 20px; background: #10b981;">استخراج تقرير التقييمات 📥</button>
-                    <button onclick="location.reload()" style="width: auto; padding: 10px 20px;">تحديث التقرير 🔄</button>
-                </div>
-            </div>
-            
-            <div id="analytics-section" style="display: none; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-                <div style="background: var(--surface); padding: 1.5rem; border-radius: 12px; border: 1px solid #334155;">
-                    <h3 style="margin-top:0; color:var(--primary); text-align:center;">إحصائيات الذكاء الاصطناعي 📈</h3>
-                    <canvas id="scoreChart"></canvas>
-                </div>
-                <div style="background: var(--surface); padding: 1.5rem; border-radius: 12px; border: 1px solid #334155; display:flex; flex-direction:column; align-items:center;">
-                    <h3 style="margin-top:0; color:var(--primary); text-align:center;">الالتزام بالضوابط (Adherence) 🎯</h3>
-                    <div style="width: 100%; max-width: 250px;"><canvas id="adherenceChart"></canvas></div>
-                </div>
+
+                <section class="insights-panel">
+                    <h3>ملاحظات قابلة للتطوير</h3>
+                    <div id="insights-list" class="insights-list"></div>
+                </section>
             </div>
 
-            <div id="loading" class="loading">جاري جلب البيانات السحابية... ⏳</div>
-            <div id="cloud-grid" class="grid"></div>
+            <div id="view-images" class="hidden">
+                <div class="section-toolbar">
+                    <div>
+                        <h2>معرض الصور والتقييمات</h2>
+                        <p>يعرض صور الدورة الحالية فقط. التقارير السابقة محفوظة في تبويب التاريخ.</p>
+                    </div>
+                    <div class="toolbar-actions">
+                        <button onclick="location.reload()">تحديث التقرير 🔄</button>
+                    </div>
+                </div>
+
+                <div id="loading" class="loading">جاري جلب البيانات السحابية... ⏳</div>
+                <div id="cloud-grid" class="grid gallery-grid-admin"></div>
             </div> <!-- End view-images -->
 
             <div id="view-feedback" class="hidden">
@@ -240,6 +396,16 @@
                 </div>
             </div>
 
+            <div id="view-history" class="hidden">
+                <div class="section-toolbar">
+                    <div>
+                        <h2>التقارير التاريخية ودورات التطوير</h2>
+                        <p>كل تصفير يحفظ الفترة السابقة كتقرير تاريخي للمقارنة مع الدورة الجديدة.</p>
+                    </div>
+                </div>
+                <div id="history-list" class="history-list"></div>
+            </div>
+
             <div id="view-settings" class="hidden">
                 <div class="settings-panel">
                     <h2 style="margin:0 0 8px 0; color:var(--primary); font-size:1.3rem;">إعدادات توليد الصور</h2>
@@ -261,12 +427,31 @@
                 <div id="ai-results"></div>
             </div>
         </div>
+
+        <div id="cycle-modal" class="modal cycle-modal">
+            <div class="modal-content">
+                <button class="close-modal" aria-label="أغلق" onclick="document.getElementById('cycle-modal').style.display='none'">✖</button>
+                <h3 style="margin-top:0; color:var(--primary);">بدء دورة تطوير جديدة</h3>
+                <p style="color:var(--muted); line-height:1.7;">سيتم حفظ بيانات الدورة الحالية كتقرير تاريخي، ثم تبدأ لوحة الأداء من الصفر للصور الجديدة بدون حذف البيانات القديمة.</p>
+                <label>عنوان التقرير التاريخي</label>
+                <input id="archive-label-input" type="text" placeholder="مثال: قبل تحسين Prompt النص العربي">
+                <label>ما الذي تم تطويره في أمر التوليد؟</label>
+                <textarea id="improvement-notes-input" placeholder="اكتب ملخص التطوير الذي طبقته بناءً على تقرير التقييمات..."></textarea>
+                <label>ملاحظات من تقرير التقييمات السابق</label>
+                <textarea id="report-notes-input" placeholder="الصق أهم الملاحظات أو الاستنتاجات التي بنيت عليها التحسين..."></textarea>
+                <button onclick="startNewCycle()">حفظ التاريخ وبدء الرصد الجديد</button>
+                <p id="cycle-status" class="settings-status"></p>
+            </div>
+        </div>
     </div>
 
     <script>
         let globalItems = [];
+        let currentCycleItems = [];
         let globalFeedback = [];
         let globalUsers = [];
+        let globalArchives = [];
+        let activeCycle = { id: 'baseline', label: 'الدورة الحالية', startedAt: 0, createdAt: null, notes: '' };
         let currentAdminPass = '';
         let currentImageModel = 'nano-banana-2';
         const loginBtn = document.getElementById('login-btn');
@@ -323,10 +508,12 @@
                 }
 
                 globalItems = data.generations;
+                activeCycle = data.activeCycle || activeCycle;
                 document.getElementById('export-btn').classList.remove('hidden');
                 renderDashboard(globalItems, pass);
                 
                 // Fetch secondary dashboard data concurrently
+                fetchAdminCycles(pass);
                 fetchFeedback(pass);
                 fetchUsers(pass);
                 fetchAppSettings();
@@ -371,9 +558,63 @@
                 const data = await res.json();
                 if (!data.ok) throw new Error(data.error || 'فشل جلب الإعدادات');
                 renderModelSettings(data.settings);
+                if (data.settings?.activeCycle) {
+                    activeCycle = data.settings.activeCycle;
+                    renderDashboard(globalItems, currentAdminPass);
+                }
             } catch (err) {
                 console.error('Error fetching app settings', err);
                 document.getElementById('settings-status').textContent = 'تعذر جلب إعدادات التوليد.';
+            }
+        }
+
+        async function fetchAdminCycles(pass = currentAdminPass) {
+            try {
+                const res = await fetch(`/api/admin-cycle?pass=${encodeURIComponent(pass)}&t=${Date.now()}`, { cache: 'no-store' });
+                const data = await res.json();
+                if (!data.ok) throw new Error(data.error || 'فشل جلب دورات التطوير');
+                activeCycle = data.activeCycle || activeCycle;
+                globalArchives = data.archives || [];
+                renderHistory();
+                if (globalItems.length) renderDashboard(globalItems, pass);
+            } catch (err) {
+                console.error('Error fetching admin cycles', err);
+                renderHistory();
+            }
+        }
+
+        function openCycleModal() {
+            document.getElementById('cycle-status').textContent = '';
+            document.getElementById('archive-label-input').value = activeCycle?.label ? `قبل تطوير: ${activeCycle.label}` : '';
+            document.getElementById('cycle-modal').style.display = 'flex';
+        }
+
+        async function startNewCycle() {
+            if (!confirm('سيتم تصفير لوحة الأداء الحالية مع حفظ البيانات السابقة كتاريخ. هل تريد المتابعة؟')) return;
+            const status = document.getElementById('cycle-status');
+            status.textContent = 'جاري حفظ التقرير التاريخي وبدء دورة جديدة...';
+            try {
+                const res = await fetch('/api/admin-cycle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        pass: currentAdminPass,
+                        archiveLabel: document.getElementById('archive-label-input').value.trim(),
+                        improvementNotes: document.getElementById('improvement-notes-input').value.trim(),
+                        reportNotes: document.getElementById('report-notes-input').value.trim()
+                    })
+                });
+                const data = await res.json();
+                if (!data.ok) throw new Error(data.error || 'فشل بدء الدورة');
+                activeCycle = data.activeCycle;
+                globalArchives = [data.archive, ...globalArchives];
+                document.getElementById('cycle-modal').style.display = 'none';
+                renderHistory();
+                renderDashboard(globalItems, currentAdminPass);
+                switchTab('dashboard');
+            } catch (err) {
+                console.error('Error starting new cycle', err);
+                status.textContent = `تعذر بدء الدورة: ${err.message}`;
             }
         }
 
@@ -419,15 +660,88 @@
             `;
         }
 
+        function getItemTimestamp(item) {
+            return Number(item?.metadata?.timestamp || 0);
+        }
+
+        function getCurrentCycleItems(items = globalItems) {
+            const start = Number(activeCycle?.startedAt || 0);
+            return items.filter(item => getItemTimestamp(item) >= start);
+        }
+
+        function summarizeItems(items) {
+            const rated = items.filter(item => item.metadata?.rating);
+            const aiItems = items.filter(item => item.metadata?.ai_score !== undefined);
+            const ratingSum = rated.reduce((sum, item) => sum + Number(item.metadata.rating || 0), 0);
+            const aiSum = aiItems.reduce((sum, item) => sum + Number(item.metadata.ai_score || 0), 0);
+            const adhered = aiItems.filter(item => item.metadata?.ai_adherence).length;
+            return {
+                total: items.length,
+                rated: rated.length,
+                avgRating: rated.length ? (ratingSum / rated.length).toFixed(1) : '0.0',
+                aiCount: aiItems.length,
+                avgAi: aiItems.length ? (aiSum / aiItems.length).toFixed(1) : '0.0',
+                adherenceRate: aiItems.length ? Math.round((adhered / aiItems.length) * 100) : 0
+            };
+        }
+
+        function formatDateLabel(timestamp) {
+            if (!timestamp) return 'من البداية';
+            return new Date(timestamp).toLocaleString('ar-EG');
+        }
+
+        function updateCycleHeader(summary) {
+            document.getElementById('cycle-title').textContent = activeCycle?.label || 'الدورة الحالية';
+            document.getElementById('cycle-range').textContent = `بدأ الرصد الحالي: ${formatDateLabel(activeCycle?.startedAt)}. البيانات السابقة محفوظة كتقارير تاريخية.`;
+            document.getElementById('total-history-count').textContent = globalItems.length;
+            document.getElementById('total-count').textContent = summary.total;
+            document.getElementById('total-ratings').textContent = summary.rated;
+            document.getElementById('avg-rating').textContent = `${summary.avgRating} ⭐`;
+            document.getElementById('avg-ai-score').textContent = summary.avgAi;
+            document.getElementById('adherence-rate').textContent = `${summary.adherenceRate}%`;
+            document.getElementById('admin-total-generations').textContent = summary.total;
+            document.getElementById('admin-total-ratings').textContent = summary.rated;
+        }
+
+        function renderInsights(items) {
+            const container = document.getElementById('insights-list');
+            const chipCounts = {};
+            const advice = [];
+            items.forEach(item => {
+                const meta = item.metadata || {};
+                (meta.chips || []).forEach(chip => chipCounts[chip] = (chipCounts[chip] || 0) + 1);
+                (meta.ai_advice || []).forEach(line => {
+                    if (line && advice.length < 4) advice.push(line);
+                });
+            });
+
+            const chipLabels = { typo: 'أخطاء النص', colors: 'الألوان', style: 'اختيار النمط', layout: 'تموضع الاسم' };
+            const topIssues = Object.entries(chipCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 4)
+                .map(([key, count]) => `${chipLabels[key] || key}: ${count}`);
+
+            const lines = [
+                ...topIssues.map(text => `أولوية رصد من تقييمات المستخدم: ${text}`),
+                ...advice.map(text => `ملاحظة AI: ${text}`)
+            ];
+
+            container.innerHTML = lines.length
+                ? lines.map(line => `<div class="insight-item">${escapeHtml(line)}</div>`).join('')
+                : '<div class="insight-item">لا توجد ملاحظات كافية بعد. ابدأ بجمع تقييمات الدورة الجديدة.</div>';
+        }
+
         function renderDashboard(items, pass) {
-            document.getElementById('total-count').textContent = items.length;
-            document.getElementById('admin-total-generations').textContent = items.length;
+            currentCycleItems = getCurrentCycleItems(items);
+            const summary = summarizeItems(currentCycleItems);
+            updateCycleHeader(summary);
+            renderInsights(currentCycleItems);
             
             let totalRatingSum = 0;
             let ratingsCount = 0;
 
             const grid = document.getElementById('cloud-grid');
-            const htmlContent = items.map(item => {
+            const htmlContent = currentCycleItems.map(item => {
                 const meta = item.metadata || {};
                 const date = new Date(meta.timestamp || Date.now()).toLocaleString('ar-EG');
                 const imageModelLabel = getImageModelLabel(meta);
@@ -503,7 +817,9 @@
                 `;
             });
 
-            grid.innerHTML = htmlContent.join('');
+            grid.innerHTML = htmlContent.length
+                ? htmlContent.join('')
+                : '<div class="empty-state" style="grid-column:1/-1;">لا توجد صور في الدورة الحالية بعد. الصور السابقة محفوظة في التقارير التاريخية.</div>';
             
             // Update Dashboard Stats
             document.getElementById('total-ratings').textContent = ratingsCount;
@@ -541,6 +857,9 @@
             if (hasAIdata) {
                 document.getElementById('analytics-section').style.display = 'grid';
                 renderCharts(dates, scores, adherenceTrue, adherenceFalse);
+            } else {
+                document.getElementById('analytics-section').style.display = 'grid';
+                renderCharts([], [], 0, 0);
             }
         }
 
@@ -558,22 +877,25 @@
 
         let scoreChartInst = null;
         let adherenceChartInst = null;
+        let cycleChartInst = null;
 
         function renderCharts(labels, dataScores, adhered, failed) {
-            Chart.defaults.color = '#cbd5e1';
+            Chart.defaults.color = getComputedStyle(document.documentElement).getPropertyValue('--muted') || '#64748b';
             Chart.defaults.font.family = 'Tajawal';
+            const chartLabels = labels.length ? labels : ['لا توجد بيانات'];
+            const chartScores = dataScores.length ? dataScores : [0];
 
             if (scoreChartInst) scoreChartInst.destroy();
             const ctxScore = document.getElementById('scoreChart').getContext('2d');
             scoreChartInst = new Chart(ctxScore, {
                 type: 'line',
                 data: {
-                    labels: labels,
+                    labels: chartLabels,
                     datasets: [{
                         label: 'تقييم الذكاء الاصطناعي (من 10)',
-                        data: dataScores,
-                        borderColor: '#8a2be2',
-                        backgroundColor: 'rgba(138,43,226,0.2)',
+                        data: chartScores,
+                        borderColor: '#0f766e',
+                        backgroundColor: 'rgba(15,118,110,0.16)',
                         borderWidth: 2,
                         fill: true,
                         tension: 0.3
@@ -592,20 +914,51 @@
                 data: {
                     labels: ['ملتزم بالضوابط', 'غير ملتزم'],
                     datasets: [{
-                        data: [adhered, failed],
+                        data: adhered || failed ? [adhered, failed] : [1, 0],
                         backgroundColor: ['#10b981', '#ef4444'],
                         borderWidth: 0
                     }]
                 },
                 options: { responsive: true, cutout: '70%', plugins: { legend: { position: 'bottom' } } }
             });
+
+            renderCycleChart();
+        }
+
+        function renderCycleChart() {
+            const ctx = document.getElementById('cycleChart').getContext('2d');
+            const currentSummary = summarizeItems(currentCycleItems);
+            const archives = [...globalArchives].reverse();
+            const labels = archives.map(a => a.label || 'تاريخي').concat(activeCycle?.label || 'الحالي');
+            const ratings = archives.map(a => Number(a.summary?.averageRating || 0)).concat(Number(currentSummary.avgRating || 0));
+            const aiScores = archives.map(a => Number(a.summary?.averageAiScore || 0)).concat(Number(currentSummary.avgAi || 0));
+            const adherence = archives.map(a => Number(a.summary?.adherenceRate || 0) / 10).concat(Number(currentSummary.adherenceRate || 0) / 10);
+
+            if (cycleChartInst) cycleChartInst.destroy();
+            cycleChartInst = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels.length ? labels : ['الحالي'],
+                    datasets: [
+                        { label: 'رضا المستخدم /5', data: ratings.length ? ratings : [0], backgroundColor: 'rgba(15,118,110,0.72)' },
+                        { label: 'تقييم AI /10', data: aiScores.length ? aiScores : [0], backgroundColor: 'rgba(198,147,61,0.72)' },
+                        { label: 'الالتزام /10', data: adherence.length ? adherence : [0], backgroundColor: 'rgba(239,111,97,0.72)' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { min: 0, max: 10 } },
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
         }
 
         // Export Report Logic
         function exportReport() {
-            if (!globalItems || globalItems.length === 0) return alert('لا يوجد بيانات لتصديرها');
+            const exportItems = currentCycleItems.length ? currentCycleItems : getCurrentCycleItems();
+            if (!exportItems || exportItems.length === 0) return alert('لا يوجد بيانات لتصديرها في الدورة الحالية');
 
-            const reportData = globalItems.map(item => {
+            const reportData = exportItems.map(item => {
                 const meta = item.metadata || {};
                 return {
                     id: item.key,
@@ -632,11 +985,17 @@
                     }
                 };
             });
+            const payload = {
+                activeCycle,
+                exportedAt: new Date().toISOString(),
+                summary: summarizeItems(exportItems),
+                items: reportData
+            };
 
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(reportData, null, 2));
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
             const downloadAnchorNode = document.createElement('a');
             downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", "wishai_evaluations_report.json");
+            downloadAnchorNode.setAttribute("download", `wishai_current_cycle_report_${Date.now()}.json`);
             document.body.appendChild(downloadAnchorNode);
             downloadAnchorNode.click();
             downloadAnchorNode.remove();
@@ -692,17 +1051,23 @@
         }
 
         function switchTab(tab) {
+            const dashboardTab = document.getElementById('tab-dashboard');
             const imagesTab = document.getElementById('tab-images');
             const feedbackTab = document.getElementById('tab-feedback');
             const usersTab = document.getElementById('tab-users');
+            const historyTab = document.getElementById('tab-history');
             const settingsTab = document.getElementById('tab-settings');
+            document.getElementById('view-dashboard').classList.toggle('hidden', tab !== 'dashboard');
             document.getElementById('view-images').classList.toggle('hidden', tab !== 'images');
             document.getElementById('view-feedback').classList.toggle('hidden', tab !== 'feedback');
             document.getElementById('view-users').classList.toggle('hidden', tab !== 'users');
+            document.getElementById('view-history').classList.toggle('hidden', tab !== 'history');
             document.getElementById('view-settings').classList.toggle('hidden', tab !== 'settings');
+            dashboardTab.classList.toggle('active', tab === 'dashboard');
             imagesTab.classList.toggle('active', tab === 'images');
             feedbackTab.classList.toggle('active', tab === 'feedback');
             usersTab.classList.toggle('active', tab === 'users');
+            historyTab.classList.toggle('active', tab === 'history');
             settingsTab.classList.toggle('active', tab === 'settings');
         }
 
@@ -779,6 +1144,39 @@
                         <td>${Number(user.generationCount || 0)}</td>
                         <td>${escapeHtml(lastUsedLabel)}</td>
                     </tr>
+                `;
+            }).join('');
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('history-list');
+            if (!list) return;
+            if (!globalArchives.length) {
+                list.innerHTML = '<div class="empty-state">لا توجد تقارير تاريخية بعد. استخدم زر “بدء دورة تطوير جديدة” بعد تطبيق تحسينات أمر التوليد.</div>';
+                return;
+            }
+
+            list.innerHTML = globalArchives.map(archive => {
+                const summary = archive.summary || {};
+                return `
+                    <article class="history-card">
+                        <header>
+                            <div>
+                                <h3>${escapeHtml(archive.label || 'تقرير تاريخي')}</h3>
+                                <p>${escapeHtml(formatDateLabel(archive.periodStart))} ← ${escapeHtml(formatDateLabel(archive.periodEnd))}</p>
+                            </div>
+                            <span class="badge">${escapeHtml(new Date(archive.createdAt || Date.now()).toLocaleDateString('ar-EG'))}</span>
+                        </header>
+                        <div class="history-metrics">
+                            <span>الصور: <strong>${Number(summary.totalGenerations || 0)}</strong></span>
+                            <span>التقييمات: <strong>${Number(summary.totalRatings || 0)}</strong></span>
+                            <span>رضا المستخدم: <strong>${Number(summary.averageRating || 0).toFixed(1)} ⭐</strong></span>
+                            <span>تقييم AI: <strong>${Number(summary.averageAiScore || 0).toFixed(1)}/10</strong></span>
+                            <span>الالتزام: <strong>${Number(summary.adherenceRate || 0)}%</strong></span>
+                        </div>
+                        ${archive.improvementNotes ? `<p><strong>تطوير مطبق:</strong> ${escapeHtml(archive.improvementNotes)}</p>` : ''}
+                        ${archive.reportNotes ? `<p><strong>استنتاجات التقرير:</strong> ${escapeHtml(archive.reportNotes)}</p>` : ''}
+                    </article>
                 `;
             }).join('');
         }

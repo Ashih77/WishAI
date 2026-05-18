@@ -41,12 +41,47 @@ function normalizeAiResult(result) {
     };
 }
 
+function compactMetadata(metadata = {}) {
+    const settings = metadata.settings || {};
+    const user = metadata.user || {};
+
+    return {
+        timestamp: metadata.timestamp || Date.now(),
+        name: metadata.name || '',
+        occasion: metadata.occasion || '',
+        greeting: metadata.greeting || '',
+        instructions: metadata.instructions || '',
+        style: metadata.style || '',
+        subStyle: metadata.subStyle || '',
+        details: metadata.details ?? '',
+        colorIntensity: metadata.colorIntensity ?? '',
+        palette: metadata.palette || '',
+        imageModel: metadata.imageModel || settings.imageModel || 'nano-banana-2',
+        settings: {
+            imageModel: settings.imageModel || metadata.imageModel || 'nano-banana-2'
+        },
+        contentElements: Array.isArray(metadata.contentElements) ? metadata.contentElements.slice(0, 8) : [],
+        tashkeel: !!metadata.tashkeel,
+        zakhrafa: !!metadata.zakhrafa,
+        namePosition: metadata.namePosition || '',
+        user: {
+            id: user.id || '',
+            name: user.name || '',
+            email: user.email || '',
+            provider: user.provider || ''
+        },
+        rating: metadata.rating,
+        feedback: metadata.feedback || '',
+        chips: Array.isArray(metadata.chips) ? metadata.chips.slice(0, 8) : []
+    };
+}
+
 async function saveEvaluation(fileKey, aiResult) {
     const store = getStore("wishai_generations");
     const existingMeta = await store.getMetadata(fileKey);
     if (!existingMeta) throw new Error('IMAGE_NOT_FOUND');
 
-    const metadata = existingMeta.metadata || {};
+    const metadata = compactMetadata(existingMeta.metadata || {});
     metadata.ai_score = aiResult.score;
     metadata.ai_adherence = aiResult.adherence;
     metadata.ai_summary = aiResult.summary;
@@ -67,7 +102,7 @@ async function saveEvaluationFailure(fileKey, error) {
         const existingMeta = await store.getMetadata(fileKey);
         if (!existingMeta) return;
 
-        const metadata = existingMeta.metadata || {};
+        const metadata = compactMetadata(existingMeta.metadata || {});
         metadata.ai_evaluation_status = 'failed';
         metadata.ai_evaluation_error = String(error?.message || error || 'AI_EVALUATION_FAILED');
         metadata.ai_evaluated_at = new Date().toISOString();
@@ -114,7 +149,7 @@ export default async (req) => {
         const store = getStore("wishai_generations");
         const image = body.image || await store.get(fileKey, { type: 'text' });
         const metadataResponse = await store.getMetadata(fileKey);
-        const metadata = body.metadata || metadataResponse?.metadata || {};
+        const metadata = compactMetadata(body.metadata || metadataResponse?.metadata || {});
         const inlineData = await imageToInlineData(image);
 
         const prompt = `أنت خبير تقييم بطاقات تهنئة مولدة بالذكاء الاصطناعي.

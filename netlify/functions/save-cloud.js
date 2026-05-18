@@ -1,5 +1,38 @@
 import { getStore } from "@netlify/blobs";
 
+function buildGenerationMetadata(stateParams = {}, timestamp) {
+    const settings = stateParams.settings || {};
+    const user = stateParams.user || {};
+
+    return {
+        timestamp,
+        ai_evaluation_status: 'pending',
+        name: stateParams.name || '',
+        occasion: stateParams.occasion || '',
+        greeting: stateParams.greeting || '',
+        instructions: stateParams.instructions || '',
+        style: stateParams.style || '',
+        subStyle: stateParams.subStyle || '',
+        details: stateParams.details ?? '',
+        colorIntensity: stateParams.colorIntensity ?? '',
+        palette: stateParams.palette || '',
+        imageModel: stateParams.imageModel || settings.imageModel || 'nano-banana-2',
+        settings: {
+            imageModel: settings.imageModel || stateParams.imageModel || 'nano-banana-2'
+        },
+        contentElements: Array.isArray(stateParams.contentElements) ? stateParams.contentElements.slice(0, 8) : [],
+        tashkeel: !!stateParams.tashkeel,
+        zakhrafa: !!stateParams.zakhrafa,
+        namePosition: stateParams.namePosition || '',
+        user: {
+            id: user.id || '',
+            name: user.name || '',
+            email: user.email || '',
+            provider: user.provider || ''
+        }
+    };
+}
+
 export default async (req, context) => {
     // CORS Headers
     const headers = new Headers({
@@ -33,11 +66,7 @@ export default async (req, context) => {
         const fallbackFileKey = `WishAI-${safeOccasion}-${timestamp}`;
         const fileKey = requestedFileKey || fallbackFileKey;
 
-        const metadata = {
-            timestamp,
-            ai_evaluation_status: 'pending',
-            ...stateParams
-        };
+        const metadata = buildGenerationMetadata(stateParams, timestamp);
 
         // Save first and return quickly so the generated card appears in Admin
         // and the client can show the rating form without waiting on AI analysis.

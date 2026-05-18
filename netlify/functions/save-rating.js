@@ -1,5 +1,44 @@
 import { getStore } from "@netlify/blobs";
 
+function compactMetadata(metadata = {}) {
+    const settings = metadata.settings || {};
+    const user = metadata.user || {};
+
+    return {
+        timestamp: metadata.timestamp || Date.now(),
+        name: metadata.name || '',
+        occasion: metadata.occasion || '',
+        greeting: metadata.greeting || '',
+        instructions: metadata.instructions || '',
+        style: metadata.style || '',
+        subStyle: metadata.subStyle || '',
+        details: metadata.details ?? '',
+        colorIntensity: metadata.colorIntensity ?? '',
+        palette: metadata.palette || '',
+        imageModel: metadata.imageModel || settings.imageModel || 'nano-banana-2',
+        settings: {
+            imageModel: settings.imageModel || metadata.imageModel || 'nano-banana-2'
+        },
+        contentElements: Array.isArray(metadata.contentElements) ? metadata.contentElements.slice(0, 8) : [],
+        tashkeel: !!metadata.tashkeel,
+        zakhrafa: !!metadata.zakhrafa,
+        namePosition: metadata.namePosition || '',
+        user: {
+            id: user.id || '',
+            name: user.name || '',
+            email: user.email || '',
+            provider: user.provider || ''
+        },
+        ai_score: metadata.ai_score,
+        ai_adherence: metadata.ai_adherence,
+        ai_summary: metadata.ai_summary || '',
+        ai_advice: Array.isArray(metadata.ai_advice) ? metadata.ai_advice.slice(0, 5) : [],
+        ai_evaluation_status: metadata.ai_evaluation_status || '',
+        ai_evaluation_error: metadata.ai_evaluation_error || '',
+        ai_evaluated_at: metadata.ai_evaluated_at || ''
+    };
+}
+
 export default async (req, context) => {
     // CORS Headers
     const headers = new Headers({
@@ -34,11 +73,12 @@ export default async (req, context) => {
              return new Response(JSON.stringify({ error: 'Image not found in cloud' }), { status: 404, headers });
         }
 
-        const metadata = metadataResponse.metadata || {};
+        const metadata = compactMetadata(metadataResponse.metadata || {});
 
         // Add the new rating data
         metadata.rating = rating;
         metadata.feedback = feedback || '';
+        metadata.rated_at = new Date().toISOString();
         if (chips && Array.isArray(chips)) {
             metadata.chips = chips;
         }

@@ -34,7 +34,10 @@
 }
 
 html {
+    background: var(--bg);
+    color-scheme: light;
     font-size: 16px;
+    min-height: 100%;
     scroll-behavior: smooth;
 }
 
@@ -43,7 +46,10 @@ body {
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
+    min-height: 100dvh;
     overflow-x: hidden;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
     line-height: 1.6;
 }
 
@@ -2922,6 +2928,8 @@ input[type="range"]::-webkit-slider-thumb {
     --shadow-sm: 0 10px 28px rgba(0, 8, 20, 0.22);
     --shadow-md: 0 20px 54px rgba(0, 8, 20, 0.3);
     --shadow-lg: 0 32px 80px rgba(0, 8, 20, 0.42);
+    background: #071426;
+    color-scheme: dark;
 }
 
 :root[data-theme="dark"] body {

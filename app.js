@@ -707,6 +707,11 @@ function initTheme() {
 function applyTheme() {
     document.documentElement.dataset.theme = state.theme;
     localStorage.setItem('wishai_theme', state.theme);
+    const isDark = state.theme === 'dark';
+    const themeColor = document.getElementById('theme-color-meta');
+    const appleStatusBar = document.getElementById('apple-status-bar-meta');
+    if (themeColor) themeColor.setAttribute('content', isDark ? '#071426' : '#f6f7f4');
+    if (appleStatusBar) appleStatusBar.setAttribute('content', isDark ? 'black-translucent' : 'default');
     updateThemeToggleText();
 }
 

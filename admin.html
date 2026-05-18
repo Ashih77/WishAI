@@ -377,6 +377,18 @@
                             </span>
                         </div>
                     `;
+                } else if (meta.ai_evaluation_status === 'pending') {
+                    aiBadgeHTML = `
+                        <div style="margin-top:10px; padding:8px 10px; background:var(--soft); border-radius:8px; border: 1px solid var(--border); color:var(--muted);">
+                            تقييم AI قيد المعالجة...
+                        </div>
+                    `;
+                } else if (meta.ai_evaluation_status === 'failed') {
+                    aiBadgeHTML = `
+                        <div style="margin-top:10px; padding:8px 10px; background:rgba(239,68,68,0.08); border-radius:8px; border: 1px solid rgba(239,68,68,0.35); color:#ef4444;">
+                            فشل تقييم AI. يمكن إعادة المحاولة من زر تقييم AI.
+                        </div>
+                    `;
                 }
 
                 return `
@@ -410,7 +422,7 @@
                         </div>
                         <div style="padding: 12px; border-top: 1px solid #334155; background: #0f172a; display: flex; gap: 8px;">
                             <button class="btn-sm btn-json" onclick='copyJson(${JSON.stringify(meta).replace(/'/g, "&#39;")})'>📋 نسخ JSON</button>
-                            <button class="btn-sm btn-ai" onclick='evaluateAI("${item.key}", "${pass}", ${JSON.stringify(meta).replace(/'/g, "&#39;")})'>🤖 تقييم AI</button>
+                            <button class="btn-sm btn-ai" onclick='evaluateAI("${item.key}", "${pass}", ${JSON.stringify(meta).replace(/'/g, "&#39;")})'>🤖 ${meta.ai_score !== undefined ? 'عرض تقييم AI' : 'تقييم AI'}</button>
                         </div>
                     </div>
                 `;

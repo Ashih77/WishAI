@@ -531,23 +531,6 @@ async function saveUserAnalytics(eventType) {
     }
 }
 
-async function evaluateCloudCard(fileKey) {
-    if (!fileKey) return;
-    try {
-        const res = await fetch('/api/evaluate-card', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fileKey })
-        });
-        const data = await res.json();
-        if (!data.ok) throw new Error(data.error || data.message || 'AI_EVALUATION_FAILED');
-        trackAnalytics('ai_evaluation_success', { fileKey, score: data.aiResult?.score });
-    } catch (err) {
-        console.warn('AI evaluation failed:', err);
-        trackAnalytics('ai_evaluation_failed', { fileKey, error: err.message });
-    }
-}
-
 async function flushPendingCloudSaves() {
     const queue = readJsonStorage(PENDING_SAVES_KEY, []);
     if (!queue.length) return;
@@ -1815,7 +1798,6 @@ function saveCard(src, occId, name, isFallback = false) {
                     document.getElementById('rating-container').classList.remove('hidden');
                     trackAnalytics('cloud_save_success', { occId, imageModel: generationSettings.imageModel, fileKey: data.fileKey });
                     saveUserAnalytics('generation');
-                    evaluateCloudCard(data.fileKey);
                 }
             })
             .catch(err => {

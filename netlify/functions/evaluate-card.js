@@ -52,9 +52,31 @@ async function saveEvaluation(fileKey, aiResult) {
     metadata.ai_summary = aiResult.summary;
     metadata.ai_advice = aiResult.advice;
     metadata.ai_evaluated_at = new Date().toISOString();
+    metadata.ai_evaluation_status = 'complete';
+    metadata.ai_evaluation_error = '';
 
     const imageBlob = await store.get(fileKey, { type: 'text' });
     await store.set(fileKey, imageBlob, { metadata });
+}
+
+async function saveEvaluationFailure(fileKey, error) {
+    if (!fileKey) return;
+
+    try {
+        const store = getStore("wishai_generations");
+        const existingMeta = await store.getMetadata(fileKey);
+        if (!existingMeta) return;
+
+        const metadata = existingMeta.metadata || {};
+        metadata.ai_evaluation_status = 'failed';
+        metadata.ai_evaluation_error = String(error?.message || error || 'AI_EVALUATION_FAILED');
+        metadata.ai_evaluated_at = new Date().toISOString();
+
+        const imageBlob = await store.get(fileKey, { type: 'text' });
+        await store.set(fileKey, imageBlob, { metadata });
+    } catch (saveErr) {
+        console.error('Error saving evaluation failure status:', saveErr);
+    }
 }
 
 export default async (req) => {
@@ -69,20 +91,24 @@ export default async (req) => {
         return new Response(null, { status: 204, headers });
     }
 
+    let fileKeyForFailure = '';
+
     try {
         if (req.method !== 'POST') {
             return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { status: 405, headers });
         }
 
-        const apiKey = getEnv('GEMINI_API_KEY');
-        if (!apiKey) {
-            return new Response(JSON.stringify({ ok: false, error: 'GEMINI_API_KEY_MISSING' }), { status: 200, headers });
-        }
-
         const body = await req.json();
         const { fileKey } = body;
+        fileKeyForFailure = fileKey || '';
         if (!fileKey) {
             return new Response(JSON.stringify({ ok: false, error: 'FILE_KEY_MISSING' }), { status: 400, headers });
+        }
+
+        const apiKey = getEnv('GEMINI_API_KEY');
+        if (!apiKey) {
+            await saveEvaluationFailure(fileKey, 'GEMINI_API_KEY_MISSING');
+            return new Response(JSON.stringify({ ok: false, error: 'GEMINI_API_KEY_MISSING' }), { status: 200, headers });
         }
 
         const store = getStore("wishai_generations");
@@ -121,6 +147,7 @@ ${JSON.stringify(metadata, null, 2)}
 
         const data = await evalResponse.json();
         if (!evalResponse.ok) {
+            await saveEvaluationFailure(fileKey, data.error?.message || 'AI_EVALUATION_FAILED');
             return new Response(JSON.stringify({
                 ok: false,
                 error: 'AI_EVALUATION_FAILED',
@@ -135,6 +162,7 @@ ${JSON.stringify(metadata, null, 2)}
         return new Response(JSON.stringify({ ok: true, aiResult }), { status: 200, headers });
     } catch (err) {
         console.error('Error evaluating card:', err);
+        await saveEvaluationFailure(fileKeyForFailure, err);
         return new Response(JSON.stringify({ ok: false, error: err.message }), { status: 500, headers });
     }
 };

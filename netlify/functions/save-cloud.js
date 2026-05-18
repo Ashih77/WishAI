@@ -5,7 +5,8 @@ export default async (req, context) => {
     const headers = new Headers({
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Content-Type': 'application/json'
     });
 
     if (req.method === 'OPTIONS') {
@@ -32,13 +33,16 @@ export default async (req, context) => {
         const fallbackFileKey = `WishAI-${safeOccasion}-${timestamp}`;
         const fileKey = requestedFileKey || fallbackFileKey;
 
+        const metadata = {
+            timestamp,
+            ai_evaluation_status: 'pending',
+            ...stateParams
+        };
+
         // Save first and return quickly so the generated card appears in Admin
         // and the client can show the rating form without waiting on AI analysis.
         await store.set(fileKey, image, {
-            metadata: {
-                timestamp,
-                ...stateParams
-            }
+            metadata
         });
 
         console.log(`[WishAI-Cloud] Successfully saved image: ${fileKey}`);
@@ -46,8 +50,25 @@ export default async (req, context) => {
         const origin = new URL(req.url).origin;
         const imageUrl = `${origin}/api/get-cloud-image?key=${encodeURIComponent(fileKey)}`;
         const shareUrl = `${origin}/share?id=${encodeURIComponent(fileKey)}`;
+        const evaluationTask = fetch(`${origin}/api/evaluate-card`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fileKey, metadata })
+        }).catch((evalErr) => {
+            console.error(`[WishAI-Cloud] Queued AI evaluation failed for ${fileKey}:`, evalErr);
+        });
 
-        return new Response(JSON.stringify({ ok: true, fileKey, imageUrl, shareUrl }), { status: 200, headers });
+        if (context?.waitUntil) {
+            context.waitUntil(evaluationTask);
+        }
+
+        return new Response(JSON.stringify({
+            ok: true,
+            fileKey,
+            imageUrl,
+            shareUrl,
+            aiEvaluationStatus: 'pending'
+        }), { status: 200, headers });
 
     } catch (err) {
         console.error('Error saving to cloud:', err);

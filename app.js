@@ -836,27 +836,23 @@ function openSimulatedPopup(provider) {
 
 let tokenClient;
 
-function isAuthorizedProductionOrigin() {
+function canUseGoogleServicesOrigin() {
     const hostname = window.location.hostname;
     const protocol = window.location.protocol;
-    
-    // GSI (Google Identity Services) strictly fails on file://, localhost, 127.0.0.1, and netlify staging domains
-    // unless registered. Since the client ID is registered for a specific domain, GSI will
-    // strictly fail with Error 400 on any other address.
-    // For local dev, static previews, and Netlify deploys, we fallback automatically.
+
+    // Google Identity Services requires a secure, authorized web origin.
+    // Never replace Google login with a fixed simulated account.
     if (protocol === "file:" ||
         hostname === "localhost" ||
         hostname === "127.0.0.1" ||
-        hostname === "" ||
-        hostname.includes("netlify.app") ||
-        hostname.includes("netlify.live")) {
+        hostname === "") {
         return false;
     }
-    
+
     return true;
 }
 
-function showGoogleBypassHint() {
+function showGoogleLoginHint(message) {
     // Remove any existing hint first
     const existing = document.getElementById('google-bypass-hint');
     if (existing) existing.remove();
@@ -878,10 +874,7 @@ function showGoogleBypassHint() {
     hint.style.lineHeight = '1.4';
     hint.style.animation = 'fadeSlideIn 0.3s var(--ease)';
     
-    const isAr = state.lang === 'ar';
-    hint.innerHTML = isAr ? 
-        `جاري الاتصال بـ Google... <span class="bypass-link" style="color: var(--primary); text-decoration: underline; cursor: pointer; font-weight: bold; transition: color 0.2s;">اضغط هنا</span> إذا واجهت مشكلة في الاتصال (خطأ 400).` :
-        `Connecting to Google... <span class="bypass-link" style="color: var(--primary); text-decoration: underline; cursor: pointer; font-weight: bold; transition: color 0.2s;">Click here</span> if you see a connection error (Error 400).`;
+    hint.textContent = message;
 
     const body = document.querySelector('.login-body');
     if (body) {
@@ -893,29 +886,28 @@ function showGoogleBypassHint() {
             body.appendChild(hint);
         }
     }
-
-    hint.querySelector('.bypass-link').onclick = () => {
-        console.warn("User triggered manual Google OAuth bypass.");
-        hint.remove();
-        openSimulatedPopup('google');
-    };
 }
 
 function loginWithGoogle() {
-    const isProd = isAuthorizedProductionOrigin();
-    
-    if (!isProd) {
-        console.warn("Local or staging preview environment detected. Real Google Login would fail with secure origin checks (Error 400). Automatically falling back to simulated login.");
-        return openSimulatedPopup('google');
+    if (!canUseGoogleServicesOrigin()) {
+        const message = state.lang === 'ar'
+            ? 'تسجيل الدخول عبر Google يعمل فقط من رابط HTTPS منشور ومضاف في Google Cloud Console. استخدم دخول الزائر للتجربة المحلية.'
+            : 'Google login only works from a deployed HTTPS origin configured in Google Cloud Console. Use Guest for local testing.';
+        console.warn(message);
+        showGoogleLoginHint(message);
+        return;
     }
 
     if (typeof google === 'undefined' || !google.accounts.oauth2) {
-        console.warn("Google OAuth2 library not loaded. Falling back to simulated login.");
-        return openSimulatedPopup('google');
+        const message = state.lang === 'ar'
+            ? 'تعذر تحميل خدمات Google. تحقق من الاتصال ثم حاول مرة أخرى.'
+            : 'Google services could not be loaded. Check your connection and try again.';
+        console.warn(message);
+        showGoogleLoginHint(message);
+        return;
     }
 
-    // Show beautiful clickable bypass box in production
-    showGoogleBypassHint();
+    showGoogleLoginHint(state.lang === 'ar' ? 'جاري الاتصال بـ Google...' : 'Connecting to Google...');
 
     try {
         if (!tokenClient) {
@@ -981,11 +973,11 @@ function fetchUserInfo(accessToken) {
 }
 
 function handleAuthError(provider) {
-    // If it's a domain/origin error, warn in console
-    console.warn(`Auth failed for ${provider}. Ensure your authorized origins in Google Console match the current URL. Falling back to simulated login.`);
-
-    // Auto-fallback to simulation popup for provider to prevent getting stuck
-    openSimulatedPopup(provider);
+    const message = state.lang === 'ar'
+        ? 'تعذر تسجيل الدخول عبر Google. تأكد أن رابط الموقع مضاف في Authorized JavaScript origins داخل Google Cloud Console.'
+        : 'Google login failed. Make sure this site URL is added to Authorized JavaScript origins in Google Cloud Console.';
+    console.warn(`Auth failed for ${provider}. ${message}`);
+    showGoogleLoginHint(message);
 }
 
 function completeLogin(userData) {

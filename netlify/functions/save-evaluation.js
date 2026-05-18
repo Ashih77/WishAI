@@ -48,7 +48,7 @@ export default async (req, context) => {
         
         if (!fileKey || !aiResult) return new Response(JSON.stringify({ error: 'Missing fileKey or aiResult' }), { status: 400, headers });
 
-        const store = getStore("wishai_generations");
+        const store = getStore("wishai_generations", { consistency: "strong" });
         const existingMeta = await store.getMetadata(fileKey);
         
         if (!existingMeta) return new Response(JSON.stringify({ error: 'Image not found' }), { status: 404, headers });

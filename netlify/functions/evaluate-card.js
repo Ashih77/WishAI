@@ -77,7 +77,7 @@ function compactMetadata(metadata = {}) {
 }
 
 async function saveEvaluation(fileKey, aiResult) {
-    const store = getStore("wishai_generations");
+    const store = getStore("wishai_generations", { consistency: "strong" });
     const existingMeta = await store.getMetadata(fileKey);
     if (!existingMeta) throw new Error('IMAGE_NOT_FOUND');
 
@@ -98,7 +98,7 @@ async function saveEvaluationFailure(fileKey, error) {
     if (!fileKey) return;
 
     try {
-        const store = getStore("wishai_generations");
+        const store = getStore("wishai_generations", { consistency: "strong" });
         const existingMeta = await store.getMetadata(fileKey);
         if (!existingMeta) return;
 
@@ -146,7 +146,7 @@ export default async (req) => {
             return new Response(JSON.stringify({ ok: false, error: 'GEMINI_API_KEY_MISSING' }), { status: 200, headers });
         }
 
-        const store = getStore("wishai_generations");
+        const store = getStore("wishai_generations", { consistency: "strong" });
         const image = body.image || await store.get(fileKey, { type: 'text' });
         const metadataResponse = await store.getMetadata(fileKey);
         const metadata = compactMetadata(body.metadata || metadataResponse?.metadata || {});

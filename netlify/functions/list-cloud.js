@@ -17,7 +17,7 @@ export default async (req, context) => {
 
     try {
         // Connect to the global store "wishai_generations"
-        const store = getStore("wishai_generations");
+        const store = getStore("wishai_generations", { consistency: "strong" });
 
         // List keys
         const { blobs } = await store.list();

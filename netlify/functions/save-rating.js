@@ -64,7 +64,7 @@ export default async (req, context) => {
         }
 
         // Connect to the global store "wishai_generations"
-        const store = getStore("wishai_generations");
+        const store = getStore("wishai_generations", { consistency: "strong" });
 
         // Fetch the existing metadata
         const metadataResponse = await store.getMetadata(fileKey);

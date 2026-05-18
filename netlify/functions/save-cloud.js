@@ -59,7 +59,7 @@ export default async (req, context) => {
         }
 
         // Connect to the global store "wishai_generations"
-        const store = getStore("wishai_generations");
+        const store = getStore("wishai_generations", { consistency: "strong" });
 
         const safeOccasion = (stateParams?.occasion || 'card').replace(/[^a-z0-9]/gi, '_');
         const timestamp = Date.now();

@@ -1,8 +1,7 @@
 import { getStore } from "@netlify/blobs";
 
 export default async (req, context) => {
-    // Simple basic admin password (in a real app, use environment variables)
-    const ADMIN_PASS = 'wishai-admin-2026';
+    const ADMIN_PASS = process.env.VITE_ADMIN_PASSWORD || 'wishai-admin-2026';
 
     const url = new URL(req.url);
     const pass = url.searchParams.get('pass');

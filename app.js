@@ -498,6 +498,39 @@ function queuePendingCloudSave(payload) {
     localStorage.setItem(PENDING_SAVES_KEY, JSON.stringify(queue));
 }
 
+function getUserAnalyticsPayload(eventType) {
+    if (!state.user) return null;
+    return {
+        eventType,
+        user: {
+            id: state.user.id,
+            name: state.user.name || '',
+            email: state.user.email || '',
+            provider: state.user.provider || 'unknown',
+            photo: state.user.photo || ''
+        },
+        app: {
+            lang: state.lang,
+            occasion: state.occasion || '',
+            imageModel: normalizeImageModel(state.imageModel)
+        }
+    };
+}
+
+async function saveUserAnalytics(eventType) {
+    const payload = getUserAnalyticsPayload(eventType);
+    if (!payload) return;
+    try {
+        await fetch('/api/save-user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    } catch (err) {
+        console.warn('Could not save user analytics:', err);
+    }
+}
+
 async function flushPendingCloudSaves() {
     const queue = readJsonStorage(PENDING_SAVES_KEY, []);
     if (!queue.length) return;
@@ -811,6 +844,7 @@ function completeLogin(userData) {
     state.isLoggedIn = true;
     state.user = userData;
     localStorage.setItem('wishai_user', JSON.stringify(userData));
+    saveUserAnalytics('login');
     updateUserInfo();
     go(1);
 
@@ -1092,15 +1126,6 @@ function bindEvents() {
     document.getElementById('my-cards-btn').onclick = () => {
         go(3);
         renderGallery();
-    };
-    document.getElementById('admin-btn').onclick = () => {
-        renderAdminDashboard();
-        go(4);
-    };
-    document.querySelector('.admin-back-home-btn').onclick = () => go(1);
-    document.getElementById('admin-retry-btn').onclick = async () => {
-        await flushPendingCloudSaves();
-        renderAdminDashboard();
     };
 
     document.querySelector('.back-home-btn').onclick = () => go(1);
@@ -1758,6 +1783,8 @@ function saveCard(src, occId, name, isFallback = false) {
             })
             .then(res => res.json())
             .then(data => {
+                if (!data.ok) throw new Error(data.error || 'SAVE_NOT_OK');
+
                 // Remove loading message and present the rating UI now that the backend evaluated it safely
                 if (document.getElementById('eval-loading')) {
                     document.getElementById('eval-loading').classList.add('hidden');
@@ -1770,6 +1797,7 @@ function saveCard(src, occId, name, isFallback = false) {
                     state.sharePageUrl = data.shareUrl || `${window.location.origin}/share?id=${encodeURIComponent(data.fileKey)}`;
                     document.getElementById('rating-container').classList.remove('hidden');
                     trackAnalytics('cloud_save_success', { occId, imageModel: generationSettings.imageModel, fileKey: data.fileKey });
+                    saveUserAnalytics('generation');
                 }
             })
             .catch(err => {
@@ -1811,23 +1839,6 @@ function saveCard(src, occId, name, isFallback = false) {
     } catch (err) {
         console.warn('Could not save card to history:', err);
     }
-}
-
-function renderAdminDashboard() {
-    const cards = readJsonStorage('wishai_cards', []);
-    const analytics = readJsonStorage(ANALYTICS_KEY, { events: [] });
-    const queue = readJsonStorage(PENDING_SAVES_KEY, []);
-    const occasionCounts = {};
-    cards.forEach(c => { occasionCounts[c.occId] = (occasionCounts[c.occId] || 0) + 1; });
-    const cloudSaved = analytics.events.filter(e => e.eventType === 'cloud_save_success').length;
-    document.getElementById('admin-total-generations').textContent = String(cards.length);
-    document.getElementById('admin-cloud-saved').textContent = String(cloudSaved);
-    document.getElementById('admin-pending-saves').textContent = String(queue.length);
-    document.getElementById('admin-fallbacks').textContent = String(cards.filter(c => c.isFallback).length);
-    document.getElementById('admin-occasion-breakdown').innerHTML = Object.entries(occasionCounts)
-        .sort((a, b) => b[1] - a[1])
-        .map(([occ, count]) => `<tr><td>${escapeHtml(occ)}</td><td>${count}</td></tr>`)
-        .join('') || '<tr><td colspan="2">No data yet</td></tr>';
 }
 
 function renderGallery() {

@@ -38,7 +38,6 @@
                 </div>
                 <button type="button" class="btn-ghost my-cards-btn" id="my-cards-btn" data-i18n="my-cards">بطاقاتي
                     🖼️</button>
-                <button type="button" class="btn-ghost admin-btn" id="admin-btn">📊 Admin</button>
                 <button type="button" class="btn-ghost theme-toggle" id="theme-toggle" aria-label="تبديل الوضع الداكن">
                     <span class="theme-toggle-icon" id="theme-toggle-icon">☾</span>
                     <span class="theme-toggle-text" id="theme-toggle-text">داكن</span>
@@ -84,34 +83,6 @@
                 </div>
             </div>
         </section>
-        <!-- Step 4: Admin Analytics -->
-        <section id="step-4" class="step">
-            <div class="card admin-card">
-                <div class="card-header">
-                    <h2>Admin Analytics</h2>
-                    <p class="subtitle">Generation and persistence health overview.</p>
-                </div>
-                <div class="admin-grid">
-                    <div class="admin-stat"><span>Total Generations</span><strong id="admin-total-generations">0</strong></div>
-                    <div class="admin-stat"><span>Cloud Saved</span><strong id="admin-cloud-saved">0</strong></div>
-                    <div class="admin-stat"><span>Pending Cloud Saves</span><strong id="admin-pending-saves">0</strong></div>
-                    <div class="admin-stat"><span>Fallback Images</span><strong id="admin-fallbacks">0</strong></div>
-                </div>
-                <div class="admin-table-wrap">
-                    <table class="admin-table">
-                        <thead>
-                            <tr><th>Occasion</th><th>Count</th></tr>
-                        </thead>
-                        <tbody id="admin-occasion-breakdown"></tbody>
-                    </table>
-                </div>
-                <div class="btn-row" style="margin-top: 20px;">
-                    <button class="btn-outline" id="admin-retry-btn">Retry Pending Saves</button>
-                    <button class="btn-outline admin-back-home-btn">Back Home</button>
-                </div>
-            </div>
-        </section>
-
         <!-- Step 1: All-in-one home -->
         <section id="step-1" class="step">
             <div class="card">

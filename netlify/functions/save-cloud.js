@@ -18,7 +18,7 @@ export default async (req, context) => {
         }
 
         const body = await req.json();
-        const { image, stateParams } = body;
+        const { fileKey: requestedFileKey, image, stateParams } = body;
         
         if (!image) {
             return new Response(JSON.stringify({ error: 'Missing image data' }), { status: 400, headers });
@@ -29,76 +29,19 @@ export default async (req, context) => {
 
         const safeOccasion = (stateParams?.occasion || 'card').replace(/[^a-z0-9]/gi, '_');
         const timestamp = Date.now();
-        const fileKey = `WishAI-${safeOccasion}-${timestamp}`;
+        const fallbackFileKey = `WishAI-${safeOccasion}-${timestamp}`;
+        const fileKey = requestedFileKey || fallbackFileKey;
 
-        // --------- AUTOMATIC FAST AI EVALUATION ---------
-        let ai_score = 0;
-        let ai_summary = "";
-        let ai_adherence = false; 
-        let ai_advice = [];
-
-        try {
-            const apiKey = (process.env.GEMINI_API_KEY || '').trim().replace(/["']/g, '');
-            if (apiKey) {
-                let base64data = image.includes(',') ? image.split(',')[1] : image;
-                
-                const prompt = `أنت خبير ذكاء اصطناعي يقوم بتقييم بطاقة تهنئة تم توليدها.
-المعطيات (JSON) التي طلبها المستخدم:
-\`\`\`json
-${JSON.stringify(stateParams, null, 2)}
-\`\`\`
-يرجى مطابقة الصورة مع المعطيات، وإعطاء التقييم بناءً على: مدى الالتزام بـ (المناسبة، الأسلوب، التشكيل، موقع الاسم، التعليمات).
-يجب أن ترجع النتيجة كـ JSON صارم فقط، بهذا الشكل بالضبط:
-{
-  "score": 8,
-  "summary": "نص التلخيص",
-  "adherence": true,
-  "advice": ["نصيحة 1", "نصيحة 2"]
-}`;
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-                const evalResponse = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{
-                            role: 'user',
-                            parts: [
-                                { text: prompt },
-                                { inlineData: { mimeType: 'image/jpeg', data: base64data } }
-                            ]
-                        }],
-                        generationConfig: { temperature: 0.1, responseMimeType: "application/json" }
-                    })
-                });
-
-                const data = await evalResponse.json();
-                if (evalResponse.ok && data.candidates && data.candidates[0].content.parts[0].text) {
-                    let aiText = data.candidates[0].content.parts[0].text;
-                    aiText = aiText.replace(/```json/gi, '').replace(/```/g, '').trim();
-                    const aiResult = JSON.parse(aiText);
-                    ai_score = aiResult.score || 0;
-                    ai_summary = aiResult.summary || "لا يوجد ملخص";
-                    ai_adherence = !!aiResult.adherence;
-                    if (Array.isArray(aiResult.advice)) ai_advice = aiResult.advice;
-                }
-            }
-        } catch (evalErr) {
-            console.error('[WishAI-Cloud] Automatic AI eval failed:', evalErr);
-        }
-
-        // ONE SINGLE SAVE TO AVOID NETLIFY 10s TIMEOUT
+        // Save first and return quickly so the generated card appears in Admin
+        // and the client can show the rating form without waiting on AI analysis.
         await store.set(fileKey, image, {
             metadata: {
                 timestamp,
-                ai_score,
-                ai_summary,
-                ai_adherence,
-                ai_advice,
                 ...stateParams
             }
         });
 
-        console.log(`[WishAI-Cloud] Successfully evaluated image: ${fileKey} with AI Score: ${ai_score}`);
+        console.log(`[WishAI-Cloud] Successfully saved image: ${fileKey}`);
 
         const origin = new URL(req.url).origin;
         const imageUrl = `${origin}/api/get-cloud-image?key=${encodeURIComponent(fileKey)}`;

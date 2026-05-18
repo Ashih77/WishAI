@@ -10,14 +10,35 @@
             --primary: #0f766e;
             --secondary: #ef6f61;
             --accent: #c6933d;
-            --bg-dark: #f6f7f4;
+            --bg: #f6f7f4;
+            --bg-panel: rgba(255, 255, 255, 0.72);
             --surface: rgba(255, 255, 255, 0.92);
+            --surface-solid: #fff;
             --text: #17201d;
             --muted: #5f6b66;
             --border: rgba(17, 24, 39, 0.1);
+            --panel-border: rgba(17, 24, 39, 0.1);
+            --soft: rgba(15, 118, 110, 0.1);
+            --overlay: rgba(23,32,29,0.42);
             --radius-lg: 22px;
             --radius-md: 16px;
             --shadow: 0 18px 44px rgba(28, 42, 38, 0.12);
+        }
+        :root[data-theme="dark"] {
+            --primary: #5eead4;
+            --secondary: #fb923c;
+            --accent: #facc15;
+            --bg: #071426;
+            --bg-panel: rgba(12, 30, 54, 0.78);
+            --surface: rgba(11, 24, 43, 0.92);
+            --surface-solid: #0b182b;
+            --text: #f4f8fb;
+            --muted: #b8c7d7;
+            --border: rgba(178, 205, 235, 0.16);
+            --panel-border: rgba(94, 234, 212, 0.2);
+            --soft: rgba(94, 234, 212, 0.14);
+            --overlay: rgba(0, 8, 20, 0.62);
+            --shadow: 0 18px 48px rgba(0, 8, 20, 0.36);
         }
         body {
             font-family: 'Tajawal', sans-serif;
@@ -27,8 +48,16 @@
                 linear-gradient(135deg, #f6f7f4 0%, #eef6f3 52%, #fff4ed 100%);
             color: var(--text);
         }
+        :root[data-theme="dark"] body {
+            background:
+                radial-gradient(circle at 18% 12%, rgba(94, 234, 212, 0.14), transparent 28%),
+                radial-gradient(circle at 82% 4%, rgba(245, 158, 114, 0.16), transparent 30%),
+                linear-gradient(145deg, #071426 0%, #0a1f3f 46%, #102a52 100%);
+        }
         .container { max-width: 1280px; margin: 0 auto; padding: 2rem; }
-        h1 { text-align: center; color: var(--text); margin: 0 0 1.5rem; }
+        .admin-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
+        h1 { color: var(--text); margin: 0; }
+        .theme-btn { width: auto; min-width: 132px; background: var(--surface); color: var(--text); border: 1px solid var(--border); }
         .login-box {
             background: var(--surface); padding: 2.5rem; border-radius: var(--radius-lg);
             max-width: 400px; margin: 4rem auto; text-align: center;
@@ -37,7 +66,7 @@
         }
         input {
             width: 100%; padding: 14px; margin: 12px 0; border-radius: var(--radius-md);
-            border: 1px solid var(--border); background: #fff; color: var(--text);
+            border: 1px solid var(--border); background: var(--surface-solid); color: var(--text);
             box-sizing: border-box; font-family: inherit; font-size: 1rem;
         }
         input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(15,118,110,0.11); }
@@ -60,13 +89,22 @@
         .card-info { padding: 1rem; font-size: 0.9rem; line-height: 1.6; color: var(--text); }
         .badge {
             display: inline-block; padding: 2px 8px; border-radius: 12px;
-            background: rgba(15, 118, 110, 0.1); color: var(--primary); font-size: 0.8rem; margin: 2px;
+            background: var(--soft); color: var(--primary); font-size: 0.8rem; margin: 2px;
         }
         .loading { text-align: center; margin-top: 2rem; display: none; }
         .hidden { display: none !important; }
-        #tabs { background: rgba(255,255,255,0.72); border: 1px solid var(--border); border-radius: 18px; padding: 6px; box-shadow: 0 8px 24px rgba(28,42,38,0.08); }
+        #tabs { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 18px; padding: 6px; box-shadow: 0 8px 24px rgba(28,42,38,0.08); }
         .admin-tab { background: transparent !important; color: var(--muted) !important; border-radius: 14px; }
-        .admin-tab.active { background: #fff !important; color: var(--text) !important; box-shadow: 0 6px 18px rgba(28,42,38,0.1); }
+        .admin-tab.active { background: var(--surface-solid) !important; color: var(--text) !important; box-shadow: 0 6px 18px rgba(28,42,38,0.1); }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; box-shadow: 0 8px 22px rgba(28,42,38,0.07); }
+        .summary-card span { display: block; color: var(--muted); font-size: 0.9rem; margin-bottom: 0.4rem; }
+        .summary-card strong { color: var(--primary); font-size: 1.55rem; }
+        .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 10px 30px rgba(28,42,38,0.08); }
+        .admin-table { width: 100%; border-collapse: collapse; }
+        .admin-table th, .admin-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); text-align: start; color: var(--text); }
+        .admin-table th { color: var(--muted); font-size: 0.9rem; background: var(--bg-panel); }
+        .empty-state { text-align:center; color:var(--muted); padding: 2rem; }
         #view-images > div[style],
         #view-feedback > div[style],
         #analytics-section > div[style] {
@@ -84,17 +122,18 @@
 
         /* AI Analysis Modal & Buttons */
         .btn-sm { padding: 10px 16px; font-size: 0.9rem; border-radius: var(--radius-md); border: none; cursor: pointer; color: #fff; width: auto; font-family: inherit; font-weight: bold; flex: 1; transition: 0.2s; }
-        .btn-json { background: #fff; border: 1px solid var(--border); color: var(--text); }
-        .btn-json:hover { background: rgba(15,118,110,0.08); }
+        .btn-json { background: var(--surface-solid); border: 1px solid var(--border); color: var(--text); }
+        .btn-json:hover { background: var(--soft); }
         .btn-ai { background: var(--primary); }
         .btn-ai:hover { opacity: 0.9; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(23,32,29,0.42); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); z-index: 50; align-items: center; justify-content: center; }
-        .modal-content { background: #fff; border: 1px solid var(--border); padding: 2.5rem; border-radius: var(--radius-lg); max-width: 600px; width: 90%; position: relative; max-height: 85vh; overflow-y: auto; box-shadow: var(--shadow);}
-        .close-modal { position: absolute; top: 1.5rem; left: 1.5rem; background: rgba(17,24,39,0.08); border-radius: 50%; border: none; color: var(--text); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; transition: 0.2s; }
-        .close-modal:hover { background: rgba(17,24,39,0.14); }
+        .modal { display: none; position: fixed; inset: 0; background: var(--overlay); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); z-index: 50; align-items: center; justify-content: center; }
+        .modal-content { background: var(--surface-solid); border: 1px solid var(--border); padding: 2.5rem; border-radius: var(--radius-lg); max-width: 600px; width: 90%; position: relative; max-height: 85vh; overflow-y: auto; box-shadow: var(--shadow);}
+        .close-modal { position: absolute; top: 1.5rem; left: 1.5rem; background: var(--bg-panel); border-radius: 50%; border: none; color: var(--text); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; transition: 0.2s; }
+        .close-modal:hover { background: var(--soft); }
         .ai-results h3 { margin-top: 0; color: var(--primary); border-bottom: 1px solid var(--border); padding-bottom: 15px; }
         @media (max-width: 760px) {
             .container { padding: 1rem; }
+            .admin-header { align-items: flex-start; flex-direction: column; }
             #tabs { flex-direction: column; }
             #view-images > div[style],
             #view-feedback > div[style] { flex-direction: column !important; align-items: stretch !important; gap: 1rem; }
@@ -105,7 +144,10 @@
 </head>
 <body>
     <div class="container">
-        <h1>WishAI Cloud Admin ☁️</h1>
+        <div class="admin-header">
+            <h1>WishAI Cloud Admin ☁️</h1>
+            <button id="admin-theme-toggle" class="theme-btn" type="button">الوضع الداكن</button>
+        </div>
         
         <div id="login-view" class="login-box">
             <p>الرجاء إدخال كلمة مرور الإدارة لعرض الصور المولدة من قبل المستخدمين</p>
@@ -118,6 +160,14 @@
             <div id="tabs" style="display: flex; gap: 10px; margin-bottom: 20px;">
                 <button id="tab-images" class="admin-tab active" onclick="switchTab('images')" style="flex: 1; padding: 12px;">الصور والتقييمات 🖼️</button>
                 <button id="tab-feedback" class="admin-tab" onclick="switchTab('feedback')" style="flex: 1; padding: 12px;">المقترحات والملاحظات 💡</button>
+                <button id="tab-users" class="admin-tab" onclick="switchTab('users')" style="flex: 1; padding: 12px;">المستخدمون والإيميلات 👥</button>
+            </div>
+
+            <div class="summary-grid">
+                <div class="summary-card"><span>إجمالي الصور المحفوظة</span><strong id="admin-total-generations">0</strong></div>
+                <div class="summary-card"><span>التقييمات المستلمة</span><strong id="admin-total-ratings">0</strong></div>
+                <div class="summary-card"><span>المستخدمون المسجلون</span><strong id="admin-registered-users">0</strong></div>
+                <div class="summary-card"><span>استخدموا التطبيق</span><strong id="admin-used-users">0</strong></div>
             </div>
 
             <div id="view-images">
@@ -163,6 +213,25 @@
                     <p style="text-align:center; color:#cbd5e1; padding: 2rem;">جاري جلب المقترحات... ⏳</p>
                 </div>
             </div>
+
+            <div id="view-users" class="hidden">
+                <div class="table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>الإيميل</th>
+                                <th>طريقة الدخول</th>
+                                <th>عدد الاستخدامات</th>
+                                <th>آخر استخدام</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body">
+                            <tr><td colspan="5" class="empty-state">جاري جلب المستخدمين...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
         <!-- AI Modal -->
@@ -177,9 +246,32 @@
     <script>
         let globalItems = [];
         let globalFeedback = [];
+        let globalUsers = [];
         const loginBtn = document.getElementById('login-btn');
         const passInput = document.getElementById('admin-pass');
         const errorMsg = document.getElementById('error-msg');
+        const themeToggle = document.getElementById('admin-theme-toggle');
+
+        function escapeHtml(value = '') {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function applyAdminTheme(theme) {
+            document.documentElement.dataset.theme = theme;
+            localStorage.setItem('wishai_theme', theme);
+            themeToggle.textContent = theme === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن';
+        }
+
+        applyAdminTheme(localStorage.getItem('wishai_theme') === 'dark' ? 'dark' : 'light');
+        themeToggle.onclick = () => {
+            const current = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+            applyAdminTheme(current === 'dark' ? 'light' : 'dark');
+        };
         
         loginBtn.onclick = async () => {
             const pass = passInput.value.trim();
@@ -203,8 +295,9 @@
                 document.getElementById('export-btn').classList.remove('hidden');
                 renderDashboard(globalItems, pass);
                 
-                // Fetch feedback concurrently
+                // Fetch secondary dashboard data concurrently
                 fetchFeedback(pass);
+                fetchUsers(pass);
             } catch (err) {
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('login-view').classList.remove('hidden');
@@ -230,6 +323,7 @@
 
         function renderDashboard(items, pass) {
             document.getElementById('total-count').textContent = items.length;
+            document.getElementById('admin-total-generations').textContent = items.length;
             
             let totalRatingSum = 0;
             let ratingsCount = 0;
@@ -303,8 +397,10 @@
             
             // Update Dashboard Stats
             document.getElementById('total-ratings').textContent = ratingsCount;
+            document.getElementById('admin-total-ratings').textContent = ratingsCount;
             const avg = ratingsCount > 0 ? (totalRatingSum / ratingsCount).toFixed(1) : '0.0';
             document.getElementById('avg-rating').textContent = avg;
+            renderUsers();
 
             // Analytics Calculation
             const dates = [];
@@ -577,17 +673,90 @@ ${JSON.stringify(meta, null, 2)}
         function switchTab(tab) {
             const imagesTab = document.getElementById('tab-images');
             const feedbackTab = document.getElementById('tab-feedback');
-            if(tab === 'images') {
-                document.getElementById('view-images').classList.remove('hidden');
-                document.getElementById('view-feedback').classList.add('hidden');
-                imagesTab.classList.add('active');
-                feedbackTab.classList.remove('active');
-            } else {
-                document.getElementById('view-images').classList.add('hidden');
-                document.getElementById('view-feedback').classList.remove('hidden');
-                imagesTab.classList.remove('active');
-                feedbackTab.classList.add('active');
+            const usersTab = document.getElementById('tab-users');
+            document.getElementById('view-images').classList.toggle('hidden', tab !== 'images');
+            document.getElementById('view-feedback').classList.toggle('hidden', tab !== 'feedback');
+            document.getElementById('view-users').classList.toggle('hidden', tab !== 'users');
+            imagesTab.classList.toggle('active', tab === 'images');
+            feedbackTab.classList.toggle('active', tab === 'feedback');
+            usersTab.classList.toggle('active', tab === 'users');
+        }
+
+        async function fetchUsers(pass) {
+            try {
+                const res = await fetch(`/api/list-users?pass=${encodeURIComponent(pass)}&t=${Date.now()}`);
+                const data = await res.json();
+                if (data.ok) {
+                    globalUsers = data.users || [];
+                    renderUsers();
+                }
+            } catch(e) {
+                console.error('Error fetching users', e);
+                renderUsers();
             }
+        }
+
+        function isRegisteredUser(user) {
+            return user.email && user.provider !== 'guest' && !user.email.endsWith('@wishai.demo');
+        }
+
+        function renderUsers() {
+            const body = document.getElementById('users-table-body');
+            const usersByEmail = new Map();
+            const generatedByEmail = new Map();
+
+            globalUsers.forEach(user => {
+                if (!user.email) return;
+                usersByEmail.set(user.email.toLowerCase(), user);
+            });
+
+            globalItems.forEach(item => {
+                const metaUser = item.metadata?.user;
+                if (!metaUser?.email) return;
+                const email = metaUser.email.toLowerCase();
+                const generated = generatedByEmail.get(email) || { count: 0, lastGeneratedAt: null };
+                const itemTimestamp = item.metadata?.timestamp || null;
+                generated.count += 1;
+                if (!generated.lastGeneratedAt || itemTimestamp > generated.lastGeneratedAt) {
+                    generated.lastGeneratedAt = itemTimestamp;
+                }
+                generatedByEmail.set(email, generated);
+
+                const existing = usersByEmail.get(email) || {};
+                usersByEmail.set(email, {
+                    ...existing,
+                    id: existing.id || metaUser.id,
+                    name: existing.name || metaUser.name,
+                    email,
+                    provider: existing.provider || metaUser.provider || 'unknown',
+                    generationCount: Math.max(Number(existing.generationCount || 0), generated.count),
+                    lastGeneratedAt: existing.lastGeneratedAt || generated.lastGeneratedAt
+                });
+            });
+
+            const registeredUsers = Array.from(usersByEmail.values()).filter(isRegisteredUser);
+            const usedUsers = registeredUsers.filter(user => Number(user.generationCount || 0) > 0);
+            document.getElementById('admin-registered-users').textContent = registeredUsers.length;
+            document.getElementById('admin-used-users').textContent = usedUsers.length;
+
+            if (!registeredUsers.length) {
+                body.innerHTML = '<tr><td colspan="5" class="empty-state">لا يوجد مستخدمون مسجلون حتى الآن.</td></tr>';
+                return;
+            }
+
+            body.innerHTML = registeredUsers.map(user => {
+                const lastUsed = user.lastGeneratedAt || user.lastSeenAt;
+                const lastUsedLabel = lastUsed ? new Date(lastUsed).toLocaleString('ar-EG') : '-';
+                return `
+                    <tr>
+                        <td>${escapeHtml(user.name || 'مستخدم')}</td>
+                        <td>${escapeHtml(user.email || '-')}</td>
+                        <td><span class="badge">${escapeHtml(user.provider || '-')}</span></td>
+                        <td>${Number(user.generationCount || 0)}</td>
+                        <td>${escapeHtml(lastUsedLabel)}</td>
+                    </tr>
+                `;
+            }).join('');
         }
         
         function renderFeedback() {

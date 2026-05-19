@@ -522,8 +522,8 @@
         let currentAdminPass = '';
         let currentImageModel = 'nano-banana-2';
         let autoEvaluationRunning = false;
-        let cloudPollingTimer = null;
         const autoEvaluationAttemptedKeys = new Set();
+        const ADMIN_SESSION_PASS_KEY = 'wishai_admin_session_pass';
         const LIVE_API_ORIGIN = 'https://enchanting-alpaca-d659e5.netlify.app';
         const loginBtn = document.getElementById('login-btn');
         const passInput = document.getElementById('admin-pass');
@@ -562,16 +562,28 @@
             return data;
         }
 
-        function startCloudPolling(pass) {
-            if (cloudPollingTimer) clearInterval(cloudPollingTimer);
-            cloudPollingTimer = setInterval(async () => {
-                if (!pass || document.getElementById('dashboard-view').classList.contains('hidden')) return;
-                try {
-                    await fetchCloudItems(pass, { render: true });
-                } catch (err) {
-                    console.error('Cloud polling failed', err);
-                }
-            }, 10000);
+        function getStoredAdminPass() {
+            try {
+                return sessionStorage.getItem(ADMIN_SESSION_PASS_KEY) || '';
+            } catch {
+                return '';
+            }
+        }
+
+        function storeAdminPass(pass) {
+            try {
+                sessionStorage.setItem(ADMIN_SESSION_PASS_KEY, pass);
+            } catch {
+                // Session storage can be unavailable in some privacy modes.
+            }
+        }
+
+        function clearStoredAdminPass() {
+            try {
+                sessionStorage.removeItem(ADMIN_SESSION_PASS_KEY);
+            } catch {
+                // Ignore storage failures; the login form remains usable.
+            }
         }
 
         function escapeHtml(value = '') {
@@ -603,10 +615,10 @@
         });
         document.getElementById('save-model-settings-btn').onclick = saveAppSettings;
         
-        loginBtn.onclick = async () => {
-            const pass = passInput.value.trim();
+        async function loadAdminDashboard(pass, options = {}) {
             if (!pass) return;
             currentAdminPass = pass;
+            errorMsg.classList.add('hidden');
 
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('dashboard-view').classList.remove('hidden');
@@ -618,7 +630,7 @@
 
                 document.getElementById('export-btn').classList.remove('hidden');
                 renderDashboard(globalItems, pass);
-                startCloudPolling(pass);
+                if (options.persistSession) storeAdminPass(pass);
                 
                 // Fetch secondary dashboard data concurrently
                 fetchAdminCycles(pass);
@@ -630,9 +642,21 @@
                 document.getElementById('login-view').classList.remove('hidden');
                 document.getElementById('dashboard-view').classList.add('hidden');
                 errorMsg.classList.remove('hidden');
+                clearStoredAdminPass();
                 console.error(err);
             }
+        }
+
+        loginBtn.onclick = async () => {
+            const pass = passInput.value.trim();
+            await loadAdminDashboard(pass, { persistSession: true });
         };
+
+        const savedAdminPass = getStoredAdminPass();
+        if (savedAdminPass) {
+            passInput.value = savedAdminPass;
+            loadAdminDashboard(savedAdminPass);
+        }
 
         function getStars(rating) {
             if (!rating) return '<span style="color:#64748b; font-size:0.8rem;">بدون تقييم</span>';

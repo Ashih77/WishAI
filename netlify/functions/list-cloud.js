@@ -8,7 +8,8 @@ export default async (req, context) => {
 
     const headers = new Headers({
         'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store'
     });
 
     if (pass !== ADMIN_PASS) {

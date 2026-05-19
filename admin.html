@@ -298,6 +298,14 @@
             font-family: inherit;
             margin: 8px 0 12px;
         }
+        .ai-evaluation-status {
+            min-height: 22px;
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        .ai-evaluation-status.active { color: var(--primary); font-weight: 700; }
+        .ai-evaluation-status.error { color: #ef4444; }
         @keyframes riseIn {
             from { opacity: 0; transform: translateY(12px); }
             to { opacity: 1; transform: translateY(0); }
@@ -409,6 +417,7 @@
                             <span>الأرشيف: <strong id="gallery-historical-count">0</strong></span>
                             <span id="gallery-filter-label" class="hidden"></span>
                         </div>
+                        <div id="ai-evaluation-status" class="ai-evaluation-status"></div>
                     </div>
                     <div class="toolbar-actions">
                         <button id="gallery-clear-filter-btn" class="hidden" onclick="clearGalleryFilter()">عرض كل الصور</button>
@@ -512,6 +521,9 @@
         let activeCycle = { id: 'baseline', label: 'الدورة الحالية', startedAt: 0, createdAt: null, notes: '' };
         let currentAdminPass = '';
         let currentImageModel = 'nano-banana-2';
+        let autoEvaluationRunning = false;
+        let cloudPollingTimer = null;
+        const autoEvaluationAttemptedKeys = new Set();
         const LIVE_API_ORIGIN = 'https://enchanting-alpaca-d659e5.netlify.app';
         const loginBtn = document.getElementById('login-btn');
         const passInput = document.getElementById('admin-pass');
@@ -529,6 +541,37 @@
 
         function cloudImageUrl(key, pass) {
             return apiUrl(`/api/get-cloud-image?key=${encodeURIComponent(key)}&pass=${encodeURIComponent(pass)}`);
+        }
+
+        function updateAiEvaluationStatus(message = '', state = '') {
+            const el = document.getElementById('ai-evaluation-status');
+            if (!el) return;
+            el.textContent = message;
+            el.classList.toggle('active', state === 'active');
+            el.classList.toggle('error', state === 'error');
+        }
+
+        async function fetchCloudItems(pass = currentAdminPass, options = {}) {
+            const res = await fetch(apiUrl(`/api/list-cloud?pass=${encodeURIComponent(pass)}&t=${Date.now()}`), { cache: 'no-store' });
+            const data = await res.json();
+            if (!data.ok) throw new Error(data.error || 'فشل جلب الصور');
+
+            globalItems = data.generations || [];
+            activeCycle = data.activeCycle || activeCycle;
+            if (options.render !== false) renderDashboard(globalItems, pass);
+            return data;
+        }
+
+        function startCloudPolling(pass) {
+            if (cloudPollingTimer) clearInterval(cloudPollingTimer);
+            cloudPollingTimer = setInterval(async () => {
+                if (!pass || document.getElementById('dashboard-view').classList.contains('hidden')) return;
+                try {
+                    await fetchCloudItems(pass, { render: true });
+                } catch (err) {
+                    console.error('Cloud polling failed', err);
+                }
+            }, 10000);
         }
 
         function escapeHtml(value = '') {
@@ -570,19 +613,12 @@
             document.getElementById('loading').style.display = 'block';
 
             try {
-                const res = await fetch(apiUrl(`/api/list-cloud?pass=${encodeURIComponent(pass)}&t=${Date.now()}`));
-                const data = await res.json();
-                
+                const data = await fetchCloudItems(pass, { render: false });
                 document.getElementById('loading').style.display = 'none';
 
-                if (!data.ok) {
-                    throw new Error(data.error);
-                }
-
-                globalItems = data.generations;
-                activeCycle = data.activeCycle || activeCycle;
                 document.getElementById('export-btn').classList.remove('hidden');
                 renderDashboard(globalItems, pass);
+                startCloudPolling(pass);
                 
                 // Fetch secondary dashboard data concurrently
                 fetchAdminCycles(pass);
@@ -790,6 +826,64 @@
             };
         }
 
+        function getUnevaluatedItems(items = globalItems) {
+            return items.filter(item => {
+                const meta = item.metadata || {};
+                return item.key && meta.ai_score === undefined && !autoEvaluationAttemptedKeys.has(item.key);
+            });
+        }
+
+        async function runAutoEvaluationQueue(items, pass) {
+            if (autoEvaluationRunning || !items.length) return;
+            autoEvaluationRunning = true;
+
+            let completed = 0;
+            let failed = 0;
+            updateAiEvaluationStatus(`جاري تقييم ${items.length} صورة ناقصة بالذكاء الاصطناعي...`, 'active');
+
+            try {
+                for (const item of items) {
+                    autoEvaluationAttemptedKeys.add(item.key);
+                    try {
+                        const res = await fetch(apiUrl('/api/evaluate-card'), {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ fileKey: item.key, metadata: item.metadata || {} })
+                        });
+                        const data = await res.json();
+                        if (!res.ok || !data.ok) throw new Error(data.error || data.message || 'AI_EVALUATION_FAILED');
+                        completed += 1;
+                    } catch (err) {
+                        failed += 1;
+                        console.error(`Auto AI evaluation failed for ${item.key}`, err);
+                    }
+
+                    updateAiEvaluationStatus(`تقييم AI تلقائي: ${completed + failed}/${items.length}`, 'active');
+                }
+
+                await fetchCloudItems(pass, { render: true });
+                if (failed) {
+                    updateAiEvaluationStatus(`اكتمل تقييم ${completed} صورة، وتعذر تقييم ${failed}.`, 'error');
+                } else {
+                    updateAiEvaluationStatus(`اكتمل تقييم ${completed} صورة بالذكاء الاصطناعي.`, '');
+                }
+            } catch (err) {
+                console.error('Auto AI evaluation queue failed', err);
+                updateAiEvaluationStatus(`تعذر تحديث نتائج تقييم AI: ${err.message}`, 'error');
+            } finally {
+                autoEvaluationRunning = false;
+            }
+        }
+
+        function ensureMissingAiEvaluations(items = globalItems, pass = currentAdminPass) {
+            const unevaluated = getUnevaluatedItems(items);
+            if (!unevaluated.length) {
+                if (!autoEvaluationRunning) updateAiEvaluationStatus('كل الصور المعروضة لديها تقييم AI أو تمت محاولة تقييمها.', '');
+                return;
+            }
+            runAutoEvaluationQueue(unevaluated, pass);
+        }
+
         function formatDateLabel(timestamp) {
             if (!timestamp) return 'من البداية';
             return new Date(timestamp).toLocaleString('ar-EG');
@@ -964,6 +1058,8 @@
                 document.getElementById('analytics-section').style.display = 'grid';
                 renderCharts([], [], 0, 0);
             }
+
+            ensureMissingAiEvaluations(items, pass);
         }
 
         // Allow 'Enter' key login
@@ -1142,7 +1238,7 @@
 
                 resultsDiv.innerHTML = renderAiReport(data.aiResult, '🤖 تقرير التقييم الذكي المستمر');
 
-                setTimeout(() => location.reload(), 2000);
+                await fetchCloudItems(pass, { render: true });
             } catch (err) {
                 console.error(err);
                 resultsDiv.innerHTML = `<div style="color:#ef4444;text-align:center; padding: 20px;">حدث خطأ أثناء التقييم: ${err.message}</div>`;

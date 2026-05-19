@@ -229,6 +229,33 @@
             border-color: var(--border-hover);
             box-shadow: 0 20px 52px rgba(15, 118, 110, 0.16);
         }
+        .image-gallery-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+        .image-gallery-meta span,
+        .cycle-status-badge {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: var(--bg-panel);
+            color: var(--muted);
+            font-size: 0.82rem;
+            padding: 0.28rem 0.7rem;
+        }
+        .cycle-status-badge.current {
+            border-color: rgba(16, 185, 129, 0.35);
+            color: #059669;
+            background: rgba(16, 185, 129, 0.08);
+        }
+        .cycle-status-badge.historical {
+            border-color: rgba(198, 147, 61, 0.35);
+            color: var(--secondary);
+            background: rgba(198, 147, 61, 0.1);
+        }
         .history-list { display: grid; gap: 1rem; }
         .history-card { padding: 1.15rem; animation: riseIn 0.35s ease both; }
         .history-card header { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; margin-bottom: 0.8rem; }
@@ -236,6 +263,28 @@
         .history-card p { margin: 0.35rem 0 0; color: var(--muted); }
         .history-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.65rem; }
         .history-metrics span { background: var(--bg-panel); border-radius: 12px; padding: 0.65rem; color: var(--text); border: 1px solid var(--border); }
+        .history-thumbs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+            gap: 0.6rem;
+            margin-top: 0.9rem;
+        }
+        .history-thumbs img {
+            width: 100%;
+            aspect-ratio: 2 / 3;
+            object-fit: cover;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            background: var(--bg-panel);
+        }
+        .history-empty-note {
+            margin-top: 0.9rem;
+            color: var(--muted);
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 0.75rem;
+        }
         .cycle-modal textarea {
             width: 100%;
             min-height: 92px;
@@ -353,9 +402,16 @@
                 <div class="section-toolbar">
                     <div>
                         <h2>معرض الصور والتقييمات</h2>
-                        <p>يعرض صور الدورة الحالية فقط. التقارير السابقة محفوظة في تبويب التاريخ.</p>
+                        <p>يعرض كل الصور المولدة: صور الدورة الحالية والصور التاريخية المؤرشفة.</p>
+                        <div class="image-gallery-meta">
+                            <span>إجمالي الصور: <strong id="gallery-total-count">0</strong></span>
+                            <span>الدورة الحالية: <strong id="gallery-current-count">0</strong></span>
+                            <span>الأرشيف: <strong id="gallery-historical-count">0</strong></span>
+                            <span id="gallery-filter-label" class="hidden"></span>
+                        </div>
                     </div>
                     <div class="toolbar-actions">
+                        <button id="gallery-clear-filter-btn" class="hidden" onclick="clearGalleryFilter()">عرض كل الصور</button>
                         <button onclick="location.reload()">تحديث التقرير 🔄</button>
                     </div>
                 </div>
@@ -451,13 +507,29 @@
         let globalFeedback = [];
         let globalUsers = [];
         let globalArchives = [];
+        let galleryFilterKeys = null;
+        let galleryFilterLabel = '';
         let activeCycle = { id: 'baseline', label: 'الدورة الحالية', startedAt: 0, createdAt: null, notes: '' };
         let currentAdminPass = '';
         let currentImageModel = 'nano-banana-2';
+        const LIVE_API_ORIGIN = 'https://enchanting-alpaca-d659e5.netlify.app';
         const loginBtn = document.getElementById('login-btn');
         const passInput = document.getElementById('admin-pass');
         const errorMsg = document.getElementById('error-msg');
         const themeToggle = document.getElementById('admin-theme-toggle');
+
+        function getApiOrigin() {
+            return window.location.protocol === 'file:' ? LIVE_API_ORIGIN : window.location.origin;
+        }
+
+        function apiUrl(path) {
+            const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+            return `${getApiOrigin()}${normalizedPath}`;
+        }
+
+        function cloudImageUrl(key, pass) {
+            return apiUrl(`/api/get-cloud-image?key=${encodeURIComponent(key)}&pass=${encodeURIComponent(pass)}`);
+        }
 
         function escapeHtml(value = '') {
             return String(value)
@@ -498,7 +570,7 @@
             document.getElementById('loading').style.display = 'block';
 
             try {
-                const res = await fetch(`/api/list-cloud?pass=${encodeURIComponent(pass)}&t=${Date.now()}`);
+                const res = await fetch(apiUrl(`/api/list-cloud?pass=${encodeURIComponent(pass)}&t=${Date.now()}`));
                 const data = await res.json();
                 
                 document.getElementById('loading').style.display = 'none';
@@ -554,7 +626,7 @@
 
         async function fetchAppSettings() {
             try {
-                const res = await fetch(`/api/app-settings?t=${Date.now()}`, { cache: 'no-store' });
+                const res = await fetch(apiUrl(`/api/app-settings?t=${Date.now()}`), { cache: 'no-store' });
                 const data = await res.json();
                 if (!data.ok) throw new Error(data.error || 'فشل جلب الإعدادات');
                 renderModelSettings(data.settings);
@@ -570,7 +642,7 @@
 
         async function fetchAdminCycles(pass = currentAdminPass) {
             try {
-                const res = await fetch(`/api/admin-cycle?pass=${encodeURIComponent(pass)}&t=${Date.now()}`, { cache: 'no-store' });
+                const res = await fetch(apiUrl(`/api/admin-cycle?pass=${encodeURIComponent(pass)}&t=${Date.now()}`), { cache: 'no-store' });
                 const data = await res.json();
                 if (!data.ok) throw new Error(data.error || 'فشل جلب دورات التطوير');
                 activeCycle = data.activeCycle || activeCycle;
@@ -594,7 +666,7 @@
             const status = document.getElementById('cycle-status');
             status.textContent = 'جاري حفظ التقرير التاريخي وبدء دورة جديدة...';
             try {
-                const res = await fetch('/api/admin-cycle', {
+                const res = await fetch(apiUrl('/api/admin-cycle'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -622,7 +694,7 @@
             const status = document.getElementById('settings-status');
             status.textContent = 'جاري الحفظ...';
             try {
-                const res = await fetch('/api/app-settings', {
+                const res = await fetch(apiUrl('/api/app-settings'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ pass: currentAdminPass, imageModel: currentImageModel })
@@ -667,6 +739,39 @@
         function getCurrentCycleItems(items = globalItems) {
             const start = Number(activeCycle?.startedAt || 0);
             return items.filter(item => getItemTimestamp(item) >= start);
+        }
+
+        function isCurrentCycleItem(item) {
+            return getItemTimestamp(item) >= Number(activeCycle?.startedAt || 0);
+        }
+
+        function getGalleryItems(items = globalItems) {
+            if (!galleryFilterKeys) return items;
+            return items.filter(item => galleryFilterKeys.has(item.key));
+        }
+
+        function setGalleryFilterStatus() {
+            const label = document.getElementById('gallery-filter-label');
+            const clearBtn = document.getElementById('gallery-clear-filter-btn');
+            const isFiltered = !!galleryFilterKeys;
+            label.classList.toggle('hidden', !isFiltered);
+            clearBtn.classList.toggle('hidden', !isFiltered);
+            label.textContent = isFiltered ? `فلتر: ${galleryFilterLabel}` : '';
+        }
+
+        function showArchiveImages(archiveId) {
+            const archive = globalArchives.find(item => item.id === archiveId);
+            if (!archive) return;
+            galleryFilterKeys = new Set(archive.itemKeys || []);
+            galleryFilterLabel = archive.label || 'أرشيف سابق';
+            renderDashboard(globalItems, currentAdminPass);
+            switchTab('images');
+        }
+
+        function clearGalleryFilter() {
+            galleryFilterKeys = null;
+            galleryFilterLabel = '';
+            renderDashboard(globalItems, currentAdminPass);
         }
 
         function summarizeItems(items) {
@@ -736,20 +841,22 @@
             const summary = summarizeItems(currentCycleItems);
             updateCycleHeader(summary);
             renderInsights(currentCycleItems);
-            
-            let totalRatingSum = 0;
-            let ratingsCount = 0;
 
             const grid = document.getElementById('cloud-grid');
-            const htmlContent = currentCycleItems.map(item => {
+            const galleryItems = getGalleryItems(items).sort((a, b) => getItemTimestamp(b) - getItemTimestamp(a));
+            const currentGalleryCount = galleryItems.filter(isCurrentCycleItem).length;
+            const historicalGalleryCount = galleryItems.length - currentGalleryCount;
+            document.getElementById('gallery-total-count').textContent = galleryItems.length;
+            document.getElementById('gallery-current-count').textContent = currentGalleryCount;
+            document.getElementById('gallery-historical-count').textContent = historicalGalleryCount;
+            setGalleryFilterStatus();
+
+            const htmlContent = galleryItems.map(item => {
                 const meta = item.metadata || {};
                 const date = new Date(meta.timestamp || Date.now()).toLocaleString('ar-EG');
                 const imageModelLabel = getImageModelLabel(meta);
-                
-                if (meta.rating) {
-                    totalRatingSum += parseInt(meta.rating);
-                    ratingsCount++;
-                }
+                const isCurrent = isCurrentCycleItem(item);
+                const cycleStatusText = isCurrent ? 'الدورة الحالية' : 'أرشيف سابق';
 
                 let aiBadgeHTML = '';
                 if (meta.ai_score !== undefined) {
@@ -782,9 +889,10 @@
 
                 return `
                     <div class="card">
-                        <img src="/api/get-cloud-image?key=${item.key}&pass=${pass}" alt="Generated Image" loading="lazy">
+                        <img src="${cloudImageUrl(item.key, pass)}" alt="Generated Image" loading="lazy">
                         
                         <div class="card-info" style="border-bottom: 1px solid #334155; padding-bottom: 12px; margin-bottom: 6px;">
+                            <span class="cycle-status-badge ${isCurrent ? 'current' : 'historical'}">${cycleStatusText}</span>
                             <div style="font-size: 1.1rem; margin-bottom: 5px;">${getStars(meta.rating)}</div>
                             ${meta.feedback ? `<div style="margin-top:8px; padding:10px; background:#0f172a; border-radius:8px; font-size:0.9rem; line-height:1.4; border-left: 3px solid var(--primary);">"${meta.feedback}"</div>` : ''}
                             ${(meta.chips && meta.chips.length > 0) ? `
@@ -819,13 +927,8 @@
 
             grid.innerHTML = htmlContent.length
                 ? htmlContent.join('')
-                : '<div class="empty-state" style="grid-column:1/-1;">لا توجد صور في الدورة الحالية بعد. الصور السابقة محفوظة في التقارير التاريخية.</div>';
-            
-            // Update Dashboard Stats
-            document.getElementById('total-ratings').textContent = ratingsCount;
-            document.getElementById('admin-total-ratings').textContent = ratingsCount;
-            const avg = ratingsCount > 0 ? (totalRatingSum / ratingsCount).toFixed(1) : '0.0';
-            document.getElementById('avg-rating').textContent = avg;
+                : '<div class="empty-state" style="grid-column:1/-1;">لا توجد صور محفوظة بعد.</div>';
+
             renderUsers();
 
             // Analytics Calculation
@@ -968,8 +1071,15 @@
                         occasion: meta.occasion,
                         style: meta.style,
                         subStyle: meta.subStyle,
+                        effectiveSubStyle: meta.effectiveSubStyle,
                         details: meta.details,
                         colorIntensity: meta.colorIntensity,
+                        palette: meta.palette,
+                        imageModel: meta.settings?.imageModel || meta.imageModel,
+                        contentElements: meta.contentElements || [],
+                        tashkeel: !!meta.tashkeel,
+                        zakhrafa: !!meta.zakhrafa,
+                        namePosition: meta.namePosition,
                         greeting: meta.greeting,
                         instructions: meta.instructions
                     },
@@ -1020,7 +1130,7 @@
             resultsDiv.innerHTML = '<div style="text-align:center; padding: 20px;">جاري دراسة الصورة وتقييم المعطيات بالذكاء الاصطناعي... ⏳<br><br><span style="font-size:0.85rem;color:#94a3b8;">قد يستغرق هذا بضع ثوانٍ</span></div>';
 
             try {
-                const res = await fetch('/api/evaluate-card', {
+                const res = await fetch(apiUrl('/api/evaluate-card'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ fileKey: key, metadata: meta })
@@ -1041,7 +1151,7 @@
 
         async function fetchFeedback(pass) {
             try {
-                const res = await fetch(`/api/list-feedback?pass=${encodeURIComponent(pass)}`);
+                const res = await fetch(apiUrl(`/api/list-feedback?pass=${encodeURIComponent(pass)}`));
                 const data = await res.json();
                 if(data.ok) {
                     globalFeedback = data.feedbacks;
@@ -1073,7 +1183,7 @@
 
         async function fetchUsers(pass) {
             try {
-                const res = await fetch(`/api/list-users?pass=${encodeURIComponent(pass)}&t=${Date.now()}`);
+                const res = await fetch(apiUrl(`/api/list-users?pass=${encodeURIComponent(pass)}&t=${Date.now()}`));
                 const data = await res.json();
                 if (data.ok) {
                     globalUsers = data.users || [];
@@ -1158,6 +1268,8 @@
 
             list.innerHTML = globalArchives.map(archive => {
                 const summary = archive.summary || {};
+                const archiveKeys = Array.isArray(archive.itemKeys) ? archive.itemKeys : [];
+                const previewKeys = archiveKeys.slice(0, 4);
                 return `
                     <article class="history-card">
                         <header>
@@ -1174,8 +1286,14 @@
                             <span>تقييم AI: <strong>${Number(summary.averageAiScore || 0).toFixed(1)}/10</strong></span>
                             <span>الالتزام: <strong>${Number(summary.adherenceRate || 0)}%</strong></span>
                         </div>
+                        ${previewKeys.length ? `
+                            <div class="history-thumbs">
+                                ${previewKeys.map(key => `<img src="${cloudImageUrl(key, currentAdminPass)}" alt="صورة من الأرشيف" loading="lazy">`).join('')}
+                            </div>
+                        ` : '<div class="history-empty-note">هذا الأرشيف لا يحتوي صوراً لأنه بدأ بعد تصفير سابق بدون توليدات جديدة.</div>'}
                         ${archive.improvementNotes ? `<p><strong>تطوير مطبق:</strong> ${escapeHtml(archive.improvementNotes)}</p>` : ''}
                         ${archive.reportNotes ? `<p><strong>استنتاجات التقرير:</strong> ${escapeHtml(archive.reportNotes)}</p>` : ''}
+                        ${archiveKeys.length ? `<button type="button" style="margin-top:1rem; width:auto; min-width:170px;" onclick='showArchiveImages(${JSON.stringify(archive.id)})'>عرض صور هذا الأرشيف</button>` : ''}
                     </article>
                 `;
             }).join('');

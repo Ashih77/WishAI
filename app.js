@@ -322,6 +322,24 @@ const SUB_STYLES_CONFIG = {
     }
 };
 
+const RELIGIOUS_OCCASIONS = new Set(['ramadan', 'eid_fitr', 'eid_adha', 'friday']);
+const OCCASION_SUB_STYLE_POOLS = {
+    traditional: {
+        religious: ['Islamic Geometry', 'Calligraphy', 'Orientalist Art', 'Classic Art', 'Vintage']
+    },
+    minimalist: {
+        religious: ['Geometric', 'Line Art', 'Monochrome', 'Negative Space', 'Flat Design'],
+        default: ['Geometric', 'Line Art', 'Negative Space', 'Flat Design', 'Scandinavian']
+    },
+    vibrant: {
+        newyear: ['Luminous', 'Gradient', 'Neon Colors', 'Colorful Surrealism', 'Pop Art'],
+        default: ['Pop Art', 'Gradient', 'Luminous', 'Colorful Surrealism', 'Fluid']
+    },
+    '3d-render': {
+        default: ['Studio Lighting', 'Isometric', 'Claymation', 'Octane Render', 'Low Poly']
+    }
+};
+
 function normalizeImageModel(model) {
     return Object.prototype.hasOwnProperty.call(IMAGE_MODELS, model) ? model : 'nano-banana-2';
 }
@@ -365,15 +383,23 @@ function applyRecommendedArtStyleForOccasion(occasionId) {
     selectArtStyle(getRecommendedArtStyleForOccasion(occasionId), { recommended: true });
 }
 
-function getRandomSubStyle(style) {
-    const options = SUB_STYLES_CONFIG[style]?.en || [];
+function getAutoSubStylePool(style, occasionId) {
+    const normalizedOccasion = normalizeOccasionId(occasionId);
+    const stylePools = OCCASION_SUB_STYLE_POOLS[style] || {};
+    if (RELIGIOUS_OCCASIONS.has(normalizedOccasion) && stylePools.religious) return stylePools.religious;
+    if (stylePools[normalizedOccasion]) return stylePools[normalizedOccasion];
+    return stylePools.default || SUB_STYLES_CONFIG[style]?.en || [];
+}
+
+function getRandomSubStyle(style, occasionId = state.occasion) {
+    const options = getAutoSubStylePool(style, occasionId);
     if (!options.length) return '';
     return options[Math.floor(Math.random() * options.length)];
 }
 
 function resolveEffectiveSubStyle() {
     if (userOpenedAdvancedOptions && userSelectedSubStyle && state.subStyle) return state.subStyle;
-    return getRandomSubStyle(state.style);
+    return getRandomSubStyle(state.style, state.occasion);
 }
 
 let state = {
@@ -449,6 +475,62 @@ function getSharedCardTitle() {
 function getSharedCardText() {
     const credit = state.lang === 'ar' ? 'صممت بواسطة WishAI' : 'Designed by WishAI';
     return state.greeting ? `${state.greeting} — ${credit}` : credit;
+}
+
+function toGenerationNumber(value, fallback) {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : fallback;
+}
+
+function buildTextPrecisionInstruction(langLabel) {
+    const isArabic = langLabel === 'Arabic';
+    const noTashkeelInstruction = isArabic && !state.tashkeel
+        ? 'ABSOLUTE ARABIC TEXT RULE: Do not add tashkeel/diacritics/harakat to any Arabic letters. No fatha, damma, kasra, sukun, shadda, tanween, or decorative marks that look like diacritics. Render the exact Arabic strings exactly as provided.'
+        : '';
+    const tashkeelInstruction = isArabic && state.tashkeel
+        ? 'Arabic text should be fully vocalized with precise tashkeel while keeping every word readable.'
+        : '';
+    const zakhrafaInstruction = state.zakhrafa
+        ? 'Use elegant decorative calligraphy, but readability and exact wording are more important than ornamentation.'
+        : 'Use clean, readable typography without ornate distortion.';
+
+    return [
+        `TEXT ACCURACY: Render only these two text elements: greeting "${state.greeting}" and name "${state.name}". Do not add greetings, translations, transliterations, signatures, dates, labels, or extra decorative words.`,
+        `TEXT PLACEMENT: The greeting appears once as the main headline. The name "${state.name}" appears exactly once in the requested name position. Never repeat the name in another corner or as a secondary watermark.`,
+        `TEXT READABILITY: ${langLabel} text must be sharp, connected correctly, and separated from busy backgrounds with enough contrast.`,
+        noTashkeelInstruction,
+        tashkeelInstruction,
+        zakhrafaInstruction
+    ].filter(Boolean).join('\n');
+}
+
+function buildStyleFidelityInstruction(effectiveSubStyle) {
+    const detailLevel = Math.max(1, Math.min(10, Math.round(toGenerationNumber(state.details, 7))));
+    const colorLevel = Math.max(1, Math.min(10, Math.round(toGenerationNumber(state.colorIntensity, 5))));
+    const paletteInstruction = state.palette && state.palette !== 'auto'
+        ? `Palette must follow "${state.palette}" while preserving readable text contrast.`
+        : 'Choose a tasteful palette that fits the occasion and keeps the text readable.';
+    const densityGuidance = {
+        minimalist: 'Minimalist means few objects, generous negative space, clean composition, and no crowded ornamentation. Even if the detail slider is high, keep the scene restrained.',
+        traditional: RELIGIOUS_OCCASIONS.has(normalizeOccasionId(state.occasion))
+            ? 'For Islamic or religious occasions, prefer Islamic geometry, refined Arabic ornament, mosque/Kaaba/lantern cues when appropriate, and avoid unrelated European Renaissance cues unless explicitly requested.'
+            : 'Traditional style should feel classic, warm, and culturally coherent without mixing unrelated historical references.',
+        vibrant: 'Vibrant style should use confident color and energy without sacrificing text clarity.',
+        watercolor: 'Watercolor style should look hand-painted with soft edges and controlled contrast behind text.',
+        '3d-render': '3D render style should use coherent materials and lighting; avoid toy-like clutter unless the selected sub-style requires it.',
+        cinematic: 'Cinematic style should prioritize depth, lighting, and dramatic composition while keeping card text legible.',
+        illustration: 'Illustration style should use a unified drawing language and avoid mixing photo-real objects with flat cartoons.',
+        papercraft: 'Papercraft style should show layered paper construction, clean edges, and crafted depth.'
+    };
+
+    return [
+        `STYLE FIDELITY: Follow the selected art style exactly: ${state.style} (${effectiveSubStyle || 'auto'}).`,
+        densityGuidance[state.style] || 'Keep the visual language consistent with the selected style and sub-style.',
+        `DETAIL LEVEL: ${detailLevel}/10. Use this as composition density, not as permission to clutter the card.`,
+        `COLOR INTENSITY: ${colorLevel}/10. Use this as saturation/contrast guidance, not as a reason to overpower the text.`,
+        paletteInstruction,
+        'QUALITY CONTROL: Never return a plain solid color, blank placeholder, corrupted text, or non-card image. The output must look like a finished vertical greeting card.'
+    ].join('\n');
 }
 
 function getShareUrl() {
@@ -1813,9 +1895,9 @@ async function generate() {
 
     const elemInstruction = selectedElements 
         ? `CRITICAL REQUIREMENT: You MUST clearly and prominently INCLUDE THESE SPECIFIC ELEMENTS in the image: ${selectedElements}.` 
-        : '';
+        : `Use occasion-appropriate visual elements naturally. Do not over-pack the card; leave a clean readable area for the greeting and name.`;
         
-    const negativeInstruction = unselectedElements
+    const negativeInstruction = selectedElements && unselectedElements
         ? `CRITICAL REQUIREMENT: You MUST NOT INCLUDE any of the following elements under any circumstances (ignore them even if the occasion usually has them): ${unselectedElements}.`
         : '';
 
@@ -1830,14 +1912,8 @@ async function generate() {
         ? `Write the secondary line "${state.nameSubtitle}" directly under the name, smaller than the name, clear and readable.`
         : '';
     const namePosInstruction = `Write the name "${state.name}" only once ${posMap[state.namePosition] || 'at the bottom'}. ${subtitleInstruction}`;
-    
-    let textStyleInstruction = '';
-    if (state.tashkeel || state.zakhrafa) {
-        textStyleInstruction = `CRITICAL TEXT STYLE: The Arabic text must be `;
-        if (state.tashkeel) textStyleInstruction += `fully vocalized with precise Arabic diacritics (Tashkeel) `;
-        if (state.tashkeel && state.zakhrafa) textStyleInstruction += `and `;
-        if (state.zakhrafa) textStyleInstruction += `written in a highly decorative, ornate calligraphy style (Zakhrafa).`;
-    }
+    const textStyleInstruction = buildTextPrecisionInstruction(langLabel);
+    const styleFidelityInstruction = buildStyleFidelityInstruction(effectiveSubStyle);
 
     let autoCorrections = "";
     try {
@@ -1858,9 +1934,10 @@ ${negativeInstruction}
 
 Instructions: ${state.instructions || 'None'}.
 TEXT TO RENDER ON THE CARD: "${state.greeting}". ${namePosInstruction}
-IMPORTANT: Do NOT duplicate any text. Each text element must appear exactly once.
-Ensure ${langLabel} text is clear, artistic, and properly connected.
-${textStyleInstruction}${autoCorrections}`;
+${textStyleInstruction}
+
+${styleFidelityInstruction}
+${autoCorrections}`;
 
     function showImage(base64, mimeType) {
         const src = `data:${mimeType};base64,${base64}`;

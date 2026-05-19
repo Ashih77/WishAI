@@ -44,12 +44,32 @@ function compactMetadata(metadata = {}) {
     };
 }
 
+function jsonResponse(body, status, headers) {
+    return new Response(JSON.stringify(body), { status, headers });
+}
+
+function normalizeRating(value) {
+    const rating = Number(value);
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) return null;
+    return rating;
+}
+
+function normalizeChips(chips) {
+    if (!Array.isArray(chips)) return [];
+    return chips
+        .map(item => String(item || '').trim())
+        .filter(Boolean)
+        .slice(0, 8);
+}
+
 export default async (req, context) => {
     // CORS Headers
     const headers = new Headers({
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store'
     });
 
     if (req.method === 'OPTIONS') {
@@ -58,48 +78,46 @@ export default async (req, context) => {
 
     try {
         if (req.method !== 'POST') {
-            return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { status: 405, headers });
+            return jsonResponse({ ok: false, error: 'Method Not Allowed' }, 405, headers);
         }
 
         const body = await req.json();
         const { fileKey, rating, feedback, chips } = body;
+        const normalizedRating = normalizeRating(rating);
         
-        if (!fileKey || !rating) {
-            return new Response(JSON.stringify({ error: 'Missing fileKey or rating' }), { status: 400, headers });
+        if (!fileKey || !normalizedRating) {
+            return jsonResponse({ ok: false, error: 'Missing fileKey or rating' }, 400, headers);
         }
 
         // Connect to the global store "wishai_generations"
         const store = getStore("wishai_generations", { consistency: "strong" });
 
         // Fetch the existing metadata
-        const metadataResponse = await store.getMetadata(fileKey);
+        const metadataResponse = await store.getMetadata(fileKey).catch(() => null);
+        const imageData = await store.get(fileKey, { type: 'text' }).catch(() => null);
         
-        if (!metadataResponse) {
-             return new Response(JSON.stringify({ error: 'Image not found in cloud' }), { status: 404, headers });
+        if (!metadataResponse || !imageData) {
+            return jsonResponse({ ok: false, error: 'Image not found in cloud' }, 404, headers);
         }
 
         const metadata = compactMetadata(metadataResponse.metadata || {});
 
         // Add the new rating data
-        metadata.rating = rating;
-        metadata.feedback = feedback || '';
+        metadata.rating = normalizedRating;
+        metadata.feedback = String(feedback || '').slice(0, 1000);
         metadata.rated_at = new Date().toISOString();
-        if (chips && Array.isArray(chips)) {
-            metadata.chips = chips;
-        }
+        metadata.chips = normalizeChips(chips);
 
         // Update the blob's metadata
-        const imageBlob = await store.get(fileKey, { type: 'text' });
-        
-        await store.set(fileKey, imageBlob, { metadata });
+        await store.set(fileKey, imageData, { metadata });
 
         console.log(`[WishAI-Cloud] Successfully saved rating for: ${fileKey}`);
 
-        return new Response(JSON.stringify({ ok: true }), { status: 200, headers });
+        return jsonResponse({ ok: true }, 200, headers);
 
     } catch (err) {
         console.error('Error saving rating:', err);
-        return new Response(JSON.stringify({ ok: false, error: err.message }), { status: 500, headers });
+        return jsonResponse({ ok: false, error: err.message }, 500, headers);
     }
 };
 

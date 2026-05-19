@@ -83,8 +83,9 @@ function compactMetadata(metadata = {}) {
 
 async function saveEvaluation(fileKey, aiResult) {
     const store = getStore("wishai_generations", { consistency: "strong" });
-    const existingMeta = await store.getMetadata(fileKey);
-    if (!existingMeta) throw new Error('IMAGE_NOT_FOUND');
+    const existingMeta = await store.getMetadata(fileKey).catch(() => null);
+    const imageData = await store.get(fileKey, { type: 'text' }).catch(() => null);
+    if (!existingMeta || !imageData) throw new Error('IMAGE_NOT_FOUND');
 
     const metadata = compactMetadata(existingMeta.metadata || {});
     metadata.ai_score = aiResult.score;
@@ -95,8 +96,7 @@ async function saveEvaluation(fileKey, aiResult) {
     metadata.ai_evaluation_status = 'complete';
     metadata.ai_evaluation_error = '';
 
-    const imageBlob = await store.get(fileKey, { type: 'text' });
-    await store.set(fileKey, imageBlob, { metadata });
+    await store.set(fileKey, imageData, { metadata });
 }
 
 async function saveEvaluationFailure(fileKey, error) {
@@ -104,16 +104,16 @@ async function saveEvaluationFailure(fileKey, error) {
 
     try {
         const store = getStore("wishai_generations", { consistency: "strong" });
-        const existingMeta = await store.getMetadata(fileKey);
-        if (!existingMeta) return;
+        const existingMeta = await store.getMetadata(fileKey).catch(() => null);
+        const imageData = await store.get(fileKey, { type: 'text' }).catch(() => null);
+        if (!existingMeta || !imageData) return;
 
         const metadata = compactMetadata(existingMeta.metadata || {});
         metadata.ai_evaluation_status = 'failed';
         metadata.ai_evaluation_error = String(error?.message || error || 'AI_EVALUATION_FAILED');
         metadata.ai_evaluated_at = new Date().toISOString();
 
-        const imageBlob = await store.get(fileKey, { type: 'text' });
-        await store.set(fileKey, imageBlob, { metadata });
+        await store.set(fileKey, imageData, { metadata });
     } catch (saveErr) {
         console.error('Error saving evaluation failure status:', saveErr);
     }

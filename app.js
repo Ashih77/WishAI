@@ -410,6 +410,7 @@ let userOpenedAdvancedOptions = false;
 let applyingRecommendedArtStyle = false;
 const ANALYTICS_KEY = 'wishai_analytics';
 const PENDING_SAVES_KEY = 'wishai_pending_cloud_saves';
+const PENDING_RATINGS_KEY = 'wishai_pending_ratings';
 
 // 🔒 Security Update: API Key moved to Netlify environment variables
 const API_BASE = '/api/gemini'; 
@@ -603,8 +604,8 @@ function init() {
     bindEvents();
     updateText();
     checkAuth();
-    flushPendingCloudSaves();
-    window.addEventListener('online', flushPendingCloudSaves);
+    flushPendingWork();
+    window.addEventListener('online', flushPendingWork);
 }
 
 function readJsonStorage(key, fallback) {
@@ -623,6 +624,16 @@ function queuePendingCloudSave(payload) {
     const queue = readJsonStorage(PENDING_SAVES_KEY, []);
     queue.push({ ...payload, queuedAt: new Date().toISOString() });
     localStorage.setItem(PENDING_SAVES_KEY, JSON.stringify(queue));
+}
+
+function queuePendingRating(payload) {
+    const queue = readJsonStorage(PENDING_RATINGS_KEY, []);
+    const ratingKey = `${payload.fileKey}:${payload.rating}:${payload.feedback || ''}:${(payload.chips || []).join(',')}`;
+    const exists = queue.some(item => item.ratingKey === ratingKey);
+    if (!exists) {
+        queue.push({ ...payload, ratingKey, queuedAt: new Date().toISOString() });
+        localStorage.setItem(PENDING_RATINGS_KEY, JSON.stringify(queue));
+    }
 }
 
 function getUserAnalyticsPayload(eventType) {
@@ -704,6 +715,60 @@ async function flushPendingCloudSaves() {
         }
     }
     localStorage.setItem(PENDING_SAVES_KEY, JSON.stringify(remaining));
+}
+
+function shouldRetryRatingSave(err) {
+    return [404, 409, 425, 429, 500, 502, 503, 504].includes(err?.status);
+}
+
+async function postRatingPayload(payload, options = {}) {
+    const attempts = options.attempts || 3;
+    let lastError = null;
+
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+        try {
+            const res = await fetch('/api/save-rating', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await readApiJson(res);
+            if (res.ok && data.ok !== false) return data;
+
+            const err = new Error(data.error || `RATING_SAVE_FAILED_HTTP_${res.status}`);
+            err.status = res.status;
+            throw err;
+        } catch (err) {
+            lastError = err;
+            if (attempt >= attempts || !shouldRetryRatingSave(err)) break;
+            await sleep(500 * attempt);
+        }
+    }
+
+    throw lastError || new Error('RATING_SAVE_FAILED');
+}
+
+async function flushPendingRatings() {
+    const queue = readJsonStorage(PENDING_RATINGS_KEY, []);
+    if (!queue.length) return;
+
+    const remaining = [];
+    for (const item of queue) {
+        const { ratingKey, queuedAt, ...payload } = item;
+        try {
+            await postRatingPayload(payload, { attempts: 1 });
+            trackAnalytics('rating_retried_success', { fileKey: payload.fileKey, rating: payload.rating, queuedAt });
+        } catch (err) {
+            remaining.push(item);
+        }
+    }
+
+    localStorage.setItem(PENDING_RATINGS_KEY, JSON.stringify(remaining));
+}
+
+function flushPendingWork() {
+    flushPendingCloudSaves();
+    flushPendingRatings();
 }
 
 function initTheme() {
@@ -1380,6 +1445,31 @@ function bindEvents() {
     const submitRatingBtn = document.getElementById('submit-rating-btn');
     const feedbackChips = document.querySelectorAll('.feedback-chip');
     const chipContainer = document.getElementById('quick-feedback-container');
+    const ratingThanks = document.getElementById('rating-thanks');
+    const ratingFeedback = document.getElementById('rating-feedback');
+    const ratingStars = document.getElementById('rating-stars');
+
+    function getRatingThanksMessage(status = 'sent') {
+        if (status === 'queued') {
+            return state.lang === 'ar'
+                ? 'تم حفظ تقييمك وسيتم إرساله تلقائياً عند استقرار الاتصال.'
+                : 'Your rating was saved and will be sent automatically when the connection is stable.';
+        }
+        return state.lang === 'ar'
+            ? 'شكرًا لمشاركتك! أرسلنا رأيك للتحسين.'
+            : 'Thanks for sharing. Your feedback was sent for improvement.';
+    }
+
+    function completeRatingSubmission(status = 'sent') {
+        if (ratingThanks) {
+            ratingThanks.textContent = getRatingThanksMessage(status);
+            ratingThanks.classList.remove('hidden');
+        }
+        submitRatingBtn.classList.add('hidden');
+        if (chipContainer) chipContainer.classList.add('hidden');
+        if (ratingFeedback) ratingFeedback.classList.add('hidden');
+        if (ratingStars) ratingStars.style.pointerEvents = 'none';
+    }
     
     window.resetStars = function() { // Expose globally for restart-btn
         currentRating = 0;
@@ -1389,10 +1479,15 @@ function bindEvents() {
         if(chipContainer) chipContainer.classList.add('hidden');
         submitRatingBtn.disabled = true;
         submitRatingBtn.classList.remove('hidden');
-        document.getElementById('rating-feedback').classList.remove('hidden');
-        document.getElementById('rating-stars').style.pointerEvents = 'auto';
-        document.getElementById('rating-thanks').classList.add('hidden');
-        document.getElementById('rating-feedback').value = '';
+        if (ratingFeedback) {
+            ratingFeedback.classList.remove('hidden');
+            ratingFeedback.value = '';
+        }
+        if (ratingStars) ratingStars.style.pointerEvents = 'auto';
+        if (ratingThanks) {
+            ratingThanks.textContent = getRatingThanksMessage();
+            ratingThanks.classList.add('hidden');
+        }
     }
 
     feedbackChips.forEach(chip => {
@@ -1450,31 +1545,28 @@ function bindEvents() {
         if (!state.currentFileKey || currentRating === 0) return;
         
         submitRatingBtn.disabled = true;
-        const feedback = document.getElementById('rating-feedback').value.trim();
+        const feedback = ratingFeedback?.value.trim() || '';
+        const ratingPayload = {
+            fileKey: state.currentFileKey,
+            rating: currentRating,
+            feedback,
+            chips: [...selectedChips]
+        };
         
         try {
-            const res = await fetch('/api/save-rating', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    fileKey: state.currentFileKey, 
-                    rating: currentRating,
-                    feedback,
-                    chips: selectedChips
-                })
-            });
-            
-            if (!res.ok) throw new Error("فشل حفظ التقييم في الخادم");
-            
-            document.getElementById('rating-thanks').classList.remove('hidden');
-            submitRatingBtn.classList.add('hidden');
-            if(chipContainer) chipContainer.classList.add('hidden');
-            document.getElementById('rating-feedback').classList.add('hidden');
-            document.getElementById('rating-stars').style.pointerEvents = 'none';
+            await postRatingPayload(ratingPayload);
+            trackAnalytics('rating_save_success', { fileKey: ratingPayload.fileKey, rating: ratingPayload.rating });
+            completeRatingSubmission();
         } catch (err) {
             console.error('Failed to submit rating', err);
-            alert("عذراً، حدث خطأ أثناء إرسال التقييم. حاول مرة أخرى.");
-            submitRatingBtn.disabled = false;
+            queuePendingRating(ratingPayload);
+            trackAnalytics('rating_save_queued', {
+                fileKey: ratingPayload.fileKey,
+                rating: ratingPayload.rating,
+                reason: err?.message || 'unknown'
+            });
+            completeRatingSubmission('queued');
+            flushPendingRatings();
         }
     };
 }

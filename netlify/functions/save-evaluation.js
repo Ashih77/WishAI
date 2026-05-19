@@ -40,7 +40,9 @@ export default async (req, context) => {
     const headers = new Headers({
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store'
     });
 
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers });
@@ -54,9 +56,10 @@ export default async (req, context) => {
         if (!fileKey || !aiResult) return new Response(JSON.stringify({ error: 'Missing fileKey or aiResult' }), { status: 400, headers });
 
         const store = getStore("wishai_generations", { consistency: "strong" });
-        const existingMeta = await store.getMetadata(fileKey);
+        const existingMeta = await store.getMetadata(fileKey).catch(() => null);
+        const imageData = await store.get(fileKey, { type: 'text' }).catch(() => null);
         
-        if (!existingMeta) return new Response(JSON.stringify({ error: 'Image not found' }), { status: 404, headers });
+        if (!existingMeta || !imageData) return new Response(JSON.stringify({ error: 'Image not found' }), { status: 404, headers });
 
         const metadata = compactMetadata(existingMeta.metadata || {});
 
@@ -70,8 +73,7 @@ export default async (req, context) => {
         metadata.ai_evaluation_status = 'complete';
         metadata.ai_evaluated_at = new Date().toISOString();
 
-        const imageBlob = await store.get(fileKey, { type: 'text' });
-        await store.set(fileKey, imageBlob, { metadata });
+        await store.set(fileKey, imageData, { metadata });
 
         console.log(`[WishAI] Saved AI evaluation for ${fileKey} with score ${metadata.ai_score}`);
         return new Response(JSON.stringify({ ok: true }), { status: 200, headers });

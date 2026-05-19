@@ -14,7 +14,7 @@ const translations = {
         'loading-suggestions': 'جاري التفكير...',
         'custom-instructions': 'إضافات خاصة (اختياري):',
         'optional-placeholder': 'مثال: أضف زهور الياسمين، اجعل اللون الفيروزي هو الغالب...',
-        'customize-design': 'تخصيص متقدم اختياري',
+        'customize-design': 'تخصيص متقدم',
         'art-style': 'نمط الفن:',
         'style': 'نمط الفن:',
         'detail-level': 'مستوى التفاصيل:',
@@ -92,7 +92,7 @@ const translations = {
         'loading-suggestions': 'Thinking...',
         'custom-instructions': 'Special Instructions (Optional):',
         'optional-placeholder': 'e.g., add jasmine flowers, dominant turquoise color...',
-        'customize-design': 'Optional Advanced Options',
+        'customize-design': 'Advanced Customization',
         'art-style': 'Art Style:',
         'style': 'Art Style:',
         'detail-level': 'Detail Level:',
@@ -908,6 +908,7 @@ function updateUserInfo() {
     } else {
         userInfo.classList.add('hidden');
     }
+    updateAdvancedAccess();
 }
 
 function logout() {
@@ -1153,6 +1154,23 @@ function completeLogin(userData) {
     }
 }
 
+function updateAdvancedAccess() {
+    const toggle = document.getElementById('advanced-toggle');
+    const button = document.getElementById('toggle-advanced-btn');
+    const panel = document.getElementById('advanced-panel');
+    if (!toggle || !button || !panel) return;
+
+    const isAvailable = !!state.isLoggedIn;
+    toggle.classList.toggle('advanced-locked', !isAvailable);
+    button.setAttribute('aria-disabled', isAvailable ? 'false' : 'true');
+
+    if (!isAvailable) {
+        panel.classList.remove('open');
+        const icon = document.querySelector('#advanced-toggle .toggle-icon');
+        if (icon) icon.style.transform = 'rotate(0deg)';
+    }
+}
+
 // Handle message from auth popup (Simulation handle)
 window.addEventListener('message', (event) => {
     if (event.origin !== window.location.origin && window.location.origin !== 'null' && event.origin !== 'null') return;
@@ -1216,6 +1234,11 @@ function bindEvents() {
     });
 
     document.getElementById('advanced-toggle').onclick = () => {
+        if (!state.isLoggedIn) {
+            updateAdvancedAccess();
+            go(0);
+            return;
+        }
         const panel = document.getElementById('advanced-panel');
         const icon = document.querySelector('#advanced-toggle .toggle-icon');
         panel.classList.toggle('open');
@@ -1696,6 +1719,7 @@ function updateText() {
     document.getElementById('user-name').placeholder = state.lang === 'ar' ? 'ما هو اسمك؟' : 'What is your name?';
     document.getElementById('name-subtitle').placeholder = state.lang === 'ar' ? 'مثال: من القلب، عائلتك، فريق العمل...' : 'Example: With love, your family, the team...';
     updateThemeToggleText();
+    updateAdvancedAccess();
     renderImageModelChoices();
     updatePreview();
 }
@@ -2257,7 +2281,7 @@ function remixCard(id) {
     
     // Open advanced panel to show restored settings
     const panel = document.getElementById('advanced-panel');
-    if (!panel.classList.contains('open')) {
+    if (state.isLoggedIn && !panel.classList.contains('open')) {
         document.getElementById('advanced-toggle').click();
     }
 }

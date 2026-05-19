@@ -831,6 +831,25 @@ textarea {
     transition: 0.3s var(--ease);
 }
 
+.pro-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 20px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.advanced-toggle.advanced-locked .toggle-btn {
+    opacity: 0.58;
+}
+
 .toggle-btn.open .toggle-icon {
     animation: gear-spin 0.5s var(--ease);
 }

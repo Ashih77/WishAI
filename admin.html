@@ -76,6 +76,35 @@
             cursor: pointer; font-family: inherit; transition: 0.2s ease;
         }
         button:hover { transform: translateY(-1px); filter: brightness(1.02); }
+        .remember-pass-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin: 0 0 12px;
+            padding: 11px 14px;
+            background: var(--bg-panel);
+            color: var(--text);
+            border: 1px solid var(--border);
+            box-shadow: none;
+        }
+        .remember-pass-toggle[aria-pressed="true"] {
+            background: var(--soft);
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+        .remember-pass-toggle .remember-check {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            line-height: 1;
+        }
         .grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 1.25rem; margin-top: 1.5rem;
@@ -342,6 +371,10 @@
         <div id="login-view" class="login-box">
             <p>الرجاء إدخال كلمة مرور الإدارة لعرض الصور المولدة من قبل المستخدمين</p>
             <input type="password" id="admin-pass" placeholder="كلمة المرور...">
+            <button id="remember-admin-pass" class="remember-pass-toggle" type="button" aria-pressed="false">
+                <span class="remember-check" aria-hidden="true"></span>
+                <span>تذكر كلمة السر على هذا الجهاز</span>
+            </button>
             <button id="login-btn">دخول</button>
             <p id="error-msg" style="color: #ef4444; margin-top: 10px;" class="hidden">كلمة المرور غير صحيحة.</p>
         </div>
@@ -524,11 +557,14 @@
         let autoEvaluationRunning = false;
         const autoEvaluationAttemptedKeys = new Set();
         const ADMIN_SESSION_PASS_KEY = 'wishai_admin_session_pass';
+        const ADMIN_REMEMBER_PASS_KEY = 'wishai_admin_remember_pass';
         const LIVE_API_ORIGIN = 'https://enchanting-alpaca-d659e5.netlify.app';
         const loginBtn = document.getElementById('login-btn');
         const passInput = document.getElementById('admin-pass');
         const errorMsg = document.getElementById('error-msg');
         const themeToggle = document.getElementById('admin-theme-toggle');
+        const rememberPassBtn = document.getElementById('remember-admin-pass');
+        let rememberAdminPass = false;
 
         function getApiOrigin() {
             return window.location.protocol === 'file:' ? LIVE_API_ORIGIN : window.location.origin;
@@ -562,7 +598,31 @@
             return data;
         }
 
+        function setRememberAdminPass(value) {
+            rememberAdminPass = !!value;
+            if (!rememberPassBtn) return;
+            rememberPassBtn.setAttribute('aria-pressed', rememberAdminPass ? 'true' : 'false');
+            rememberPassBtn.querySelector('.remember-check').textContent = rememberAdminPass ? '✓' : '';
+        }
+
         function getStoredAdminPass() {
+            let remembered = false;
+            try {
+                remembered = localStorage.getItem(ADMIN_REMEMBER_PASS_KEY) === 'true';
+            } catch {
+                remembered = false;
+            }
+
+            setRememberAdminPass(remembered);
+
+            if (remembered) {
+                try {
+                    return localStorage.getItem(ADMIN_SESSION_PASS_KEY) || '';
+                } catch {
+                    return '';
+                }
+            }
+
             try {
                 return sessionStorage.getItem(ADMIN_SESSION_PASS_KEY) || '';
             } catch {
@@ -570,11 +630,23 @@
             }
         }
 
-        function storeAdminPass(pass) {
+        function storeAdminPass(pass, remember = false) {
             try {
                 sessionStorage.setItem(ADMIN_SESSION_PASS_KEY, pass);
             } catch {
                 // Session storage can be unavailable in some privacy modes.
+            }
+
+            try {
+                if (remember) {
+                    localStorage.setItem(ADMIN_SESSION_PASS_KEY, pass);
+                    localStorage.setItem(ADMIN_REMEMBER_PASS_KEY, 'true');
+                    return;
+                }
+                localStorage.removeItem(ADMIN_SESSION_PASS_KEY);
+                localStorage.removeItem(ADMIN_REMEMBER_PASS_KEY);
+            } catch {
+                // Local storage can be unavailable in some privacy modes.
             }
         }
 
@@ -584,6 +656,15 @@
             } catch {
                 // Ignore storage failures; the login form remains usable.
             }
+
+            try {
+                localStorage.removeItem(ADMIN_SESSION_PASS_KEY);
+                localStorage.removeItem(ADMIN_REMEMBER_PASS_KEY);
+            } catch {
+                // Ignore storage failures; the login form remains usable.
+            }
+
+            setRememberAdminPass(false);
         }
 
         function escapeHtml(value = '') {
@@ -614,6 +695,7 @@
             };
         });
         document.getElementById('save-model-settings-btn').onclick = saveAppSettings;
+        rememberPassBtn.onclick = () => setRememberAdminPass(!rememberAdminPass);
         
         async function loadAdminDashboard(pass, options = {}) {
             if (!pass) return;
@@ -630,7 +712,7 @@
 
                 document.getElementById('export-btn').classList.remove('hidden');
                 renderDashboard(globalItems, pass);
-                if (options.persistSession) storeAdminPass(pass);
+                if (options.persistSession) storeAdminPass(pass, rememberAdminPass);
                 
                 // Fetch secondary dashboard data concurrently
                 fetchAdminCycles(pass);

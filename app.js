@@ -1327,18 +1327,34 @@ function completeLogin(userData) {
     }
 }
 
+function canUseAdvancedCustomization() {
+    const email = (state.user?.email || '').trim();
+    return !!state.isLoggedIn
+        && state.user?.provider === 'google'
+        && !!email
+        && !email.endsWith('@wishai.demo');
+}
+
+function getAdvancedAccessMessage() {
+    return state.lang === 'ar'
+        ? 'التخصيص المتقدم Pro متاح فقط عند تسجيل الدخول بحساب Google.'
+        : 'Advanced Customization Pro is available only when signed in with a Google account.';
+}
+
 function updateAdvancedAccess() {
     const toggle = document.getElementById('advanced-toggle');
     const button = document.getElementById('toggle-advanced-btn');
     const panel = document.getElementById('advanced-panel');
     if (!toggle || !button || !panel) return;
 
-    const isAvailable = !!state.isLoggedIn;
+    const isAvailable = canUseAdvancedCustomization();
     toggle.classList.toggle('advanced-locked', !isAvailable);
     button.setAttribute('aria-disabled', isAvailable ? 'false' : 'true');
+    button.title = isAvailable ? '' : getAdvancedAccessMessage();
 
     if (!isAvailable) {
         panel.classList.remove('open');
+        userOpenedAdvancedOptions = false;
         const icon = document.querySelector('#advanced-toggle .toggle-icon');
         if (icon) icon.style.transform = 'rotate(0deg)';
     }
@@ -1407,9 +1423,12 @@ function bindEvents() {
     });
 
     document.getElementById('advanced-toggle').onclick = () => {
-        if (!state.isLoggedIn) {
+        if (!canUseAdvancedCustomization()) {
             updateAdvancedAccess();
-            go(0);
+            alert(getAdvancedAccessMessage());
+            if (!state.isLoggedIn) {
+                go(0);
+            }
             return;
         }
         const panel = document.getElementById('advanced-panel');
@@ -2434,7 +2453,7 @@ function remixCard(id) {
     
     // Open advanced panel to show restored settings
     const panel = document.getElementById('advanced-panel');
-    if (state.isLoggedIn && !panel.classList.contains('open')) {
+    if (canUseAdvancedCustomization() && !panel.classList.contains('open')) {
         document.getElementById('advanced-toggle').click();
     }
 }

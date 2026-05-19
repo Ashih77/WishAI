@@ -10,6 +10,99 @@ function parseJsonText(value) {
     return JSON.parse(clean);
 }
 
+const BLOB_METADATA_MAX_BYTES = 1800;
+
+function truncateText(value, maxLength) {
+    const text = String(value || '').trim();
+    if (text.length <= maxLength) return text;
+    return `${text.slice(0, Math.max(0, maxLength - 1)).trim()}…`;
+}
+
+function metadataByteLength(metadata) {
+    return Buffer.byteLength(JSON.stringify(metadata), 'utf8');
+}
+
+function fitMetadataForBlob(metadata) {
+    const fitted = JSON.parse(JSON.stringify(metadata || {}));
+
+    const truncations = [
+        ['instructions', 180],
+        ['feedback', 140],
+        ['ai_summary', 220],
+        ['ai_evaluation_error', 160],
+        ['greeting', 160],
+        ['nameSubtitle', 60],
+        ['cycleLabel', 60],
+        ['subStyle', 40],
+        ['effectiveSubStyle', 40]
+    ];
+
+    truncations.forEach(([key, maxLength]) => {
+        if (fitted[key] !== undefined) fitted[key] = truncateText(fitted[key], maxLength);
+    });
+
+    if (Array.isArray(fitted.ai_advice)) {
+        fitted.ai_advice = fitted.ai_advice.map(item => truncateText(item, 90)).slice(0, 3);
+    }
+
+    if (Array.isArray(fitted.chips)) fitted.chips = fitted.chips.slice(0, 5);
+    if (Array.isArray(fitted.contentElements)) fitted.contentElements = fitted.contentElements.slice(0, 5);
+
+    const optionalKeys = [
+        'feedback',
+        'chips',
+        'contentElements',
+        'cycleLabel',
+        'nameSubtitle',
+        'instructions',
+        'ai_evaluation_error',
+        'effectiveSubStyle',
+        'subStyle',
+        'palette',
+        'colorIntensity',
+        'details',
+        'namePosition'
+    ];
+
+    if (fitted.user && metadataByteLength(fitted) > BLOB_METADATA_MAX_BYTES) {
+        fitted.user = {
+            name: truncateText(fitted.user.name, 40),
+            email: truncateText(fitted.user.email, 80)
+        };
+    }
+
+    while (metadataByteLength(fitted) > BLOB_METADATA_MAX_BYTES && optionalKeys.length) {
+        delete fitted[optionalKeys.shift()];
+    }
+
+    if (metadataByteLength(fitted) > BLOB_METADATA_MAX_BYTES) {
+        fitted.ai_summary = truncateText(fitted.ai_summary, 120);
+        fitted.ai_advice = Array.isArray(fitted.ai_advice) ? fitted.ai_advice.slice(0, 1) : [];
+        fitted.greeting = truncateText(fitted.greeting, 100);
+        fitted.name = truncateText(fitted.name, 40);
+    }
+
+    if (metadataByteLength(fitted) <= BLOB_METADATA_MAX_BYTES) return fitted;
+
+    return {
+        timestamp: fitted.timestamp || Date.now(),
+        name: truncateText(fitted.name, 40),
+        occasion: truncateText(fitted.occasion, 40),
+        greeting: truncateText(fitted.greeting, 80),
+        imageModel: truncateText(fitted.imageModel || fitted.settings?.imageModel || 'nano-banana-2', 40),
+        settings: {
+            imageModel: truncateText(fitted.settings?.imageModel || fitted.imageModel || 'nano-banana-2', 40)
+        },
+        rating: fitted.rating,
+        ai_score: fitted.ai_score,
+        ai_adherence: fitted.ai_adherence,
+        ai_summary: truncateText(fitted.ai_summary, 100),
+        ai_advice: Array.isArray(fitted.ai_advice) ? fitted.ai_advice.slice(0, 1).map(item => truncateText(item, 80)) : [],
+        ai_evaluated_at: fitted.ai_evaluated_at,
+        ai_evaluation_status: fitted.ai_evaluation_status || 'complete'
+    };
+}
+
 async function imageToInlineData(image) {
     if (!image) throw new Error('IMAGE_MISSING');
 
@@ -36,8 +129,8 @@ function normalizeAiResult(result) {
     return {
         score,
         adherence: Boolean(result.adherence),
-        summary: String(result.summary || result.ai_summary || ''),
-        advice: advice.map(item => String(item)).slice(0, 5)
+        summary: truncateText(result.summary || result.ai_summary || '', 240),
+        advice: advice.map(item => truncateText(item, 100)).slice(0, 3)
     };
 }
 
@@ -96,7 +189,7 @@ async function saveEvaluation(fileKey, aiResult) {
     metadata.ai_evaluation_status = 'complete';
     metadata.ai_evaluation_error = '';
 
-    await store.set(fileKey, imageData, { metadata });
+    await store.set(fileKey, imageData, { metadata: fitMetadataForBlob(metadata) });
 }
 
 async function saveEvaluationFailure(fileKey, error) {
@@ -110,10 +203,10 @@ async function saveEvaluationFailure(fileKey, error) {
 
         const metadata = compactMetadata(existingMeta.metadata || {});
         metadata.ai_evaluation_status = 'failed';
-        metadata.ai_evaluation_error = String(error?.message || error || 'AI_EVALUATION_FAILED');
+        metadata.ai_evaluation_error = truncateText(error?.message || error || 'AI_EVALUATION_FAILED', 180);
         metadata.ai_evaluated_at = new Date().toISOString();
 
-        await store.set(fileKey, imageData, { metadata });
+        await store.set(fileKey, imageData, { metadata: fitMetadataForBlob(metadata) });
     } catch (saveErr) {
         console.error('Error saving evaluation failure status:', saveErr);
     }

@@ -44,7 +44,7 @@ const translations = {
         'create-new': 'تصميم جديد',
         'logout': 'تسجيل الخروج',
         'generating': 'جاري توليد البطاقة...',
-        'ramadan': 'رمضان', 'eid_fitr': 'عيد الفطر', 'eid_adha': 'عيد الأضحى', 'birthday': 'ميلاد', 'wedding': 'زواج',
+        'ramadan': 'رمضان', 'eid_fitr': 'عيد الفطر', 'eid_adha': 'عيد الأضحى', 'friday': 'يوم الجمعة', 'birthday': 'ميلاد', 'wedding': 'زواج',
         'graduation': 'تخرج', 'success': 'نجاح', 'newborn': 'مولود جديد', 'love': 'حب',
         'friendship': 'صداقة', 'daily': 'تحية يومية', 'newyear': 'سنة جديدة', 'thankyou': 'شكر',
         'btn-guest': 'المتابعة كزائر',
@@ -122,7 +122,7 @@ const translations = {
         'create-new': 'New Design',
         'logout': 'Logout',
         'generating': 'Generating your card...',
-        'ramadan': 'Ramadan', 'eid_fitr': 'Eid Al-Fitr', 'eid_adha': 'Eid Al-Adha', 'birthday': 'Birthday', 'wedding': 'Wedding',
+        'ramadan': 'Ramadan', 'eid_fitr': 'Eid Al-Fitr', 'eid_adha': 'Eid Al-Adha', 'friday': 'Friday', 'birthday': 'Birthday', 'wedding': 'Wedding',
         'graduation': 'Graduation', 'success': 'Success', 'newborn': 'Newborn', 'love': 'Love',
         'friendship': 'Friendship', 'daily': 'Daily Greeting', 'newyear': 'New Year', 'thankyou': 'Thank You',
         'btn-guest': 'Continue as Guest',
@@ -172,6 +172,11 @@ const occasions = [
         id: 'eid_adha', icon: '🕋', nameAr: 'عيد الأضحى', nameEn: 'Eid Al-Adha',
         descAr: 'أجواء عيد الأضحى المبارك، تكبيرات العيد، رموز الحج والكعبة، ضيافة عربية، تمر وقهوة، وفرحة اجتماع العائلة.',
         descEn: 'Eid Al-Adha atmosphere, Eid takbeer, Hajj and Kaaba-inspired symbols, Arabic hospitality, dates and coffee, and family gathering joy.'
+    },
+    {
+        id: 'friday', icon: '🕌', nameAr: 'يوم الجمعة', nameEn: 'Friday',
+        descAr: 'أجواء يوم الجمعة المبارك، نور هادئ، دعاء وسكينة، زخارف إسلامية راقية، ومشهد روحاني مريح.',
+        descEn: 'Blessed Friday atmosphere, gentle light, prayers and serenity, refined Islamic patterns, and a peaceful spiritual scene.'
     },
     {
         id: 'birthday', icon: '🎂', nameAr: 'ميلاد', nameEn: 'Birthday',
@@ -237,13 +242,13 @@ function getOccasionById(id) {
 
 const greetings = {
     ar: {
-        ramadan: 'رمضان كريم', eid_fitr: 'عيد فطر مبارك', eid_adha: 'عيد أضحى مبارك', birthday: 'عيد ميلاد سعيد',
+        ramadan: 'رمضان كريم', eid_fitr: 'عيد فطر مبارك', eid_adha: 'عيد أضحى مبارك', friday: 'جمعة مباركة', birthday: 'عيد ميلاد سعيد',
         wedding: 'زواج مبارك', graduation: 'مبارك التخرج', success: 'مبارك النجاح',
         newborn: 'مبارك المولود', love: 'أحبك', friendship: 'صديقي الغالي',
         daily: 'يوم سعيد', newyear: 'سنة سعيدة', thankyou: 'شكراً لك'
     },
     en: {
-        ramadan: 'Ramadan Kareem', eid_fitr: 'Eid Al-Fitr Mubarak', eid_adha: 'Eid Al-Adha Mubarak', birthday: 'Happy Birthday',
+        ramadan: 'Ramadan Kareem', eid_fitr: 'Eid Al-Fitr Mubarak', eid_adha: 'Eid Al-Adha Mubarak', friday: 'Blessed Friday', birthday: 'Happy Birthday',
         wedding: 'Happy Wedding', graduation: 'Happy Graduation', success: 'Congratulations',
         newborn: 'Welcome Baby', love: 'I Love You', friendship: 'Best Friends Forever',
         daily: 'Have a Great Day', newyear: 'Happy New Year', thankyou: 'Thank You'
@@ -265,6 +270,7 @@ const OCCASION_RECOMMENDED_STYLES = {
     ramadan: 'traditional',
     eid_fitr: 'traditional',
     eid_adha: 'traditional',
+    friday: 'traditional',
     birthday: 'vibrant',
     wedding: 'watercolor',
     graduation: 'cinematic',
@@ -552,6 +558,7 @@ const FALLBACK_GREETINGS = {
     'ramadan': ['رمضان كريم وكل عام وأنتم بخير', 'مبارك عليكم الشهر الفضيل', 'نسأل الله لكم قبول الطاعات في رمضان', 'رمضان مبارك، أعاده الله عليكم باليمن والبركات', 'أجمل التهاني بمناسبة حلول شهر رمضان'],
     'eid_fitr': ['عيد فطر مبارك وكل عام وأنتم بخير', 'تقبل الله منا ومنكم صالح الأعمال', 'عساكم من عواده، عيد فطر سعيد', 'فرحة الفطر تعود عليكم بالخير', 'عيد فطر سعيد أعاده الله عليكم بالبركات'],
     'eid_adha': ['عيد أضحى مبارك وكل عام وأنتم بخير', 'تقبل الله طاعاتكم وأضحاكم', 'عساكم من عواده، عيد أضحى سعيد', 'أجمل التهاني بعيد الأضحى المبارك', 'أضحى مبارك أعاده الله عليكم بالخير'],
+    'friday': ['جمعة مباركة طيبة عليكم', 'اللهم اجعل جمعتكم نوراً وسكينة', 'جمعة خير وبركة بإذن الله', 'أسأل الله لكم في الجمعة دعوة لا ترد', 'طيب الله جمعتكم وملأها بالرضا'],
     'eid': ['عيد فطر مبارك وكل عام وأنتم بخير', 'تقبل الله منا ومنكم صالح الأعمال', 'عساكم من عواده، عيد فطر سعيد', 'فرحة الفطر تعود عليكم بالخير', 'عيد فطر سعيد أعاده الله عليكم بالبركات'],
     'birthday': ['عيد ميلاد سعيد وكل عام وأنت بخير', 'أتمنى لك عاماً مليئاً بالأفراح والنجاح', 'في يوم ميلادك، أتمنى لك كل السعادة', 'كل سنة وأنت طيب وعقبال مائة عام', 'أجمل التهاني بمناسبة يوم ميلادك'],
     'graduation': ['مبارك التخرج وإلى مزيد من النجاح', 'ألف مبروك التخرج، فخورون بك', 'تهانينا القلبية بهذا الإنجاز الرائع', 'نجاحك يسعدنا، مبارك التخرج', 'من نجاح إلى نجاح، ألف مبروك'],
@@ -569,6 +576,7 @@ const FALLBACK_GREETINGS_EN = {
     ramadan: ['Ramadan Kareem to you and your family', 'Wishing you a blessed Ramadan', 'May Ramadan bring peace and joy', 'Warm wishes for the holy month', 'May your prayers be accepted'],
     eid_fitr: ['Eid Al-Fitr Mubarak', 'Wishing you a joyful Eid', 'May Eid bring happiness and peace', 'Eid Mubarak to you and yours', 'Warm wishes for a blessed Eid'],
     eid_adha: ['Eid Al-Adha Mubarak', 'Wishing you a blessed Eid', 'May your Eid be full of joy', 'Warm wishes for Eid Al-Adha', 'May this Eid bring peace and blessings'],
+    friday: ['Blessed Friday to you', 'May your Friday be peaceful', 'Wishing you a Friday full of blessings', 'May your prayers be answered this Friday', 'A serene and blessed Friday'],
     birthday: ['Happy Birthday and best wishes', 'Wishing you a year full of joy', 'May your day be bright and beautiful', 'Many happy returns', 'Warm birthday wishes to you'],
     wedding: ['Wishing you a lifetime of love', 'Congratulations on your wedding', 'May your days be filled with joy', 'Best wishes to the happy couple', 'A beautiful beginning together'],
     graduation: ['Congratulations on your graduation', 'Proud of your great achievement', 'Wishing you continued success', 'Your future is bright', 'Well done and best wishes'],

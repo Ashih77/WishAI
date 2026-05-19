@@ -340,6 +340,137 @@ const OCCASION_SUB_STYLE_POOLS = {
     }
 };
 
+function cardElement(id, icon, ar, en, promptEn) {
+    return { id, icon, ar, en, promptEn };
+}
+
+const OCCASION_CONTENT_ELEMENTS = {
+    ramadan: [
+        cardElement('ramadan-lanterns', '🏮', 'فوانيس رمضانية', 'Ramadan lanterns', 'warm Ramadan lanterns'),
+        cardElement('ramadan-crescent', '🌙', 'هلال وسماء ليلية', 'Crescent night sky', 'a crescent moon in a calm night sky'),
+        cardElement('ramadan-patterns', '✦', 'زخارف إسلامية', 'Islamic geometry', 'refined Islamic geometric ornaments'),
+        cardElement('ramadan-dates', '☕', 'تمر وقهوة عربية', 'Dates and Arabic coffee', 'dates and Arabic coffee as subtle hospitality details'),
+        cardElement('ramadan-mosque', '🕌', 'مسجد مضاء', 'Lit mosque', 'a softly lit mosque silhouette'),
+        cardElement('ramadan-glow', '✨', 'إضاءة روحانية', 'Spiritual glow', 'gentle spiritual glowing light')
+    ],
+    eid_fitr: [
+        cardElement('eid-fitr-gifts', '🎁', 'عيديات وهدايا', 'Eid gifts', 'elegant Eid gifts and envelopes'),
+        cardElement('eid-fitr-sweets', '🍬', 'كعك وحلويات العيد', 'Eid sweets', 'Eid cookies and festive sweets'),
+        cardElement('eid-fitr-crescent', '🌙', 'هلال رقيق', 'Delicate crescent', 'a delicate Eid crescent moon'),
+        cardElement('eid-fitr-family', '👨‍👩‍👧', 'لمحة عائلية دافئة', 'Warm family cue', 'a warm family celebration cue without clutter'),
+        cardElement('eid-fitr-patterns', '✦', 'نقوش عيد ناعمة', 'Soft Eid patterns', 'soft Eid ornamental patterns'),
+        cardElement('eid-fitr-lights', '💡', 'أنوار احتفالية', 'Festive lights', 'tasteful festive lights')
+    ],
+    eid_adha: [
+        cardElement('eid-adha-kaaba', '🕋', 'رمز الكعبة والحج', 'Kaaba and Hajj cue', 'respectful Kaaba and Hajj-inspired cues'),
+        cardElement('eid-adha-takbeer', '✦', 'أجواء التكبير', 'Takbeer atmosphere', 'visual atmosphere of Eid takbeer without extra text'),
+        cardElement('eid-adha-coffee', '☕', 'ضيافة عربية', 'Arabic hospitality', 'Arabic coffee, dates, and hospitality details'),
+        cardElement('eid-adha-gifts', '🎁', 'هدايا العيد', 'Eid gifts', 'elegant Eid gifts'),
+        cardElement('eid-adha-geometric', '◆', 'هندسة إسلامية', 'Islamic geometry', 'refined Islamic geometric borders'),
+        cardElement('eid-adha-gathering', '👥', 'اجتماع العائلة', 'Family gathering', 'subtle family gathering silhouettes')
+    ],
+    friday: [
+        cardElement('friday-mosque', '🕌', 'مسجد هادئ', 'Peaceful mosque', 'a peaceful mosque silhouette'),
+        cardElement('friday-light', '✨', 'نور وسكينة', 'Light and serenity', 'soft serene light'),
+        cardElement('friday-prayer-rug', '▤', 'سجادة صلاة', 'Prayer rug', 'an elegant prayer rug detail'),
+        cardElement('friday-quran', '📖', 'مصحف بتوقير', 'Respectful Quran cue', 'a respectful Quran-inspired cue without readable text'),
+        cardElement('friday-florals', '🌿', 'نباتات هادئة', 'Calm greenery', 'calm greenery and simple natural details'),
+        cardElement('friday-patterns', '✦', 'زخارف إسلامية خفيفة', 'Light Islamic ornaments', 'light Islamic ornamental patterns')
+    ],
+    birthday: [
+        cardElement('birthday-cake', '🎂', 'كعكة ميلاد', 'Birthday cake', 'a beautiful birthday cake'),
+        cardElement('birthday-balloons', '🎈', 'بالونات ملونة', 'Colorful balloons', 'colorful birthday balloons'),
+        cardElement('birthday-confetti', '🎊', 'قصاصات احتفال', 'Confetti', 'festive confetti'),
+        cardElement('birthday-gifts', '🎁', 'هدايا مغلفة', 'Wrapped gifts', 'wrapped birthday gifts'),
+        cardElement('birthday-candles', '🕯️', 'شموع مضيئة', 'Lit candles', 'lit birthday candles'),
+        cardElement('birthday-ribbons', '🎀', 'شرائط احتفالية', 'Party ribbons', 'party ribbons and streamers')
+    ],
+    wedding: [
+        cardElement('wedding-rings', '💍', 'خواتم زفاف', 'Wedding rings', 'elegant wedding rings'),
+        cardElement('wedding-roses', '🌹', 'ورود فاخرة', 'Luxury roses', 'luxury roses'),
+        cardElement('wedding-fabric', '🪡', 'قماش حريري', 'Silk fabric', 'soft silk fabric folds'),
+        cardElement('wedding-lights', '✨', 'إضاءة رومانسية', 'Romantic lights', 'romantic warm lights'),
+        cardElement('wedding-arch', '▱', 'قوس احتفال', 'Ceremony arch', 'an elegant wedding ceremony arch'),
+        cardElement('wedding-pearls', '◦', 'لؤلؤ وتفاصيل ذهبية', 'Pearls and gold details', 'pearls and subtle gold details')
+    ],
+    graduation: [
+        cardElement('graduation-cap', '🎓', 'قبعة تخرج', 'Graduation cap', 'a graduation cap'),
+        cardElement('graduation-diploma', '📜', 'شهادة ملفوفة', 'Rolled diploma', 'a rolled diploma tied with ribbon'),
+        cardElement('graduation-confetti', '🎊', 'قصاصات نجاح', 'Success confetti', 'celebratory success confetti'),
+        cardElement('graduation-books', '📚', 'كتب ومعرفة', 'Books and knowledge', 'books and academic details'),
+        cardElement('graduation-stars', '⭐', 'نجوم إنجاز', 'Achievement stars', 'achievement stars'),
+        cardElement('graduation-stage', '🏛️', 'منصة احتفال', 'Ceremony stage', 'a subtle graduation ceremony stage cue')
+    ],
+    success: [
+        cardElement('success-trophy', '🏆', 'كأس إنجاز', 'Achievement trophy', 'an achievement trophy'),
+        cardElement('success-fireworks', '🎆', 'ألعاب نارية', 'Fireworks', 'celebratory fireworks'),
+        cardElement('success-stars', '⭐', 'نجوم تفوق', 'Excellence stars', 'stars symbolizing excellence'),
+        cardElement('success-ribbons', '🎗️', 'شرائط فوز', 'Victory ribbons', 'victory ribbons'),
+        cardElement('success-light', '✨', 'إضاءة مشرقة', 'Bright light', 'bright uplifting light'),
+        cardElement('success-laurel', '🌿', 'إكليل تفوق', 'Laurel wreath', 'a laurel wreath')
+    ],
+    newborn: [
+        cardElement('newborn-cradle', '🍼', 'سرير طفل ناعم', 'Soft baby cradle', 'a soft baby cradle'),
+        cardElement('newborn-toys', '🧸', 'ألعاب لطيفة', 'Cute toys', 'cute baby toys'),
+        cardElement('newborn-clouds', '☁️', 'غيوم ناعمة', 'Soft clouds', 'soft dreamy clouds'),
+        cardElement('newborn-stars', '⭐', 'نجوم صغيرة', 'Tiny stars', 'tiny gentle stars'),
+        cardElement('newborn-clothes', '👶', 'ملابس مولود', 'Baby clothes', 'soft newborn clothes'),
+        cardElement('newborn-pastels', '🎀', 'تفاصيل باستيل', 'Pastel details', 'pastel baby details')
+    ],
+    love: [
+        cardElement('love-hearts', '❤️', 'قلوب فنية', 'Artistic hearts', 'artistic hearts'),
+        cardElement('love-roses', '🌹', 'ورود حمراء', 'Red roses', 'red roses'),
+        cardElement('love-candles', '🕯️', 'شموع رومانسية', 'Romantic candles', 'romantic candles'),
+        cardElement('love-soft-light', '✨', 'إضاءة ناعمة', 'Soft light', 'soft romantic lighting'),
+        cardElement('love-ribbons', '🎀', 'شرائط حريرية', 'Silk ribbons', 'silk ribbons'),
+        cardElement('love-silhouette', '👥', 'ظل رومانسي رقيق', 'Subtle romantic silhouette', 'a subtle romantic silhouette')
+    ],
+    friendship: [
+        cardElement('friendship-hands', '🤝', 'أيدي صداقة', 'Friendship hands', 'hands or symbols of friendship'),
+        cardElement('friendship-flowers', '🌼', 'زهور مبهجة', 'Cheerful flowers', 'cheerful friendship flowers'),
+        cardElement('friendship-sun', '☀️', 'شمس دافئة', 'Warm sun', 'warm sunny light'),
+        cardElement('friendship-ribbons', '🎀', 'شرائط ملونة', 'Colorful ribbons', 'colorful ribbons'),
+        cardElement('friendship-gift', '🎁', 'هدية بسيطة', 'Simple gift', 'a simple friendly gift'),
+        cardElement('friendship-shapes', '💫', 'أشكال مرحة', 'Playful shapes', 'playful friendly shapes')
+    ],
+    daily: [
+        cardElement('daily-coffee', '☕', 'قهوة صباحية', 'Morning coffee', 'a morning coffee cup'),
+        cardElement('daily-sunrise', '🌅', 'شروق هادئ', 'Calm sunrise', 'a calm sunrise'),
+        cardElement('daily-greenery', '🌿', 'نباتات منعشة', 'Fresh greenery', 'fresh greenery'),
+        cardElement('daily-window', '▢', 'نافذة مضيئة', 'Bright window', 'a bright peaceful window'),
+        cardElement('daily-flowers', '🌸', 'زهور خفيفة', 'Light flowers', 'light floral details'),
+        cardElement('daily-soft-light', '✨', 'إضاءة متفائلة', 'Hopeful light', 'hopeful gentle light')
+    ],
+    newyear: [
+        cardElement('newyear-fireworks', '🎆', 'ألعاب نارية', 'Fireworks', 'large festive fireworks'),
+        cardElement('newyear-clock', '🕛', 'ساعة منتصف الليل', 'Midnight clock', 'a clock near midnight'),
+        cardElement('newyear-sparkles', '✨', 'لمعان ذهبي', 'Golden sparkles', 'golden and silver sparkles'),
+        cardElement('newyear-confetti', '🎊', 'قصاصات احتفال', 'Confetti', 'celebratory confetti'),
+        cardElement('newyear-ribbons', '🎀', 'شرائط سنة جديدة', 'New Year ribbons', 'New Year celebration ribbons'),
+        cardElement('newyear-lights', '💡', 'أنوار احتفالية', 'Festive lights', 'festive party lights')
+    ],
+    thankyou: [
+        cardElement('thankyou-bouquet', '💐', 'باقة زهور', 'Flower bouquet', 'a thoughtful flower bouquet'),
+        cardElement('thankyou-note', '✉️', 'بطاقة شكر صغيرة', 'Small thank-you note', 'a small blank thank-you note without readable text'),
+        cardElement('thankyou-ribbon', '🎀', 'شريط هدية', 'Gift ribbon', 'an elegant gift ribbon'),
+        cardElement('thankyou-warm-light', '✨', 'إضاءة امتنان', 'Warm grateful light', 'warm grateful light'),
+        cardElement('thankyou-leaves', '🌿', 'أوراق هادئة', 'Calm leaves', 'calm botanical leaves'),
+        cardElement('thankyou-gift', '🎁', 'هدية تقدير', 'Appreciation gift', 'a small appreciation gift')
+    ]
+};
+
+const STYLE_CONTENT_ACCENTS = {
+    modern: cardElement('style-modern-glass', '◇', 'ألواح زجاجية عصرية', 'Modern glass panels', 'modern translucent glass panels'),
+    traditional: cardElement('style-traditional-border', '▣', 'إطار زخرفي تقليدي', 'Traditional ornate frame', 'a traditional ornate frame'),
+    minimalist: cardElement('style-minimalist-space', '□', 'مساحات بيضاء أنيقة', 'Elegant negative space', 'elegant negative space with minimal details'),
+    vibrant: cardElement('style-vibrant-color', '🌈', 'دفعات ألوان مبهجة', 'Vibrant color bursts', 'vibrant color bursts'),
+    watercolor: cardElement('style-watercolor-wash', '🎨', 'لطخات ألوان مائية', 'Watercolor washes', 'soft watercolor washes'),
+    '3d-render': cardElement('style-3d-depth', '🧊', 'مجسمات ثلاثية الأبعاد', '3D depth elements', 'polished 3D depth elements'),
+    cinematic: cardElement('style-cinematic-light', '🎬', 'إضاءة سينمائية', 'Cinematic lighting', 'cinematic light beams and depth'),
+    illustration: cardElement('style-illustration-lines', '✏️', 'خطوط رسم توضيحي', 'Illustration linework', 'expressive illustration linework'),
+    papercraft: cardElement('style-papercraft-layers', '📄', 'طبقات ورقية', 'Layered paper pieces', 'layered papercraft paper pieces')
+};
+
 function normalizeImageModel(model) {
     return Object.prototype.hasOwnProperty.call(IMAGE_MODELS, model) ? model : 'nano-banana-2';
 }
@@ -400,6 +531,48 @@ function getRandomSubStyle(style, occasionId = state.occasion) {
 function resolveEffectiveSubStyle() {
     if (userOpenedAdvancedOptions && userSelectedSubStyle && state.subStyle) return state.subStyle;
     return getRandomSubStyle(state.style, state.occasion);
+}
+
+function getContentElementOptions(occasionId = state.occasion, style = state.style) {
+    const normalizedOccasion = normalizeOccasionId(occasionId) || 'daily';
+    const base = OCCASION_CONTENT_ELEMENTS[normalizedOccasion] || OCCASION_CONTENT_ELEMENTS.daily;
+    const styleAccent = STYLE_CONTENT_ACCENTS[style];
+    const options = styleAccent ? [...base.slice(0, 5), styleAccent] : base.slice(0, 6);
+    return options.slice(0, 6);
+}
+
+function syncContentElementSelection(options = getContentElementOptions()) {
+    const validIds = new Set(options.map(option => option.id));
+    state.contentElements = (state.contentElements || []).filter(id => validIds.has(id));
+}
+
+function renderContentElements(options = getContentElementOptions()) {
+    const container = document.getElementById('content-elements');
+    if (!container) return;
+
+    syncContentElementSelection(options);
+    container.innerHTML = options.map(option => {
+        const label = state.lang === 'ar' ? option.ar : option.en;
+        const isActive = state.contentElements.includes(option.id);
+        return `
+            <button type="button" class="element-chip${isActive ? ' active' : ''}" data-element="${option.id}">
+                <span class="element-icon">${option.icon}</span>
+                <span class="element-name">${escapeHtml(label)}</span>
+            </button>
+        `;
+    }).join('');
+
+    container.querySelectorAll('.element-chip[data-element]').forEach(chip => {
+        chip.onclick = () => {
+            chip.classList.toggle('active');
+            const elementId = chip.dataset.element;
+            if (chip.classList.contains('active')) {
+                if (!state.contentElements.includes(elementId)) state.contentElements.push(elementId);
+            } else {
+                state.contentElements = state.contentElements.filter(id => id !== elementId);
+            }
+        };
+    });
 }
 
 let state = {
@@ -1285,6 +1458,7 @@ function bindEvents() {
             state.subStyle = null;
             state.effectiveSubStyle = '';
             userSelectedSubStyle = false;
+            renderContentElements();
 
             // Populate Sub-Styles Panel
             const subPanel = document.getElementById('sub-styles-panel');
@@ -1347,19 +1521,6 @@ function bindEvents() {
         };
     });
 
-    // Content Elements Toggle
-    document.querySelectorAll('.element-chip[data-element]').forEach(chip => {
-        chip.onclick = () => {
-            chip.classList.toggle('active');
-            const el = chip.dataset.element;
-            if (chip.classList.contains('active')) {
-                if (!state.contentElements.includes(el)) state.contentElements.push(el);
-            } else {
-                state.contentElements = state.contentElements.filter(e => e !== el);
-            }
-        };
-    });
-
     document.getElementById('generate-btn').onclick = () => {
         state.name = document.getElementById('user-name').value.trim();
         state.nameSubtitle = document.getElementById('name-subtitle').value.trim();
@@ -1382,6 +1543,7 @@ function bindEvents() {
         state.style = 'modern';
         state.subStyle = null;
         state.effectiveSubStyle = '';
+        state.contentElements = [];
         userSelectedArtStyle = false;
         userSelectedSubStyle = false;
         userOpenedAdvancedOptions = false;
@@ -1402,6 +1564,7 @@ function bindEvents() {
         go(1);
         selectArtStyle(state.style, { recommended: true });
         renderOccasions();
+        renderContentElements();
         renderImageModelChoices();
     };
 
@@ -1686,6 +1849,7 @@ function renderOccasions() {
         el.innerHTML = `<span class="occ-icon">${o.icon}</span><span class="occ-name">${state.lang === 'ar' ? o.nameAr : o.nameEn}</span>`;
         el.onclick = () => {
             state.occasion = o.id;
+            state.contentElements = [];
             applyRecommendedArtStyleForOccasion(o.id);
             const defaultGreeting = greetings[state.lang][o.id] || '';
             state.greeting = defaultGreeting;
@@ -1693,6 +1857,7 @@ function renderOccasions() {
             document.getElementById('greeting-field').classList.remove('hidden');
             document.getElementById('position-field').classList.remove('hidden'); // Show Name Position explicitly
             document.getElementById('suggestions-container').classList.add('hidden');
+            renderContentElements();
             updatePreview();
             renderOccasions();
         };
@@ -1720,6 +1885,7 @@ function updateText() {
     document.getElementById('name-subtitle').placeholder = state.lang === 'ar' ? 'مثال: من القلب، عائلتك، فريق العمل...' : 'Example: With love, your family, the team...';
     updateThemeToggleText();
     updateAdvancedAccess();
+    renderContentElements();
     renderImageModelChoices();
     updatePreview();
 }
@@ -1903,19 +2069,12 @@ async function generate() {
     const occDesc = state.lang === 'ar' ? occ.descAr : occ.descEn;
     const langLabel = state.lang === 'ar' ? 'Arabic' : 'English';
 
-    // Build content elements description
-    const elemMap = {
-        people: state.lang === 'ar' ? 'أشخاص يحتفلون' : 'people celebrating',
-        landmarks: state.lang === 'ar' ? 'معالم ومساجد وأماكن دينية' : 'landmarks, mosques, and religious places',
-        food: state.lang === 'ar' ? 'طعام وحلويات وكعك المناسبة' : 'food, sweets, and occasion-specific treats',
-        decorations: state.lang === 'ar' ? 'زخارف إسلامية وفوانيس وإضاءات احتفالية' : 'Islamic patterns, lanterns, and festive decorations',
-        nature: state.lang === 'ar' ? 'طبيعة خلابة وورود وأزهار' : 'beautiful nature, roses, and flowers',
-        candles: state.lang === 'ar' ? 'شموع مضيئة وإضاءة دافئة وأنوار رومانسية' : 'glowing candles, warm lighting, and romantic ambiance'
-    };
-    
-    const selectedElements = state.contentElements.map(e => elemMap[e]).join(' AND ');
-    const allElements = Object.keys(elemMap);
-    const unselectedElements = allElements.filter(e => !state.contentElements.includes(e)).map(e => elemMap[e]).join(', ');
+    const contentElementOptions = getContentElementOptions(state.occasion, state.style);
+    syncContentElementSelection(contentElementOptions);
+    const elemMap = Object.fromEntries(contentElementOptions.map(option => [option.id, option.promptEn]));
+    const selectedElements = state.contentElements.map(e => elemMap[e]).filter(Boolean).join(' AND ');
+    const allElements = contentElementOptions.map(option => option.id);
+    const unselectedElements = allElements.filter(e => !state.contentElements.includes(e)).map(e => elemMap[e]).filter(Boolean).join(', ');
 
     const elemInstruction = selectedElements 
         ? `CRITICAL REQUIREMENT: You MUST clearly and prominently INCLUDE THESE SPECIFIC ELEMENTS in the image: ${selectedElements}.` 
@@ -2259,13 +2418,7 @@ function remixCard(id) {
 
     renderImageModelChoices();
 
-    // Content Elements
-    document.querySelectorAll('.element-chip').forEach(c => {
-        c.classList.remove('active');
-        if (state.contentElements && state.contentElements.includes(c.dataset.element)) {
-            c.classList.add('active');
-        }
-    });
+    renderContentElements();
 
     // Text Formatting & Position
     document.getElementById('pref-tashkeel').checked = !!state.tashkeel;

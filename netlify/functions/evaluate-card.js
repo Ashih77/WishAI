@@ -10,7 +10,7 @@ function parseJsonText(value) {
     return JSON.parse(clean);
 }
 
-const BLOB_METADATA_MAX_BYTES = 1800;
+const BLOB_METADATA_MAX_BYTES = 900;
 
 function truncateText(value, maxLength) {
     const text = String(value || '').trim();
